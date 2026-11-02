@@ -112,8 +112,14 @@ const SESSIONS=[
   files:[{titre:"Courriel interne — Voss",texte:"« Ils ont triplé la dose. Si Militech apprend que les lots sont contaminés, nous sommes finis. Rendez-vous au sous-sol B, code d’accès 4721. »"},
          {titre:"Plan des sous-sols",texte:"Niveau B : laboratoire (nord), coffre-fort (est), sortie de secours (sud). Une seule caméra couvre le couloir, angle mort à gauche du coffre."}]},
  {id:"s1lock",type:"lock",nom:"CRACK-LOCK // Coffre-fort",code:"VAULT-12",secret:"4721",tries:8,desc:"Serrure électronique à code numérique.",
-  files:[{titre:"Contrat Militech — confidentiel",texte:"Accord de livraison de 12 lots de stimulants de combat. Signataire : Dr Elias Voss. Paiement : 80 000 eb à la livraison."}]},
- {id:"s1net",type:"net",nom:"NET // Architecture du réseau",code:"NET-01",desc:"Simulation d’architecture NET : strates, mots de passe, glace et paydata.",
+  files:[{titre:"Contrat Militech — confidentiel",texte:"Accord de livraison de 12 lots de stimulants de combat. Signataire : Dr Elias Voss. Paiement : 80 000 eb à la livraison."}]}]},
+{id:2,titre:"Les rues de Heywood",resume:"Une gang war qui cache un autre jeu.",apps:[
+ {id:"s2breach",type:"breach",nom:"BREACH // Réseau des Valentinos",code:"HEY-2020",time:30,desc:"Le terminal d’un chef de bande.",
+  files:[{titre:"Liste des points de deal",texte:"Quatre points : Chromeland, Rue des Palmiers, Entrepôt 9, Bar « El Coyote ». Livraisons le jeudi."},
+         {titre:"Message crypté — « La Gata »",texte:"« Le carnet est chez Marisol. Ne le donne à personne, surtout pas aux flics de la NCPD. »"}]},
+ {id:"s2lock",type:"lock",nom:"CRACK-LOCK // Casier de gare",code:"LOCK-88",secret:"90315",tries:8,desc:"Casier consigne de la gare de Heywood.",
+  files:[{titre:"Le carnet de Marisol",texte:"Noms, dates, sommes. La dernière ligne : « Le maire lui-même a reçu 20 000 eb »."}]},
+ {id:"s2net",type:"net",nom:"NET // Architecture du réseau",code:"NET-02",desc:"Simulation d’architecture NET : strates, mots de passe, glace et paydata.",
   /* Fichiers récupérables (référencés par f:N dans les nœuds). html:true = texte non échappé (permet <mark class="hl">) */
   files:[
    {titre:"Organisation et activités",texte:`================================================================
@@ -216,29 +222,23 @@ const SESSIONS=[
     {id:"s1pw",type:"password",nom:"Porte d'entrée SD 6",diff:"SD 6",ouvre:2}]},
    {nom:"STRATE 2 - Sécurité périphérique",nodes:[
     {id:"s2pw",type:"password",nom:"Accès Strate 3",diff:"Facile",ouvre:3},
-    {id:"cam",type:"cameras",nom:"Caméras de surveillance SD 6",diff:"SD 6",cams:"s1sec"}]},
+    {id:"cam",type:"cameras",nom:"Caméras de surveillance SD 6",diff:"SD 6",cams:"s2sec"}]},
    {nom:"STRATE 3 - Défense active",nodes:[
     {id:"tour",type:"tourelles",nom:"Tourelles automatisées",diff:"SD 6"},
     {id:"s3pw",type:"password",nom:"Accès Strate 4 (Core)",diff:"Facile",ouvre:4},
-    {id:"ice",type:"blackice",nom:"IA ennemi",diff:"Facile",image:"images/ia-ennemi.png",nomIA:"Putois",stats:"ATT 4 DEF 2 VIE 10"},
+    {id:"ice",type:"blackice",nom:"IA ennemi",diff:"Facile",image:"Images/Session 2/NET-02/ia-ennemi.png",nomIA:"Putois",stats:"ATT 4 DEF 2 VIE 10"},
     {id:"logs",type:"fichier",nom:"Organisation et activités",f:0}]},
    {nom:"STRATE 4 - Cœur de données",nodes:[
     {id:"f1",type:"paydata",nom:"Liste des victimes",f:1},
     {id:"f2",type:"paydata",nom:"Virements offshore",f:2}]}]},
- {id:"s1sec",type:"feed",nom:"SÉCURITÉ // Accès caméras du bâtiment",code:"CAM-01",desc:"Système de vidéosurveillance : sous-sol, étages et toit.",files:[],
+ {id:"s2sec",type:"feed",nom:"SÉCURITÉ // Accès caméras du bâtiment",code:"CAM-02",desc:"Système de vidéosurveillance : sous-sol, étages et toit.",files:[],
   zones:[
-   {groupe:"Sous-sol",cams:[{nom:"Cage",img:"images/ss-cage.png"},{nom:"Réserve",img:"images/ss-reserve.png"},{nom:"Salle de jeux",img:"images/ss-jeux.png"}]},
-   {groupe:"Rez-de-chaussée",cams:[{nom:"Garage",img:"images/rdc-garage.png"},{nom:"Stockage",img:"images/rdc-stockage.png"},{nom:"Escalier",img:"images/rdc-escalier.png"}]},
-   {groupe:"Étage 1",cams:[{nom:"Dortoir",img:"images/e1-dortoir.png"},{nom:"Atelier",img:"images/e1-atelier.png"},{nom:"Salle de pause",img:"images/e1-pause.png"}]},
-   {groupe:"Étage 2",cams:[{nom:"Bureau",img:"images/e2-bureau.png"},{nom:"Salle Net",img:"images/e2-net.png"},{nom:"Accès toit",img:"images/e2-accestoit.png"}]},
-   {groupe:"Toit",cams:[{nom:"Vue globale",img:"images/toit.png"}]}
-  ]}]},
-{id:2,titre:"Les rues de Heywood",resume:"Une gang war qui cache un autre jeu.",apps:[
- {id:"s2breach",type:"breach",nom:"BREACH // Réseau des Valentinos",code:"HEY-2020",time:30,desc:"Le terminal d’un chef de bande.",
-  files:[{titre:"Liste des points de deal",texte:"Quatre points : Chromeland, Rue des Palmiers, Entrepôt 9, Bar « El Coyote ». Livraisons le jeudi."},
-         {titre:"Message crypté — « La Gata »",texte:"« Le carnet est chez Marisol. Ne le donne à personne, surtout pas aux flics de la NCPD. »"}]},
- {id:"s2lock",type:"lock",nom:"CRACK-LOCK // Casier de gare",code:"LOCK-88",secret:"90315",tries:8,desc:"Casier consigne de la gare de Heywood.",
-  files:[{titre:"Le carnet de Marisol",texte:"Noms, dates, sommes. La dernière ligne : « Le maire lui-même a reçu 20 000 eb »."}]}]}
+   {groupe:"Sous-sol",cams:[{nom:"Cage",img:"Images/Session 2/CAM-02/ss-cage.png"},{nom:"Réserve",img:"Images/Session 2/CAM-02/ss-reserve.png"},{nom:"Salle de jeux",img:"Images/Session 2/CAM-02/ss-jeux.png"}]},
+   {groupe:"Rez-de-chaussée",cams:[{nom:"Garage",img:"Images/Session 2/CAM-02/rdc-garage.png"},{nom:"Stockage",img:"Images/Session 2/CAM-02/rdc-stockage.png"},{nom:"Escalier",img:"Images/Session 2/CAM-02/rdc-escalier.png"}]},
+   {groupe:"Étage 1",cams:[{nom:"Dortoir",img:"Images/Session 2/CAM-02/e1-dortoir.png"},{nom:"Atelier",img:"Images/Session 2/CAM-02/e1-atelier.png"},{nom:"Salle de pause",img:"Images/Session 2/CAM-02/e1-pause.png"}]},
+   {groupe:"Étage 2",cams:[{nom:"Bureau",img:"Images/Session 2/CAM-02/e2-bureau.png"},{nom:"Salle Net",img:"Images/Session 2/CAM-02/e2-net.png"},{nom:"Accès toit",img:"Images/Session 2/CAM-02/e2-accestoit.png"}]},
+   {groupe:"Toit",cams:[{nom:"Vue globale",img:"Images/Session 2/CAM-02/toit.png"}]}
+  ]}]}
 ];
 /* ======================================================================= */
 const $=(s,e=document)=>e.querySelector(s),R=n=>Math.floor(Math.random()*n);
