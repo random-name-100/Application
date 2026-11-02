@@ -378,10 +378,11 @@ function mj(){
 
 const TAB={};
 function session(s){
-  view.innerHTML=`<a href="#">← INDEX</a><h2>SESSION ${String(s.id).padStart(2,"0")} // ${s.cache?bars(10,4,12):esc(s.titre.toUpperCase())}</h2>${s.cache?"":`<p><small>${esc(s.resume)}</small></p>`}<div class="tabs"><button data-t="acces">ACCÈS APPLICATIONS</button><button data-t="save">SAUVEGARDE DES INFOS</button><button data-t="resume">RÉSUMÉ</button></div><div id="tab"></div>`;
+  view.innerHTML=`<a href="#">← INDEX</a><h2>SESSION ${String(s.id).padStart(2,"0")} // ${s.cache?bars(10,4,12):esc(s.titre.toUpperCase())}</h2>${s.cache?"":`<p><small>${esc(s.resume)}</small></p>`}<div class="tabs"><button data-t="acces">ACCÈS APPLICATIONS</button><button data-t="save">SAUVEGARDE DES INFOS</button>${done(s)?'<button data-t="resume">RÉSUMÉ</button>':""}</div><div id="tab"></div>`;
   const tab=$("#tab");
   const nbf=()=>nfound(s,ST.get("files"));
-  const setTab=n=>{TAB[s.id]=n;view.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===n));n==="acces"?acces():n==="resume"?resume():save()};
+  const setTab=n=>{if(n==="resume"&&!done(s))n="acces"; /* onglet RÉSUMÉ visible seulement une fois la session terminée */
+    TAB[s.id]=n;view.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===n));n==="acces"?acces():n==="resume"?resume():save()};
   $(".tabs",view).onclick=e=>{const t=e.target.dataset?.t;if(t)setTab(t)};
 
   function acces(){
