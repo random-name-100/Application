@@ -309,28 +309,49 @@ function reveal(app,idxs){
 
 /* ---------- Sessions terminées (état partagé) ----------
    Une session est TERMINÉE si :
-   - terminee:true est écrit dans SESSIONS (fonctionne partout, y compris GitHub Pages), ou
-   - le MJ l'a clôturée depuis l'onglet MJ sur la page claude.ai : l'état est alors partagé
-     en direct avec tous ceux qui consultent la page (seul le propriétaire de la page peut l'écrire).
+   - terminee:true est écrit dans SESSIONS (secours, fonctionne partout sans connexion), ou
+   - le MJ l'a clôturée depuis l'onglet MJ : l'état est enregistré dans Firebase (Firestore,
+     collection "sessions") et visible en direct par tous ceux qui consultent la page, sans compte.
+     Seul le compte MJ (UID fixé dans les règles Firestore) peut écrire.
+     Si Firebase est injoignable, la page claude.ai se rabat sur son propre stockage partagé.
    Une session terminée affiche toutes ses applications et tous ses fichiers pour tout le monde. */
-const DONE={};let DB=null,OWNER=false;
+const FIREBASE={apiKey:"AIzaSyBGeJ5Bv00E2W0wj0LeyYZzrGId5GTz4p4",authDomain:"beyond-human-campaign.firebaseapp.com",projectId:"beyond-human-campaign",
+  storageBucket:"beyond-human-campaign.firebasestorage.app",messagingSenderId:"931899078066",appId:"1:931899078066:web:0f1bc67c2afaf725bfe0ab"};
+const FBU="https://www.gstatic.com/firebasejs/13.1.0/";
+const DONE={};
+/* SYNC.kind : "firebase" | "claude" | null (aucun stockage partagé) */
+const SYNC={kind:null,canWrite:false,user:null,set:null,login:null,logout:null};
 const done=s=>!!(s.terminee||DONE[s.id]);
 const got=(s,a,i,f)=>done(s)||!!f[fid(a,i)];
 const nfound=(s,f)=>s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>got(s,a,i,f)).length,0);
 function refresh(){ /* ne coupe ni une application lancée ni une saisie en cours */
   if($("#app")||document.activeElement?.tagName==="INPUT")return;route(true)}
-(async()=>{try{
-  if(!window.claude?.use)return;
+function applySnap(list){
+  for(const k in DONE)delete DONE[k];
+  list.forEach(([id,v])=>{const m=String(id).match(/^s(\d+)$/);if(m&&v&&v.terminee)DONE[+m[1]]=true});
+  refresh()}
+const timeout=(p,ms)=>Promise.race([p,new Promise((_,ko)=>setTimeout(()=>ko(new Error("timeout")),ms))]);
+async function initFirebase(){
+  const [A,F,U]=await Promise.all(["app","firestore","auth"].map(m=>import(FBU+"firebase-"+m+".js")));
+  const app=A.initializeApp(FIREBASE),db=F.getFirestore(app),auth=U.getAuth(app);
+  await new Promise((ok,ko)=>{let first=true;
+    F.onSnapshot(F.collection(db,"sessions"),snap=>{if(SYNC.kind==="claude")return;applySnap(snap.docs.map(d=>[d.id,d.data()]));if(first){first=false;ok()}},
+      e=>{if(first){first=false;ko(e)}})});
+  Object.assign(SYNC,{kind:"firebase",
+    set:(s,v)=>F.setDoc(F.doc(db,"sessions","s"+s.id),{terminee:v,maj:Date.now()}),
+    login:(e,pw)=>U.signInWithEmailAndPassword(auth,e,pw),logout:()=>U.signOut(auth)});
+  U.onAuthStateChanged(auth,u=>{SYNC.user=u;SYNC.canWrite=!!u;refresh()})}
+async function initClaude(){
+  if(!window.claude?.use)throw new Error("no claude");
   const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
-  OWNER=user?(await user.isOwner()):false;
-  if(!db){refresh();return}
-  DB=db;
-  db.collection("sessions").onSnapshot(snap=>{
-    for(const k in DONE)delete DONE[k];
-    snap.docs.forEach(d=>{const v=d.data(),m=d.id.match(/^s(\d+)$/);if(m&&v&&v.terminee)DONE[+m[1]]=true});
-    refresh()},()=>{});
-  refresh()}catch(e){}})();
-async function setDone(s,v){await DB.collection("sessions").doc("s"+s.id).set({terminee:v,maj:Date.now()})}
+  if(!db)throw new Error("no db");
+  const owner=user?await user.isOwner():false;
+  Object.assign(SYNC,{kind:"claude",canWrite:owner,set:(s,v)=>db.collection("sessions").doc("s"+s.id).set({terminee:v,maj:Date.now()})});
+  db.collection("sessions").onSnapshot(snap=>applySnap(snap.docs.map(d=>[d.id,d.data()])),()=>{});
+  refresh()}
+(async()=>{
+  try{await timeout(initFirebase(),10000)}
+  catch(e){console.warn("Firebase indisponible :",e&&(e.code||e.message));try{await initClaude()}catch(e2){refresh()}}})();
 
 /* ---------- Navigation ---------- */
 function route(keep){const y=scrollY;if(location.hash==="#mj")mj();else{const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home()}window.scrollTo(0,keep?y:0)}
@@ -358,15 +379,29 @@ function mj(){
   view.innerHTML=`<a href="#">← INDEX</a><h2>▓ MJ // CLÔTURE DES SESSIONS</h2><div class="panel" id="clo"></div><h2>▓ MJ // APPLICATIONS NON UTILISÉES</h2><p><small>${RESERVE.length} APPLICATION(S) EN RÉSERVE — NON RATTACHÉES À UNE SESSION, LEUR CODE N’EST ACCEPTÉ NULLE PART.</small></p><div id="tab"></div>`;
   const clo=$("#clo");
   function cloture(){
-    const note=!DB?"<p class=\"warn\"><small>CLÔTURE PARTAGÉE INDISPONIBLE ICI : ELLE NE FONCTIONNE QUE SUR LA PAGE CLAUDE.AI, OUVERTE PAR SON PROPRIÉTAIRE. AILLEURS (GITHUB), AJOUTER terminee:true À LA SESSION DANS LE CODE.</small></p>"
-      :!OWNER?"<p class=\"warn\"><small>SEUL LE PROPRIÉTAIRE DE LA PAGE PEUT CLÔTURER UNE SESSION.</small></p>"
-      :"<p><small>CLÔTURER UNE SESSION DÉVERROUILLE TOUTES SES APPLICATIONS ET TOUS SES FICHIERS POUR TOUS CEUX QUI CONSULTENT LA PAGE.</small></p>";
-    clo.innerHTML=note+SESSIONS.map(s=>`<div class="mj-row"><span>SESSION ${String(s.id).padStart(2,"0")} — ${s.cache?"[CLASSIFIÉE]":esc(s.titre)}<br><small>${done(s)?"▓ TERMINÉE"+(s.terminee?" (FIXÉE DANS LE CODE)":""):"EN COURS"}</small></span>${DB&&OWNER&&!s.terminee?`<button data-s="${s.id}">${done(s)?"↺ ROUVRIR":"▓ TERMINER LA SESSION"}</button>`:""}</div>`).join("")+'<div class="msg" id="cm"></div>';
+    const W=t=>`<p class="warn"><small>${t}</small></p>`;
+    let head;
+    if(!SYNC.kind)head=W("STOCKAGE PARTAGÉ INDISPONIBLE (FIREBASE INJOIGNABLE OU RÈGLES NON PUBLIÉES). EN SECOURS : AJOUTER terminee:true À LA SESSION DANS LE CODE.");
+    else if(SYNC.kind==="claude"&&!SYNC.canWrite)head=W("SEUL LE PROPRIÉTAIRE DE LA PAGE PEUT CLÔTURER UNE SESSION.");
+    else if(SYNC.kind==="firebase"&&!SYNC.user)head=`<div>CONNEXION DU COMPTE MJ</div><div class="row"><input id="le" type="email" placeholder="E-MAIL" autocomplete="username" spellcheck="false" style="text-transform:none"><input id="lp" type="password" placeholder="MOT DE PASSE" autocomplete="current-password" style="text-transform:none"><button id="lb">CONNEXION</button></div><div class="msg" id="lm"></div>`;
+    else head=`<p><small>CLÔTURER UNE SESSION DÉVERROUILLE TOUTES SES APPLICATIONS ET TOUS SES FICHIERS POUR TOUS CEUX QUI CONSULTENT LA PAGE.</small></p>`
+      +(SYNC.kind==="firebase"?`<div class="row"><small style="flex:1">CONNECTÉ : ${esc(SYNC.user.email||"")}</small><button id="lo">DÉCONNEXION</button></div>`:"");
+    const can=SYNC.kind&&SYNC.canWrite;
+    clo.innerHTML=head+SESSIONS.map(s=>`<div class="mj-row"><span>SESSION ${String(s.id).padStart(2,"0")} — ${s.cache?"[CLASSIFIÉE]":esc(s.titre)}<br><small>${done(s)?"▓ TERMINÉE"+(s.terminee?" (FIXÉE DANS LE CODE)":""):"EN COURS"}</small></span>${can&&!s.terminee?`<button data-s="${s.id}">${done(s)?"↺ ROUVRIR":"▓ TERMINER LA SESSION"}</button>`:""}</div>`).join("")+'<div class="msg" id="cm"></div>';
+    const lb=$("#lb",clo);
+    if(lb){const go=async()=>{const e=$("#le").value.trim(),pw=$("#lp").value;if(!e||!pw)return;lb.disabled=true;$("#lm").textContent="CONNEXION…";
+        try{await SYNC.login(e,pw);document.activeElement?.blur();cloture()}
+        catch(err){lb.disabled=false;const c=err&&err.code||"";
+          $("#lm").textContent=/invalid-credential|wrong-password|user-not-found|invalid-email/.test(c)?"░ IDENTIFIANTS INCORRECTS"
+            :/unauthorized-domain/.test(c)?"░ DOMAINE NON AUTORISÉ — L’AJOUTER DANS FIREBASE (AUTHENTICATION → PARAMÈTRES → DOMAINES AUTORISÉS)"
+            :/too-many-requests/.test(c)?"░ TROP DE TENTATIVES — RÉESSAYER PLUS TARD":"░ ÉCHEC DE CONNEXION : "+c}};
+      lb.onclick=go;$("#lp").onkeydown=e=>{if(e.key==="Enter")go()}}
+    const lo=$("#lo",clo);if(lo)lo.onclick=async()=>{await SYNC.logout();cloture()};
     clo.querySelectorAll("[data-s]").forEach(b=>{let armed=false;b.onclick=async()=>{
       const s=SESSIONS.find(x=>x.id===+b.dataset.s),v=!done(s);
       if(!armed){armed=true;b.textContent=v?"CONFIRMER : TOUT DÉVERROUILLER ?":"CONFIRMER LA RÉOUVERTURE ?";return}
-      b.disabled=true;try{await setDone(s,v);DONE[s.id]=v||undefined;if(!v)delete DONE[s.id];cloture();$("#cm").textContent=v?"▓ SESSION TERMINÉE — VISIBLE PAR TOUS":"SESSION ROUVERTE"}
-      catch(e){b.disabled=false;$("#cm").textContent="░ ÉCHEC : "+(e&&e.code||"ERREUR")}}})}
+      b.disabled=true;try{await SYNC.set(s,v);if(v)DONE[s.id]=true;else delete DONE[s.id];cloture();$("#cm").textContent=v?"▓ SESSION TERMINÉE — VISIBLE PAR TOUS":"SESSION ROUVERTE"}
+      catch(e){b.disabled=false;const c=e&&e.code||"";$("#cm").textContent=/permission/.test(c)?"░ REFUSÉ : CE COMPTE N’EST PAS LE COMPTE MJ (VÉRIFIER L’UID DANS LES RÈGLES FIRESTORE)":"░ ÉCHEC : "+(c||"ERREUR")}}})}
   cloture();
   const tab=$("#tab");
   function list(){
