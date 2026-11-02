@@ -118,6 +118,7 @@ footer{margin:18px 0 4px;font-size:11px;opacity:.6;text-align:center;letter-spac
 <footer>PROGRESSION ENREGISTRÉE SUR CET APPAREIL</footer>
 </main>
 <div id="ov"></div>
+<script src="cartes.js"></script>
 <script>
 /* ============ CONFIGURATION MJ : sessions, codes, fichiers ============ */
 const SESSIONS=[
@@ -354,7 +355,9 @@ async function initClaude(){
   catch(e){console.warn("Firebase indisponible :",e&&(e.code||e.message));try{await initClaude()}catch(e2){refresh()}}})();
 
 /* ---------- Navigation ---------- */
-function route(keep){const y=scrollY;if(location.hash==="#mj")mj();else{const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home()}window.scrollTo(0,keep?y:0)}
+function route(keep){const y=scrollY;const cm=location.hash.match(/^#carte(?:-([\w-]+))?$/);
+  if(cm){if(keep&&$(".nc-box"))return;window.NC_CARTE?NC_CARTE.render(view,cm[1]):view.innerHTML="<p>CARTE INDISPONIBLE (cartes.js absent).</p>";if(!keep)window.scrollTo(0,0);return}
+  if(location.hash==="#mj")mj();else{const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home()}window.scrollTo(0,keep?y:0)}
 addEventListener("hashchange",()=>route());
 
 function home(){
@@ -364,7 +367,7 @@ function home(){
     const nf=nfound(s,f),tf=s.apps.reduce((n,a)=>n+a.files.length,0);
     if(s.cache)return `<a class="card classified" href="#session-${s.id}"><span class="stamp">CLASSIFIÉ</span><small class="doc-head">DOSSIER NC-2045-${String(s.id).padStart(2,"0")} // DIFFUSION RESTREINTE</small><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${bars(14,6,9)}</span><small>${bars(4,11,7)}</small><small>ACCÈS : HABILITATION NIVEAU 5 REQUISE</small></a>`;
     return `<a class="card" href="#session-${s.id}"><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${esc(s.titre)}</span><small>${esc(s.resume)}</small><small>APPS ${s.apps.filter(a=>done(s)||u[a.id]).length}/${s.apps.length} · FICHIERS ${nf}/${tf}</small>${done(s)?'<small class="fin">▓ SESSION TERMINÉE</small>':""}</a>`}).join("")}</div>
-  <div class="row"><button id="rz">EFFACER LA PROGRESSION</button><a href="#mj"><button>⚿ ACCÈS MJ</button></a></div>`;
+  <div class="row"><button id="rz">EFFACER LA PROGRESSION</button><a href="#carte"><button>🗺 CARTE</button></a><a href="#mj"><button>⚿ ACCÈS MJ</button></a></div>`;
   let armed=false;$("#rz").onclick=e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER L’EFFACEMENT ?";return}ST.set("unl",{});ST.set("files",{});home()}}
 
 /* ---------- Onglet MJ (code "MJ", non mémorisé : redemandé à chaque chargement) ---------- */
