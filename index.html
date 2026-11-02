@@ -108,6 +108,23 @@ tr.out td:nth-child(4){color:#ff3344}
 h2 .redact{background:var(--c);color:var(--c)}
 .mj-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--dim)}
 .card .fin{opacity:1;text-shadow:0 0 8px var(--c)}
+/* --- App : TRACK --- */
+.tk{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start}
+@media(max-width:900px){.tk{grid-template-columns:1fr}}
+.tk-map{height:min(80vh,880px);min-height:360px}
+.tk-side{max-height:min(80vh,880px);overflow:auto}
+.tk-tour{font-size:16px;letter-spacing:.12em;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.tk-chip{border:1px solid var(--k);color:var(--k);padding:1px 6px;font-size:12px;opacity:.7}.tk-chip.ok{background:var(--k);color:#000;opacity:1}
+.tk-role{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:12px;margin:6px 0}.tk-role button{padding:5px 8px;font-size:12px}
+.tk-box{border:1px solid var(--dim);padding:8px;margin:8px 0;display:flex;flex-direction:column;gap:6px}
+.tk-keys{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.tk-keys button{padding:8px 0;font-size:20px;line-height:1.1}.tk-keys small{font-size:9px}
+.tk-seq{display:flex;flex-wrap:wrap;gap:4px}.tk-seq button{padding:3px 7px;font-size:13px}
+.tk-car{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--dim);padding-top:5px}
+.tk-ctl{display:flex;gap:4px;align-items:center}.tk-ctl button{padding:3px 8px}.tk-ctl b{min-width:18px;text-align:center}
+.tk-chk{display:flex;gap:8px;align-items:center;font-size:12px}.tk-chk input{flex:none;min-width:0}
+.tk-go{flex:1;font-size:15px}
+.tk-log{font-size:12px;border-top:1px solid var(--dim);margin-top:8px;padding-top:6px;max-height:260px;overflow:auto}.tk-log div{padding:2px 0}
+.tk-blink{animation:fdb 1s infinite}
 footer{margin:18px 0 4px;font-size:11px;opacity:.6;text-align:center;letter-spacing:.1em}
 </style>
 </head>
@@ -260,7 +277,10 @@ L'accès au sous-sol enfin déverrouillé, l'escouade plonge dans l'abîme. Ils 
    {groupe:"Toit",cams:[{nom:"Vue globale",img:"Images/Session 2/CAM-02/toit.png"}]}
   ]}]},
 /* cache:true = titre, sous-titre et résumé masqués façon dossier confidentiel. Passer à false (et remplir titre/resume/histoire) pour révéler la session */
-{id:3,cache:true,titre:"",resume:"",histoire:"",apps:[]}
+{id:3,cache:true,titre:"",resume:"",histoire:"",apps:[
+ {id:"s3track",type:"track",nom:"TRACK // Poursuite urbaine",code:"TRACK-603",desc:"Traque en voiture sur le plan de Night City : deux véhicules de traque contre une voiture de police, au tour par tour.",files:[],
+  /* départs : coordonnées de la carte officielle (2000 × 1332) ; vmax = carrefours franchissables par tour */
+  voitures:{t1:{nom:"TRAQUEUR 1",col:"#00ff9c",dep:[960,470],vmax:4},t2:{nom:"TRAQUEUR 2",col:"#ffd400",dep:[1010,525],vmax:4},police:{nom:"POLICE",col:"#3d8bff",dep:[1190,650],vmax:4}}}]}
 ];
 /* ============ APPLICATIONS EN RÉSERVE (onglet MJ) ============
    Non rattachées à une session : leur code n'est accepté nulle part.
@@ -322,6 +342,13 @@ const FBU="https://www.gstatic.com/firebasejs/13.1.0/";
 const DONE={};
 /* SYNC.kind : "firebase" | "claude" | null (aucun stockage partagé) */
 const SYNC={kind:null,canWrite:false,user:null,set:null,login:null,logout:null};
+/* Documents de jeu partagés (application TRACK…) : SYNC.watch(col,id,cb) → désabonnement ; SYNC.put(col,id,data).
+   Par défaut : stockage local (cet appareil seulement), remplacé par Firebase ou claude.ai quand ils répondent. */
+{const L={},key=(c,i)=>"nr:doc:"+c+"/"+i,read=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+ addEventListener("storage",e=>{(L[e.key]||[]).forEach(f=>f(read(e.key)))});
+ Object.assign(SYNC,{watch:(c,i,cb)=>{const k=key(c,i);(L[k]||(L[k]=[])).push(cb);setTimeout(()=>cb(read(k)),0);return()=>{L[k]=L[k].filter(f=>f!==cb)}},
+   put:async(c,i,d)=>{const k=key(c,i);try{localStorage.setItem(k,JSON.stringify(d))}catch(e){}(L[k]||[]).forEach(f=>f(JSON.parse(JSON.stringify(d))))}})}
+let syncReady;SYNC.ready=new Promise(r=>syncReady=r);
 const done=s=>!!(s.terminee||DONE[s.id]);
 const got=(s,a,i,f)=>done(s)||!!f[fid(a,i)];
 const nfound=(s,f)=>s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>got(s,a,i,f)).length,0);
@@ -340,19 +367,25 @@ async function initFirebase(){
       e=>{if(first){first=false;ko(e)}})});
   Object.assign(SYNC,{kind:"firebase",
     set:(s,v)=>F.setDoc(F.doc(db,"sessions","s"+s.id),{terminee:v,maj:Date.now()}),
-    login:(e,pw)=>U.signInWithEmailAndPassword(auth,e,pw),logout:()=>U.signOut(auth)});
-  U.onAuthStateChanged(auth,u=>{SYNC.user=u;SYNC.canWrite=!!u;refresh()})}
+    login:(e,pw)=>U.signInWithEmailAndPassword(auth,e,pw),logout:()=>U.signOut(auth),
+    watch:(c,i,cb)=>F.onSnapshot(F.doc(db,c,i),d=>cb(d.exists()?d.data():null),e=>{console.warn("lecture",c,i,e.code);cb(null,e)}),
+    put:(c,i,d)=>F.setDoc(F.doc(db,c,i),d)});
+  /* le MJ se connecte par e-mail ; les joueurs reçoivent une connexion anonyme (pour écrire leurs ordres) */
+  U.onAuthStateChanged(auth,u=>{SYNC.user=u&&!u.isAnonymous?u:null;SYNC.canWrite=!!SYNC.user;SYNC.anon=!!(u&&u.isAnonymous);
+    if(!u)U.signInAnonymously(auth).catch(e=>console.warn("connexion anonyme indisponible :",e.code));refresh()})}
 async function initClaude(){
   if(!window.claude?.use)throw new Error("no claude");
   const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
   if(!db)throw new Error("no db");
   const owner=user?await user.isOwner():false;
-  Object.assign(SYNC,{kind:"claude",canWrite:owner,set:(s,v)=>db.collection("sessions").doc("s"+s.id).set({terminee:v,maj:Date.now()})});
+  Object.assign(SYNC,{kind:"claude",canWrite:owner,set:(s,v)=>db.collection("sessions").doc("s"+s.id).set({terminee:v,maj:Date.now()}),
+    watch:(c,i,cb)=>db.doc(c+"/"+i).onSnapshot(d=>cb(d.exists?d.data():null),e=>cb(null,e)),put:(c,i,d)=>db.doc(c+"/"+i).set(d)});
   db.collection("sessions").onSnapshot(snap=>applySnap(snap.docs.map(d=>[d.id,d.data()])),()=>{});
   refresh()}
 (async()=>{
   try{await timeout(initFirebase(),10000)}
-  catch(e){console.warn("Firebase indisponible :",e&&(e.code||e.message));try{await initClaude()}catch(e2){refresh()}}})();
+  catch(e){console.warn("Firebase indisponible :",e&&(e.code||e.message));try{await initClaude()}catch(e2){refresh()}}
+  syncReady()})();
 
 /* ---------- Navigation ---------- */
 function route(keep){const y=scrollY;const cm=location.hash.match(/^#carte(?:-([\w-]+))?$/);
@@ -560,6 +593,157 @@ RUN.feed=(root,app)=>{
       img.onload=()=>{img.style.visibility="visible";img.classList.add("glitch");tx.style.display="none";rec.style.display="block";ti.textContent="> CAMÉRA ACTIVE : "+name;if(c.f!==undefined&&app.files[c.f])reveal(app,[c.f])};
       img.onerror=()=>{ti.textContent="> LIAISON PERDUE : "+name;tx.textContent="SIGNAL PERDU — FLUX INDISPONIBLE"};
       img.src=c.img},1500)}};
+
+/* ============ APP : TRACK (poursuite au tour par tour sur le plan complet) ============
+   Documents partagés :  traque/<id>        état public (tour, positions des traqueurs, police si visible, journal)
+                         traque/<id>-t1|t2   ordres des traqueurs (cachés à l'écran du MJ jusqu'à la résolution)
+                         traquemj/<id>       police : position et ordres (lisibles par le MJ seulement)
+   Ordres : une liste de choix aux carrefours (⬆ tout droit, ⬅ gauche, ➡ droite, ↩ demi-tour), au plus vmax par tour.
+   Résolution (MJ) : tous les déplacements sont appliqués en même temps, interceptions détectées. */
+RUN.track=(root,app)=>{
+  const M=window.NC_CARTE;if(!M||!M.buildGraph){root.innerHTML="<p>CARTE INDISPONIBLE.</p>";return}
+  document.body.classList.add("wide");
+  const ID=app.id,V=app.voitures,CARS=["t1","t2","police"],ICON={S:"⬆",L:"⬅",R:"➡",U:"↩"},LIB={S:"TOUT DROIT",L:"GAUCHE",R:"DROITE",U:"DEMI-TOUR"};
+  const RK="nr:track-role:"+ID;let role=(()=>{try{return localStorage.getItem(RK)||""}catch(e){return""}})(),localMJ=false;
+  let pub=null,priv=null,ord={t1:null,t2:null},draft=[],placing=null,anim=null,animTour=0,unsubs=[],privSub=null,msg="",busy=false;
+  const isMJ=()=>SYNC.kind==="firebase"?!!SYNC.user:SYNC.kind==="claude"?!!SYNC.canWrite:(localMJ||mjOk);
+  const P=k=>{const n=M.buildGraph().N[k];return n?n.p:null},nm=k=>M.interName(k)||"carrefour";
+  root.innerHTML=`<div class="tk"><div class="tk-map"></div><div class="tk-side"><h2 style="margin:0 0 6px">${esc(app.nom)}</h2><div class="tk-body"><p>CONNEXION…</p></div></div></div>`;
+  const side=$(".tk-body",root);
+  /* ---- carte ---- */
+  const home0=()=>{const pts=["t1","t2","police"].map(c=>carOf(c)).filter(Boolean).map(c=>P(c.n)).filter(Boolean);
+    if(!pts.length)return null;const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs)-450,Math.min(...ys)-350,Math.max(...xs)+450,Math.max(...ys)+350]};
+  const map=M.mountMap($(".tk-map",root),{onTap,onScale:()=>draw()});
+  /* ---- état ---- */
+  function carOf(c){if(c==="police")return isMJ()&&priv?priv.police:pub&&pub.cars.police;return pub&&pub.cars[c]}
+  const vmaxOf=c=>(c==="police"&&isMJ()&&priv?priv.vmax:pub&&pub.vmax&&pub.vmax[c])||V[c].vmax;
+  const myCar=()=>role==="mj"?"police":role;
+  const ready=c=>c==="police"?!!pub&&pub.policeOk===pub.tour:!!ord[c]&&!!pub&&ord[c].tour===pub.tour;
+  function defaults(){const cars={};CARS.forEach(c=>{const n=M.nearestInter(M.C(V[c].dep));cars[c]={n:n.k,f:[...n.adj.keys()][0]}});
+    return{pub:{tour:1,cars:{t1:cars.t1,t2:cars.t2,police:cars.police},vmax:{t1:V.t1.vmax,t2:V.t2.vmax},policeOk:0,cacher:false,log:[{t:0,txt:"Nouvelle traque. Le MJ place les véhicules, puis chacun donne ses ordres."}],last:{tour:0,paths:{}},maj:Date.now()},
+      priv:{police:cars.police,vmax:V.police.vmax,ordres:[],tour:0}}}
+  const fail=e=>{busy=false;const c=e&&e.code||e&&e.message||"erreur";msg=/permission|denied|not_found|invalid_argument/i.test(c)?
+      "░ ÉCRITURE REFUSÉE ("+c+"). "+(SYNC.kind==="firebase"?"Vérifier la connexion anonyme et les règles Firestore (traque / traquemj).":"Droits insuffisants sur cette page."):"░ ÉCHEC : "+c;render()};
+  const putPub=d=>SYNC.put("traque",ID,{...d,maj:Date.now()}),putPriv=d=>SYNC.put("traquemj",ID,d);
+  /* ---- abonnements ---- */
+  function subPriv(){if(privSub||!isMJ())return;privSub=SYNC.watch("traquemj",ID,d=>{if(!alive())return;priv=d;draw();render()});unsubs.push(()=>privSub&&privSub())}
+  const alive=()=>{if(root.isConnected)return true;unsubs.forEach(f=>{try{f()}catch(e){}});unsubs=[];return false};
+  SYNC.ready.then(()=>{if(!alive())return;
+    unsubs.push(SYNC.watch("traque",ID,d=>{if(!alive())return;const first=!pub;pub=d;
+      if(!d&&isMJ()){const D=defaults();putPriv(D.priv).then(()=>putPub(D.pub)).catch(fail);return}
+      if(d&&d.last&&d.last.tour===d.tour&&animTour&&animTour<d.tour)startAnim(d.last.paths);
+      if(d)animTour=d.tour;if(d&&d.tour!==draftTour){draft=[];draftTour=d.tour}
+      if(first&&d){const h=home0();if(h){map.setHome(h);map.z.fit();map.lod()}}
+      draw();render()}));
+    ["t1","t2"].forEach(c=>unsubs.push(SYNC.watch("traque",ID+"-"+c,d=>{if(!alive())return;ord[c]=d;if(d&&pub&&d.tour===pub.tour&&role===c&&!draft.length)draft=(d.ordres||[]).slice();render()})));
+    if(role==="mj")subPriv();render()});
+  let draftTour=0;
+  /* ---- tracé sur la carte ---- */
+  function poly(keys){return keys.map(P).filter(Boolean)}
+  function draw(){
+    if(!map.layer.isConnected)return;const k=map.z.px?map.z.px():0.3,u=1/Math.max(k,0.05),L=[];
+    const show=c=>c!=="police"||isMJ()||(pub&&!pub.cacher&&pub.cars.police);
+    if(pub&&pub.last&&pub.last.paths&&!anim)CARS.forEach(c=>{const pts=show(c)&&pub.last.paths[c]?poly(pub.last.paths[c]):[];
+      if(pts.length>1)L.push(`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="${V[c].col}" stroke-opacity=".45" stroke-width="${7*u}" stroke-linejoin="round" stroke-linecap="round"/>`)});
+    const mc=myCar(),me=mc&&carOf(mc);
+    if(me&&draft.length){const r=M.course(me.n,me.f,draft),pts=poly(r.path);
+      if(pts.length>1)L.push(`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="#fff" stroke-width="${4*u}" stroke-dasharray="${10*u} ${7*u}" stroke-linejoin="round"/>`);
+      r.pos.slice(1).forEach((q,i)=>{const p=P(q);if(p)L.push(`<circle cx="${p[0]}" cy="${p[1]}" r="${7*u}" fill="#000" stroke="#fff" stroke-width="${2*u}"/><text x="${p[0]}" y="${p[1]}" dy="${3.5*u}" font-size="${10*u}" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="bold">${i+1}</text>`)})}
+    CARS.forEach(c=>{if(!show(c))return;const car=carOf(c);if(!car)return;let p=P(car.n),f=P(car.f);
+      if(anim&&anim.pos[c]){p=anim.pos[c].p;f=anim.pos[c].f}if(!p)return;
+      let dx=1,dy=0;if(f){dx=p[0]-f[0];dy=p[1]-f[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l}
+      const r=13*u,a=[p[0]+dx*r*2.1,p[1]+dy*r*2.1],b=[p[0]+dx*r*1.1-dy*r*.8,p[1]+dy*r*1.1+dx*r*.8],d=[p[0]+dx*r*1.1+dy*r*.8,p[1]+dy*r*1.1-dx*r*.8];
+      const lab=c==="police"?"P":c.toUpperCase();
+      L.push(`<g${placing===c?' class="tk-blink"':""}><polygon points="${[a,b,d].map(q=>q.join(",")).join(" ")}" fill="${V[c].col}" stroke="#000" stroke-width="${2*u}"/><circle cx="${p[0]}" cy="${p[1]}" r="${r}" fill="${V[c].col}" stroke="#000" stroke-width="${3*u}"/>${c==="police"?`<circle cx="${p[0]}" cy="${p[1]}" r="${r*1.45}" fill="none" stroke="#ff2a3d" stroke-width="${3*u}" stroke-dasharray="${5*u} ${4*u}"/>`:""}<text x="${p[0]}" y="${p[1]}" dy="${4.5*u}" font-size="${13*u}" text-anchor="middle" font-family="monospace" font-weight="bold" fill="#000">${lab}</text></g>`)});
+    map.layer.innerHTML=L.join("")}
+  function startAnim(paths){const T0=performance.now(),D=2200,ln={};
+    CARS.forEach(c=>{const pts=paths&&paths[c]?poly(paths[c]):[];if(pts.length<2)return;const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));ln[c]={pts,cum}});
+    anim={pos:{}};const tick=now=>{if(!alive())return;const t=Math.min(1,(now-T0)/D),e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+      Object.entries(ln).forEach(([c,{pts,cum}])=>{const s=e*cum[cum.length-1];let i=1;while(i<cum.length-1&&cum[i]<s)i++;const tt=(s-cum[i-1])/((cum[i]-cum[i-1])||1);
+        anim.pos[c]={p:[pts[i-1][0]+(pts[i][0]-pts[i-1][0])*tt,pts[i-1][1]+(pts[i][1]-pts[i-1][1])*tt],f:pts[i-1]}});
+      draw();if(t<1)requestAnimationFrame(tick);else{anim=null;draw()}};requestAnimationFrame(tick)}
+  /* ---- toucher la carte : placement (MJ) ou nom du carrefour ---- */
+  function onTap(p,scr){
+    const n=M.nearestInter(p,60/Math.max(map.z.px(),0.05));
+    if(placing&&isMJ()){if(!n){msg="░ TOUCHER PLUS PRÈS D'UN CARREFOUR";render();return}
+      const c=placing;placing=null;setCar(c,{n:n.k,f:[...n.adj.keys()][0]});return}
+    if(n)map.showTip(`<b>▓ CARREFOUR</b>${esc(nm(n.k))}`,scr)}
+  async function setCar(c,car){busy=true;try{
+      if(c==="police"){await putPriv({...priv,police:car});if(!pub.cacher)await putPub({...pub,cars:{...pub.cars,police:car}})}
+      else await putPub({...pub,cars:{...pub.cars,[c]:car}});msg="▓ POSITION ENREGISTRÉE : "+nm(car.n)}catch(e){fail(e)}busy=false;render()}
+  /* ---- envoi des ordres ---- */
+  async function sendOrders(){const c=myCar();if(!c||!pub)return;busy=true;render();
+    try{if(c==="police"){await putPriv({...priv,ordres:draft.slice(),tour:pub.tour});await putPub({...pub,policeOk:pub.tour})}
+      else await SYNC.put("traque",ID+"-"+c,{ordres:draft.slice(),tour:pub.tour,maj:Date.now()});
+      msg="▓ ORDRES ENVOYÉS — MODIFIABLES JUSQU'À LA RÉSOLUTION"}catch(e){fail(e)}busy=false;render()}
+  /* ---- résolution du tour (MJ) ---- */
+  async function resolve(){if(!pub||!priv)return;busy=true;render();
+    const O={t1:ready("t1")?ord.t1.ordres:[],t2:ready("t2")?ord.t2.ordres:[],police:priv.tour===pub.tour?priv.ordres:[]};
+    const st={t1:pub.cars.t1,t2:pub.cars.t2,police:priv.police},R={};CARS.forEach(c=>R[c]=M.course(st[c].n,st[c].f,(O[c]||[]).slice(0,vmaxOf(c))));
+    const at=(r,i)=>r.pos[Math.min(i,r.pos.length-1)],log=[],T=pub.tour,hide=!!pub.cacher;
+    ["t1","t2"].forEach(c=>{const r=R[c],o=O[c]||[];
+      log.push({t:T,txt:`${V[c].nom} : ${o.length?o.map(x=>ICON[x]).join(" ")+" → "+nm(r.n):"aucun ordre, reste sur place"}${r.notes.length?" ("+r.notes.join(", ")+")":""}`})});
+    if(!hide)log.push({t:T,txt:`${V.police.nom} → ${nm(R.police.n)}`});else log.push({t:T,txt:`${V.police.nom} : position inconnue`});
+    ["t1","t2"].forEach(c=>{const a=R[c],b=R.police,m=Math.max(a.pos.length,b.pos.length);
+      for(let i=0;i<m;i++){if(at(a,i)===at(b,i)){log.push({t:T,txt:`⚠ CONTACT : ${V[c].nom} intercepte la police — ${nm(at(a,i))}`});break}
+        if(i&&at(a,i)===at(b,i-1)&&at(a,i-1)===at(b,i)){log.push({t:T,txt:`⚠ FACE-À-FACE : ${V[c].nom} croise la police — ${nm(at(a,i))}`});break}}});
+    const cars={t1:{n:R.t1.n,f:R.t1.f},t2:{n:R.t2.n,f:R.t2.f},police:hide?null:{n:R.police.n,f:R.police.f}};
+    const paths={t1:R.t1.path,t2:R.t2.path};if(!hide)paths.police=R.police.path;
+    try{await putPriv({...priv,police:{n:R.police.n,f:R.police.f},ordres:[],tour:T});
+      await putPub({...pub,tour:T+1,cars,policeOk:0,last:{tour:T+1,paths},log:[...log.reverse(),...(pub.log||[])].slice(0,80)});msg="▓ TOUR "+T+" RÉSOLU"}catch(e){fail(e)}
+    busy=false;render()}
+  /* ---- panneau ---- */
+  function render(){
+    if(!side.isConnected)return;
+    if(!pub){side.innerHTML=SYNC.kind?`<p>${isMJ()?"CRÉATION DE LA TRAQUE…":"EN ATTENTE DU MJ : la traque démarre quand le MJ ouvre l'application."}</p>${roleHTML()}`:`<p class="warn"><small>MODE LOCAL : stockage partagé indisponible, la traque n'existe que sur cet appareil.</small></p>${isMJ()?"":"<p>EN ATTENTE DU MJ.</p>"}${roleHTML()}`;bindRole();
+      if(!SYNC.kind&&isMJ()&&!busy){busy=true;const D=defaults();putPriv(D.priv).then(()=>putPub(D.pub)).finally(()=>busy=false)}return}
+    const mj=isMJ()&&role==="mj",c=myCar(),car=c&&carOf(c),vm=c?vmaxOf(c):0;
+    const chip=k=>`<span class="tk-chip${ready(k)?" ok":""}" style="--k:${V[k].col}">${k==="police"?"P":k.toUpperCase()} ${ready(k)?"✓":"…"}</span>`;
+    let h=`<div class="tk-tour">TOUR ${pub.tour} ${CARS.map(chip).join("")}</div>`;
+    if(!SYNC.kind)h+=`<p class="warn"><small>MODE LOCAL : la traque n'est pas partagée entre appareils.</small></p>`;
+    h+=roleHTML();
+    if(c&&car){
+      h+=`<div class="tk-box"><div><b style="color:${V[c].col}">▓ ORDRES — ${esc(V[c].nom)}</b>${c==="police"?" <small>(secrets)</small>":""}</div>
+        <small>POSITION : ${esc(nm(car.n))}</small>
+        <div class="tk-keys">${["L","S","R","U"].map(x=>`<button data-k="${x}" ${draft.length>=vm?"disabled":""}>${ICON[x]}<br><small>${LIB[x]}</small></button>`).join("")}</div>
+        <div class="tk-seq">${draft.map((x,i)=>`<button data-rm="${i}" title="Retirer">${i+1}. ${ICON[x]} ✕</button>`).join("")||"<small>AUCUN ORDRE = LE VÉHICULE RESTE SUR PLACE</small>"}</div>
+        <small>${draft.length}/${vm} CARREFOURS${draft.length?" · ARRIVÉE PRÉVUE : "+esc(nm(M.course(car.n,car.f,draft).n)):""}</small>
+        <div class="row"><button data-a="clear">EFFACER</button><button data-a="send" ${busy?"disabled":""}>✔ VALIDER LES ORDRES</button></div>
+        ${ready(c)?`<small>▓ ORDRES DU TOUR ${pub.tour} ENREGISTRÉS</small>`:""}</div>`}
+    else if(c==="police"&&!priv)h+=`<p><small>CHARGEMENT DES DONNÉES MJ…</small></p>`;
+    else if(role!=="mj")h+=`<p><small>Choisissez votre véhicule ci-dessus.</small></p>`;
+    if(mj&&priv){
+      h+=`<div class="tk-box"><b>▓ CONTRÔLE MJ</b><small>Ordres des traqueurs : masqués jusqu'à la résolution.</small>
+        ${CARS.map(k=>{const cr=carOf(k);const d=k!=="police"&&cr&&priv.police?M.hops(cr.n,priv.police.n):null;return `<div class="tk-car"><span style="color:${V[k].col}">■ ${esc(V[k].nom)}</span>
+          <small>${cr?esc(nm(cr.n)):"—"}${d!==null&&d!==Infinity?` · ${d} carrefour(s) de la police`:""}</small>
+          <span class="tk-ctl"><button data-v="${k}" data-d="-1">−</button><b>${vmaxOf(k)}</b><button data-v="${k}" data-d="1">+</button>
+          <button data-place="${k}" class="${placing===k?"on":""}">📍</button><button data-rot="${k}" title="Changer l'orientation">↻</button></span></div>`}).join("")}
+        <small>− / + : carrefours max par tour · 📍 puis toucher la carte · ↻ orientation</small>
+        <label class="tk-chk"><input type="checkbox" data-a="hide" ${pub.cacher?"checked":""}> Cacher la police aux joueurs</label>
+        <div class="row"><button data-a="resolve" class="tk-go" ${busy?"disabled":""}>▶ RÉSOLUTION DU TOUR ${pub.tour}</button></div>
+        <div class="row"><button data-a="reset">↺ NOUVELLE TRAQUE</button></div></div>`}
+    h+=`<div class="msg">${esc(msg)}</div><div class="tk-log"><b>▓ JOURNAL</b>${(pub.log||[]).map(l=>`<div><small>T${l.t}</small> ${esc(l.txt)}</div>`).join("")}</div>`;
+    side.innerHTML=h;bindRole();
+    side.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{if(draft.length<vm){draft.push(b.dataset.k);draw();render()}});
+    side.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{draft.splice(+b.dataset.rm,1);draw();render()});
+    const A=a=>side.querySelector(`[data-a="${a}"]`);
+    A("clear")&&(A("clear").onclick=()=>{draft=[];draw();render()});A("send")&&(A("send").onclick=sendOrders);
+    if(mj&&priv){
+      side.querySelectorAll("[data-v]").forEach(b=>b.onclick=async()=>{const k=b.dataset.v,v=Math.max(0,Math.min(8,vmaxOf(k)+ +b.dataset.d));
+        try{if(k==="police")await putPriv({...priv,vmax:v});else await putPub({...pub,vmax:{...pub.vmax,[k]:v}})}catch(e){fail(e)}});
+      side.querySelectorAll("[data-place]").forEach(b=>b.onclick=()=>{placing=placing===b.dataset.place?null:b.dataset.place;msg=placing?"TOUCHEZ LA CARTE À L'ENDROIT VOULU":"";draw();render()});
+      side.querySelectorAll("[data-rot]").forEach(b=>b.onclick=()=>{const k=b.dataset.rot,cr=carOf(k);if(!cr)return;const ks=[...M.buildGraph().N[cr.n].adj.keys()];setCar(k,{n:cr.n,f:ks[(ks.indexOf(cr.f)+1)%ks.length]})});
+      A("hide").onchange=async e=>{const v=e.target.checked;try{await putPub({...pub,cacher:v,cars:{...pub.cars,police:v?null:priv.police}})}catch(er){fail(er)}};
+      A("resolve").onclick=resolve;
+      let armed=false;A("reset").onclick=async e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER : TOUT REMETTRE À ZÉRO ?";return}
+        const D=defaults();try{await putPriv(D.priv);await putPub(D.pub);await SYNC.put("traque",ID+"-t1",{ordres:[],tour:0});await SYNC.put("traque",ID+"-t2",{ordres:[],tour:0})}catch(er){fail(er)}}}}
+  function roleHTML(){return `<div class="tk-role">JE JOUE : ${["t1","t2","mj"].map(r=>`<button data-role="${r}" class="${role===r?"on":""}">${r==="mj"?"MJ (POLICE)":esc(V[r].nom)}</button>`).join("")}</div>
+    ${role==="mj"&&!isMJ()?(SYNC.kind?`<p class="warn"><small>${SYNC.kind==="firebase"?"CONNECTEZ-VOUS COMME MJ DANS L'ONGLET ⚿ ACCÈS MJ DE L'ACCUEIL.":"SEUL LE PROPRIÉTAIRE DE LA PAGE PEUT ÊTRE MJ."}</small></p>`
+      :`<div class="row"><input id="tk-mj" type="password" placeholder="CODE MJ"><button id="tk-mjok">OK</button></div>`):""}`}
+  function bindRole(){side.querySelectorAll("[data-role]").forEach(b=>b.onclick=()=>{role=b.dataset.role;try{localStorage.setItem(RK,role)}catch(e){}draft=[];placing=null;msg="";
+      if(role!=="mj"&&ord[role]&&pub&&ord[role].tour===pub.tour)draft=(ord[role].ordres||[]).slice();if(role==="mj")subPriv();draw();render()});
+    const ok=$("#tk-mjok",side);if(ok){const go=()=>{if($("#tk-mj",side).value.trim().toUpperCase()==="MJ"){localMJ=true;subPriv();render()}};ok.onclick=go;$("#tk-mj",side).onkeydown=e=>{if(e.key==="Enter")go()}}}
+};
 
 /* ============ APP : ARCHITECTURE NET (strates + nœuds) ============ */
 RUN.net=(root,app,ctx)=>{

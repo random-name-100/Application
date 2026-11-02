@@ -272,6 +272,85 @@ function buildCity(){
   return CACHE.v=renderSVG(V);
 }
 
+/* ===================== GRAPHE ROUTIER (poursuites) =====================
+   Nœuds : extrémités des tronçons (clé "x:y" arrondie, identique sur tous les appareils).
+   Les rues en T (qui s'arrêtent sur une autre rue sans sommet commun) sont raccordées.
+   Carrefour = nœud de degré ≠ 2. Les autoroutes ne font pas partie du graphe.          */
+function buildGraph(){
+  if(CACHE.g)return CACHE.g;
+  const V=buildCity(),K=p=>Math.round(p[0])+":"+Math.round(p[1]);
+  const E=V.edges.filter(e=>e.cls!=="wall").map(e=>({a:e.a,b:e.b,name:e.name,cls:e.cls}));
+  const GS=40,grid=new Map(),cellsOf=e=>{const r=[];const x0=Math.floor(Math.min(e.a[0],e.b[0])/GS)-1,x1=Math.floor(Math.max(e.a[0],e.b[0])/GS)+1,y0=Math.floor(Math.min(e.a[1],e.b[1])/GS)-1,y1=Math.floor(Math.max(e.a[1],e.b[1])/GS)+1;
+    for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)r.push(x+":"+y);return r};
+  const addG=i=>cellsOf(E[i]).forEach(c=>{(grid.get(c)||grid.set(c,[]).get(c)).push(i)});
+  E.forEach((e,i)=>addG(i));
+  const deg={};const inc=k=>deg[k]=(deg[k]||0)+1;E.forEach(e=>{inc(K(e.a));inc(K(e.b))});
+  const ends=[];E.forEach(e=>[e.a,e.b].forEach(p=>{if(deg[K(p)]===1)ends.push({p,name:e.name,cls:e.cls})}));
+  ends.forEach(({p,name,cls})=>{const kp=K(p);if(deg[kp]!==1)return;
+    let best=null,bd=6;(grid.get(Math.floor(p[0]/GS)+":"+Math.floor(p[1]/GS))||[]).forEach(i=>{const e=E[i];if(e.dead||K(e.a)===kp||K(e.b)===kp)return;const d=segDist(p,e.a,e.b);if(d<bd){bd=d;best=i}});
+    if(best===null)return;const e=E[best],dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],L=dx*dx+dy*dy;let t=((p[0]-e.a[0])*dx+(p[1]-e.a[1])*dy)/L;t=Math.max(0,Math.min(1,t));
+    let q=[e.a[0]+t*dx,e.a[1]+t*dy];
+    if(dist(q,e.a)<3)q=e.a;else if(dist(q,e.b)<3)q=e.b;
+    else{e.dead=true;E.push({a:e.a,b:q,name:e.name,cls:e.cls},{a:q,b:e.b,name:e.name,cls:e.cls});addG(E.length-2);addG(E.length-1);inc(K(q))}
+    if(K(q)!==kp){E.push({a:p,b:q,name,cls});addG(E.length-1);inc(kp);inc(K(q))}});
+  const N={};const node=p=>{const k=K(p);return N[k]||(N[k]={k,p:[Math.round(p[0]),Math.round(p[1])],adj:new Map()})};
+  E.forEach(e=>{if(e.dead)return;const a=node(e.a),b=node(e.b);if(a===b)return;const L=dist(e.a,e.b),o={name:e.name,len:L,cls:e.cls};
+    if(!a.adj.has(b.k))a.adj.set(b.k,o);if(!b.adj.has(a.k))b.adj.set(a.k,o)});
+  const inter=Object.values(N).filter(n=>n.adj.size!==2&&n.adj.size>0);
+  return CACHE.g={N,inter};
+}
+/* carrefour le plus proche d'un point (repère du plan) */
+function nearestInter(p,max=1e9){const g=buildGraph();let best=null,bd=max;g.inter.forEach(n=>{const d=dist(n.p,p);if(d<bd){bd=d;best=n}});return best}
+/* nom des rues d'un carrefour */
+function interName(k){const n=buildGraph().N[k];if(!n)return"";return[...new Set([...n.adj.values()].map(o=>o.name).filter(Boolean))].slice(0,3).join(" × ")}
+/* un pas : depuis le carrefour n (arrivé depuis le nœud voisin f), choix c = "S" tout droit, "L" gauche, "R" droite, "U" demi-tour */
+function step(n,f,c){
+  const g=buildGraph(),A=g.N[n];if(!A)return{n,f,path:[n],bloque:true};
+  const P=A.p,F=g.N[f]?g.N[f].p:null,hin=F?Math.atan2(P[1]-F[1],P[0]-F[0]):0;
+  const outs=[...A.adj.keys()].filter(k=>k!==f||!F).map(k=>{const q=g.N[k].p;let a=Math.atan2(q[1]-P[1],q[0]-P[0])-hin;while(a>Math.PI)a-=2*Math.PI;while(a<=-Math.PI)a+=2*Math.PI;return{k,a}});
+  let to=null,ok=true;
+  if(c==="U"){if(F&&A.adj.has(f))to=f;else ok=false}
+  else{const S=outs.filter(o=>Math.abs(o.a)<0.8).sort((x,y)=>Math.abs(x.a)-Math.abs(y.a))[0],
+         L=outs.filter(o=>o.a<-0.4).sort((x,y)=>Math.abs(x.a+Math.PI/2)-Math.abs(y.a+Math.PI/2))[0],
+         R=outs.filter(o=>o.a>0.4).sort((x,y)=>Math.abs(x.a-Math.PI/2)-Math.abs(y.a-Math.PI/2))[0];
+    const w={S,L,R}[c];if(w)to=w.k;else{ok=false;const m=outs.slice().sort((x,y)=>Math.abs(x.a)-Math.abs(y.a))[0];if(m)to=m.k}}
+  if(!to)return{n,f,path:[n],bloque:true,ok:false};
+  const rue=A.adj.get(to).name;let prev=n,cur=to;const path=[n,cur];let guard=0;
+  while(g.N[cur].adj.size===2&&guard++<800){const nx=[...g.N[cur].adj.keys()].find(k=>k!==prev);prev=cur;cur=nx;path.push(cur)}
+  return{n:cur,f:prev,path,ok,rue};
+}
+/* déplacement d'un tour : liste de choix → positions successives */
+function course(n,f,ordres){const pos=[n],path=[n],rues=[],notes=[];let bloque=false;
+  for(const c of ordres){const r=step(n,f,c);if(r.bloque){bloque=true;notes.push("bloqué");break}
+    if(!r.ok)notes.push("choix impossible → "+(c==="U"?"arrêt":"tout droit"));
+    n=r.n;f=r.f;pos.push(n);path.push(...r.path.slice(1));if(r.rue)rues.push(r.rue)}
+  return{n,f,pos,path,rues,notes,bloque}}
+/* distance en carrefours (BFS) */
+function hops(a,b){if(a===b)return 0;const g=buildGraph(),seen=new Set([a]);let fr=[a],d=0;
+  while(fr.length&&d<60){d++;const nx=[];for(const k of fr){for(const j of g.N[k].adj.keys()){let prev=k,cur=j,gd=0;while(g.N[cur].adj.size===2&&gd++<800){const z=[...g.N[cur].adj.keys()].find(x=>x!==prev);prev=cur;cur=z}
+    if(cur===b)return d;if(!seen.has(cur)){seen.add(cur);nx.push(cur)}}}fr=nx}return Infinity}
+
+/* carte complète montée dans un conteneur (applications) : renvoie la visionneuse */
+function mountMap(box,opt={}){
+  css();const data=buildCity(),w=data.W,h=data.H;
+  box.classList.add("nc-box");
+  box.innerHTML=`<div class="nc-inner">${data.svg}</div><div class="nc-tools"><button data-z="in" title="Zoomer">+</button><button data-z="out" title="Dézoomer">−</button><button data-z="fit" title="Recentrer">⤢</button><button data-z="fs" title="Plein écran">⛶</button></div><div class="nc-tip"></div>`;
+  const inner=box.querySelector(".nc-inner"),tip=box.querySelector(".nc-tip"),svg=box.querySelector("svg");
+  inner.style.width=w+"px";inner.style.height=h+"px";
+  let lod=()=>{};
+  const z=zoomable(box,inner,w,h,()=>lod(),(t,p,scr)=>opt.onTap&&opt.onTap(p,scr),opt.home);
+  lod=()=>{const k=z.px();box.classList.toggle("z0",k<0.5);box.classList.toggle("z1",k>=0.5&&k<0.85);opt.onScale&&opt.onScale(k)};
+  box.querySelector(".nc-tools").onclick=e=>{const a=e.target.closest("button")?.dataset.z;if(!a)return;tip.style.display="none";
+    if(a==="in")z.zin();if(a==="out")z.zout();if(a==="fit")z.fit();
+    if(a==="fs"){if(document.fullscreenElement)document.exitFullscreen();else box.requestFullscreen?.().catch(()=>{})}};
+  box.addEventListener("pointerdown",e=>{if(!e.target.closest(".nc-tools"))tip.style.display="none"});
+  requestAnimationFrame(()=>{z.fit();lod()});
+  const showTip=(html,scr)=>{tip.innerHTML=html;tip.style.display="block";const r=box.getBoundingClientRect();
+    tip.style.left=Math.min(Math.max(8,scr[0]+14),r.width-290)+"px";tip.style.top=Math.min(Math.max(8,scr[1]+14),r.height-90)+"px"};
+  const ns="http://www.w3.org/2000/svg",layer=document.createElementNS(ns,"g");svg.append(layer);
+  return{data,svg,layer,z,box,showTip,lod:()=>lod(),setHome:r=>{z.home=r}};
+}
+
 /* ------------------------------ rendu SVG ------------------------------ */
 function renderSVG(G){
   const {W,H,cell:CELL}=G,area=G.area,id=G.id;
@@ -351,7 +430,7 @@ function zoomable(box,inner,w,h,onScale,onTap,home){
   let s=1,tx=0,ty=0,fitS=1;const pts=new Map();let moved=0,downT=null,last=null;
   const rect=()=>box.getBoundingClientRect();
   const apply=()=>{inner.style.transform=`translate(${tx}px,${ty}px) scale(${s})`;onScale&&onScale(s)};
-  const fit=()=>{const r=rect();fitS=Math.min(r.width/w,r.height/h);if(home){const [x0,y0,x1,y1]=home;s=Math.min(r.width/(x1-x0),r.height/(y1-y0));tx=r.width/2-(x0+x1)/2*s;ty=r.height/2-(y0+y1)/2*s}else{s=fitS;tx=(r.width-w*s)/2;ty=(r.height-h*s)/2}apply()};
+  const api={};const fit=()=>{const r=rect();fitS=Math.min(r.width/w,r.height/h);home=api.home||home;if(home){const [x0,y0,x1,y1]=home;s=Math.min(r.width/(x1-x0),r.height/(y1-y0));tx=r.width/2-(x0+x1)/2*s;ty=r.height/2-(y0+y1)/2*s}else{s=fitS;tx=(r.width-w*s)/2;ty=(r.height-h*s)/2}apply()};
   const zoomAt=(f,cx,cy)=>{const ns=Math.max(fitS*0.8,Math.min(fitS*40,s*f));f=ns/s;tx=cx-(cx-tx)*f;ty=cy-(cy-ty)*f;s=ns;apply()};
   box.addEventListener("wheel",e=>{e.preventDefault();const r=rect();zoomAt(Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top)},{passive:false});
   box.addEventListener("pointerdown",e=>{if(e.target.closest(".nc-tools"))return;box.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);if(pts.size===1){moved=0;downT=e.target}last=null});
@@ -365,8 +444,8 @@ function zoomable(box,inner,w,h,onScale,onTap,home){
   box.addEventListener("dblclick",e=>{const r=rect();zoomAt(2,e.clientX-r.left,e.clientY-r.top)});
   addEventListener("resize",()=>{if(box.isConnected)fit()});
   const c=()=>{const r=rect();return[r.width/2,r.height/2]};
-  return{fit,zin:()=>zoomAt(1.5,...c()),zout:()=>zoomAt(1/1.5,...c()),scale:()=>s/fitS,px:()=>s,
-    centerOn:(p,k)=>{const r=rect();s=Math.max(s,k);tx=r.width/2-p[0]*s;ty=r.height/2-p[1]*s;apply()}};
+  return Object.assign(api,{fit,zin:()=>zoomAt(1.5,...c()),zout:()=>zoomAt(1/1.5,...c()),scale:()=>s/fitS,px:()=>s,
+    centerOn:(p,k)=>{const r=rect();s=Math.max(s,k);tx=r.width/2-p[0]*s;ty=r.height/2-p[1]*s;apply()}});
 }
 
 /* ---------------------------- styles ---------------------------- */
@@ -503,5 +582,5 @@ function render(view,id){
 }
 const $=(s,e=document)=>e.querySelector(s);
 
-window.NC_CARTE={render,QUARTIERS,buildCity};
+window.NC_CARTE={render,QUARTIERS,buildCity,buildGraph,nearestInter,interName,step,course,hops,mountMap,C};
 })();
