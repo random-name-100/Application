@@ -65,6 +65,32 @@ details{margin-bottom:8px}summary{font-weight:bold;padding:6px 8px;background:va
 @keyframes fdb{50%{opacity:0}}
 .fd-screen img.glitch{animation:fdg 4s infinite}
 @keyframes fdg{0%,92%,100%{filter:none;transform:none}93%{filter:invert(10%) sepia(50%) hue-rotate(90deg) contrast(150%);transform:skew(2deg) translate(2px,-1px)}95%{filter:none;transform:none}98%{filter:contrast(150%) grayscale(50%);transform:translate(-3px,2px)}}
+/* --- Vue partagée (deux applications côte à côte) --- */
+body.wide main{max-width:1500px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+/* --- App : architecture NET --- */
+.nt-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.nt-head h2{margin:0}
+.nt-strate{border:1px solid var(--c);margin:12px 0;box-shadow:0 0 12px var(--dim);animation:ntin .4s}
+@keyframes ntin{from{opacity:0}}
+@media(prefers-reduced-motion:reduce){.nt-strate{animation:none}}
+.nt-strate h3{margin:0;padding:8px 12px;background:var(--hi);border-bottom:1px solid var(--c)}
+.nt-nodes{display:grid;gap:8px;padding:10px}
+.nt-node{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;padding:12px;border-left:3px solid var(--dim)}
+.nt-node.done{border-left:3px solid var(--c)}
+.nt-node small{display:block;opacity:.7;margin-top:3px}
+.nt-tag{white-space:nowrap;font-size:.85em}.nt-tag.off{color:#ff3344}
+.nt-node:hover .nt-tag{color:var(--bg)}
+.nt-locked{padding:14px;border:1px dashed var(--dim);text-align:center;opacity:.7;margin-top:12px}
+.nt-img{max-width:100%;display:block;margin:10px 0;border:1px solid var(--c)}
+.warn{color:#ff3344}
+.hl{background:#ffb000;color:#000;font-weight:bold;padding:2px 6px;box-shadow:0 0 12px #ffb00099}
+#ov .panel.wide{max-width:1000px}
+.tw{overflow-x:auto;margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:.85em}
+th,td{border:1px solid var(--dim);padding:5px 7px;text-align:left;vertical-align:top}th{background:var(--hi)}
+td:nth-child(1),td:nth-child(4){white-space:nowrap}td:nth-child(4){text-align:right}
+tr.out td:nth-child(4){color:#ff3344}
 footer{margin:18px 0 4px;font-size:11px;opacity:.6;text-align:center;letter-spacing:.1em}
 </style>
 </head>
@@ -87,6 +113,118 @@ const SESSIONS=[
          {titre:"Plan des sous-sols",texte:"Niveau B : laboratoire (nord), coffre-fort (est), sortie de secours (sud). Une seule caméra couvre le couloir, angle mort à gauche du coffre."}]},
  {id:"s1lock",type:"lock",nom:"CRACK-LOCK // Coffre-fort",code:"VAULT-12",secret:"4721",tries:8,desc:"Serrure électronique à code numérique.",
   files:[{titre:"Contrat Militech — confidentiel",texte:"Accord de livraison de 12 lots de stimulants de combat. Signataire : Dr Elias Voss. Paiement : 80 000 eb à la livraison."}]},
+ {id:"s1net",type:"net",nom:"NET // Architecture du réseau",code:"NET-01",desc:"Simulation d’architecture NET : strates, mots de passe, glace et paydata.",
+  /* Fichiers récupérables (référencés par f:N dans les nœuds). html:true = texte non échappé (permet <mark class="hl">) */
+  files:[
+   {titre:"Organisation et activités",texte:`================================================================
+// STRUCTURE DU RÉSEAU "BOOMERS" - SECTEUR NIGHT CITY
+// DOCUMENT INTERNE - STRICTEMENT CONFIDENTIEL
+================================================================
+
+[ 1. HIERARCHIE & MEMBRES CLÉS ]
+> "Papa" Kord : Chef des opérations NC. Gère les contrats Corpo (notamment BY Corp).
+> "Boom-Boom" Suarez : Lieutenant / Chef de la sécurité. (Spécialiste explosifs, gestion des hommes de main).
+> Dr. Silas "Boucher" Vance : Ripperdoc principal. Évalue la "marchandise", retire le chrome, conditionne les sujets.
+> "Slick" Rick : Fixer affilié. Repère les cibles isolées (sans-abris, fugueurs, joytoys sans protection).
+> Effectifs totaux : Env. 35 "Soldats/Gardiens", 4 Netrunners (Défense locale), 6 Techniciens médicaux.
+
+[ 2. ACTIVITÉS OPÉRATIONNELLES ]
+> Trafic d'humains : Kidnapping de cibles de bas étage ou commandes corporatistes spécifiques.
+> Extraction d'organes/Chrome : Récupération et revente au marché noir des implants des victimes jugées "non-viables".
+> "Livraisons Viande" : Transfert exclusif de sujets vivants et conditionnés (effacement mnésique partiel) vers les laboratoires ou les sous-traitants de BY Corp.
+
+[ 3. PLANQUES & INFRASTRUCTURES (NIGHT CITY) ]
+> PLANQUE ALPHA (Le Hub) : Ancienne usine de traitement d'eau (South Night City). Sert de centre de tri et de détention principale. Lourdement gardée. Le batîment est localisé juste à côté Dock Cargo Community.
+> PLANQUE BETA (La Clinique) : Sous-sol du Motel "Neon Nights" (Pacifica). Sert aux opérations chirurgicales rapides, extractions de chrome et sédation lourde.
+> PLANQUE GAMMA (Point de transfert) : Hangar #44, Docks de Night City. Utilisée uniquement les nuits de pleine lune pour les transferts directs de "marchandise" vers les navettes cargos de BY Corp.
+================================================================`},
+   {titre:"Liste des victimes",html:true,texte:`================================================================
+// ARCHIVE SÉCURISÉE : GESTION DES STOCKS - "MARCHANDISE" Q3
+// STATUT : EN ATTENTE DE TRAITEMENT OU D'EXPÉDITION
+================================================================
+01. Alan "Spark" Decker - [Sain, Puce d'identité retirée]
+02. Maria Vasquez - [Traitement en cours - Clinique]
+03. Tomáš Kovář - [Prêt pour expédition]
+04. Sarah Jenkins - [Rejet cybernétique, valeur réduite]
+05. Kenji Sato - [Lot 4, Parcage Watson]
+06. "Mantis" (Inconnu) - [Sédation lourde]
+07. Elena Rostova - [Préparation organique]
+08. Marcus Thorne - [Transfert validé]
+09. Chloé Dupont - [Sain, profil corpo]
+10. David M. - [En attente d'évaluation médicale]
+11. Jackson "T-Bone" - [Pièces détachées (organes)]
+12. Akira Yamato - [Lot 4, Parcage Watson]
+13. Samira Al-Fayed - [Traitement chimique]
+14. Boris "The Anvil" - [Sédation lourde - Risque élevé]
+15. Lucy Vance - [Prêt pour expédition]
+16. Omar Little - [Pièces détachées]
+17. Chen Wei - [Transfert validé]
+18. "Cipher" (Inconnu) - [Évaluation en cours]
+19. Rebecca Chambers - [Lot Corpo - Intact]
+20. Wyatt Earp (Faux nom) - [Sain]
+21. Nadia K. - [Sédation]
+22. Julian Bashir - [Extraction terminée]
+23. Fatima Zara - [Lot 5, Parcage Pacifica]
+24. Hector "Cruz" - [Rejet - Destruction prévue]
+25. Winston Smith - [Transfert BY Corp]
+26. Anya Corazon - [Traitement en cours]
+27. Liam O'Connor - [Lot 4, Parcage Watson]
+28. Sofia Mancini - [Sain]
+29. "Wire" (Inconnu) - [Sédation]
+30. Jin-Soo Park - [Prêt pour expédition]
+31. Chloe "Byte" - [Pièces détachées (chrome mineur)]
+32. Arthur Dent - [En transit]
+33. Mia Toretto - [Lot 5, Parcage Pacifica]
+<mark class="hl">34. Lisa Fiodorovitch Ouvarov [Лиза Фёдоровна Уварова] - *** COMMANDE SPÉCIALE ***</mark>
+35. Hassan "Sand" - [Sain]
+36. Victoria Chase - [Profil corpo - Haut risque]
+37. Elias Vance - [Lot 4, Parcage Watson]
+38. "Ghost" (Inconnu) - [Traitement chimique]
+39. Natasha Romanoff (Faux nom) - [Prêt pour expédition]
+40. Oliver Queen - [Pièces détachées]
+41. Yuki Tanaka - [Sédation lourde]
+42. Benjamin Sisko - [Sain]
+43. Clara "Hex" - [Transfert validé]
+44. "Brick" (Inconnu) - [Destruction prévue]
+45. Diego "Razor" - [Lot 5, Parcage Pacifica]
+46. Samantha Carter - [Sédation]
+47. Jamal "Rook" - [Extraction terminée]
+48. Wei Shen - [Lot Corpo]
+49. Isabella "Viper" - [Sain]
+50. "Null" (Inconnu) - [Prêt pour expédition]
+================================================================`},
+   {titre:"Virements offshore",texte:`================================================================
+// RELEVÉ DE TRANSACTIONS BANCAIRES - COMPTE #884-X-992
+// CRYPTAGE : NIVEAU 2 (DÉCRYPTÉ)
+================================================================`,
+    table:{cols:["DATE","TYPE","EXPÉDITEUR / DEST.","MONTANT (eb)","LIBELLÉ / RÉFÉRENCE"],rows:[
+     ["12/10/2045","OUT","Militech Surplus","- 4 500 eb","Achat munitions (Lourdes/Incendiaires)"],
+     ["14/10/2045","OUT","Clinique \"Doc\" Z.","- 2 300 eb","Entretien matériel médical / Cuves"],
+     ["15/10/2045","IN","Maelstrom (Local)","+ 1 200 eb","Vente de pièces détachées (Chrome usagé)"],
+     ["16/10/2045","OUT","Location Immob.","- 1 500 eb","Loyer Entrepôt 4 (Watson)"],
+     ["18/10/2045","IN","BY Corp (Holding)","+ 25 000 eb","REF: Acompte chargement viande - Lot A2"],
+     ["20/10/2045","OUT","NCPD (Dpt. Vice)","- 5 000 eb","\"Donation de charité\" (Pot-de-vin Secteur 4)"],
+     ["21/10/2045","OUT","Synth-Burger Inc.","- 350 eb","Ravitaillement alimentaire (Garde / Matériel)"],
+     ["22/10/2045","IN","BY Corp (Logist.)","+ 45 000 eb","REF: Solde livraison viande fraîche + Bonus discrétion"],
+     ["24/10/2045","OUT","Fixer \"Dexter\"","- 3 000 eb","Commission apporteur d'affaires (Infos cibles)"],
+     ["25/10/2045","IN","BY Corp (Holding)","+ 80 000 eb","REF: COMMANDE SPÉCIALE (Sujet L.F.O.) - Priorité absolue"],
+     ["26/10/2045","OUT","Kendachi Armory","- 8 900 eb","Équipement de sécurité (Gilets, Fusils à pompe)"]]},
+    pied:"// SOLDE ACTUEL : + 135 150 eb"}],
+  /* Strates du réseau. cams = id de l'application caméras déverrouillée par le nœud de contrôle */
+  strates:[
+   {nom:"STRATE 1 - Surface",nodes:[
+    {id:"s1pw",type:"password",nom:"Porte d'entrée SD 6",diff:"SD 6",ouvre:2}]},
+   {nom:"STRATE 2 - Sécurité périphérique",nodes:[
+    {id:"s2pw",type:"password",nom:"Accès Strate 3",diff:"Facile",ouvre:3},
+    {id:"cam",type:"cameras",nom:"Caméras de surveillance SD 6",diff:"SD 6",cams:"s1sec"}]},
+   {nom:"STRATE 3 - Défense active",nodes:[
+    {id:"tour",type:"tourelles",nom:"Tourelles automatisées",diff:"SD 6"},
+    {id:"s3pw",type:"password",nom:"Accès Strate 4 (Core)",diff:"Facile",ouvre:4},
+    {id:"ice",type:"blackice",nom:"IA ennemi",diff:"Facile",image:"images/ia-ennemi.png",nomIA:"Putois",stats:"ATT 4 DEF 2 VIE 10"},
+    {id:"logs",type:"fichier",nom:"Organisation et activités",f:0}]},
+   {nom:"STRATE 4 - Cœur de données",nodes:[
+    {id:"f1",type:"paydata",nom:"Liste des victimes",f:1},
+    {id:"f2",type:"paydata",nom:"Virements offshore",f:2}]}]},
  {id:"s1sec",type:"feed",nom:"SÉCURITÉ // Accès caméras du bâtiment",code:"CAM-01",desc:"Système de vidéosurveillance : sous-sol, étages et toit.",files:[],
   zones:[
    {groupe:"Sous-sol",cams:[{nom:"Cage",img:"images/ss-cage.png"},{nom:"Réserve",img:"images/ss-reserve.png"},{nom:"Salle de jeux",img:"images/ss-jeux.png"}]},
@@ -110,11 +248,17 @@ const ST={get(k){try{const v=JSON.parse(localStorage.getItem("nr:"+k));if(v)retu
  set(k,v){mem[k]=v;try{localStorage.setItem("nr:"+k,JSON.stringify(v))}catch(e){}}};
 const view=$("#view"),ov=$("#ov"),RUN={};
 const fid=(a,i)=>a.id+"-"+i;
-ov.onclick=e=>{if(e.target===ov)ov.classList.remove("show")};
+let ovLock=false; /* true = la fenêtre ne peut pas être fermée (combat contre la glace) */
+ov.onclick=e=>{if(e.target===ov&&!ovLock)ov.classList.remove("show")};
+addEventListener("keydown",e=>{if(e.key==="Escape"&&!ovLock)ov.classList.remove("show")});
 
 /* ---------- Fichiers ---------- */
+const fileBody=f=>`<pre>${f.html?f.texte:esc(f.texte)}</pre>`
+  +(f.table?`<div class="tw"><table><thead><tr>${f.table.cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${f.table.rows.map(r=>`<tr class="${r[1]==="IN"?"in":"out"}">${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:"")
+  +(f.pied?`<pre>${esc(f.pied)}</pre>`:"");
 function openFiles(app,idxs,fresh){
-  ov.innerHTML=`<div class="panel"><small>${esc(app.nom)}</small>${idxs.map(i=>`<h3>▓ ${esc(app.files[i].titre)}${fresh.includes(i)?'<span class="new">NOUVEAU</span>':""}</h3><pre>${esc(app.files[i].texte)}</pre>`).join("")}<div class="row"><button id="x">FERMER</button></div></div>`;
+  ovLock=false;const wide=idxs.some(i=>app.files[i].table);
+  ov.innerHTML=`<div class="panel${wide?" wide":""}"><small>${esc(app.nom)}</small>${idxs.map(i=>`<h3>▓ ${esc(app.files[i].titre)}${fresh.includes(i)?'<span class="new">NOUVEAU</span>':""}</h3>${fileBody(app.files[i])}`).join("")}<div class="row"><button id="x">FERMER</button></div></div>`;
   ov.classList.add("show");$("#x").onclick=()=>ov.classList.remove("show")}
 function reveal(app,idxs){
   const fs=ST.get("files"),fresh=idxs.filter(i=>!fs[fid(app,i)]);
@@ -125,6 +269,7 @@ function route(){const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.f
 addEventListener("hashchange",route);
 
 function home(){
+  document.body.classList.remove("wide");
   const u=ST.get("unl"),f=ST.get("files");
   view.innerHTML=`<h2>▓ SÉLECTION DE SESSION</h2><div class="sg">${SESSIONS.map(s=>{
     const nf=s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>f[fid(a,i)]).length,0),tf=s.apps.reduce((n,a)=>n+a.files.length,0);
@@ -140,6 +285,7 @@ function session(s){
   $(".tabs",view).onclick=e=>{const t=e.target.dataset?.t;if(t)setTab(t)};
 
   function acces(){
+    document.body.classList.remove("wide");
     const u=ST.get("unl"),open=s.apps.filter(a=>u[a.id]),locked=s.apps.length-open.length;
     tab.innerHTML=`<div class="panel"><div>CODE D’ACCÈS FOURNI PAR LE MJ</div><div class="row"><input id="code" placeholder="XXXXX-00" autocomplete="off" spellcheck="false"><button id="ok">VALIDER</button></div><div class="msg" id="m"></div></div>
     <h2>▓ APPLICATIONS DÉVERROUILLÉES</h2><div class="sg">${open.map(a=>`<div class="card"><b>${esc(a.nom)}</b><small>${esc(a.desc)}</small><button data-l="${a.id}">▶ LANCER</button></div>`).join("")||"<small>AUCUNE POUR LE MOMENT</small>"}</div>
@@ -151,11 +297,17 @@ function session(s){
     $("#ok").onclick=go;$("#code").onkeydown=e=>{if(e.key==="Enter")go()};
     tab.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>launch(s.apps.find(a=>a.id===b.dataset.l)))}
 
-  function launch(a){
-    tab.innerHTML=`<button id="bk">← APPLICATIONS</button><div class="panel" id="app" style="margin-top:10px"></div>`;
-    $("#bk").onclick=acces;RUN[a.type]($("#app"),a)}
+  /* launch(a) : une application. launch(a,b) : a à gauche, b à droite sur la même page */
+  function launch(a,b){
+    document.body.classList.toggle("wide",!!b);
+    tab.innerHTML=`<button id="bk">← APPLICATIONS</button><div class="${b?"split":""}" style="margin-top:10px"><div class="panel" id="app"></div>${b?'<div class="panel" id="app2"></div>':""}</div>`;
+    $("#bk").onclick=acces;
+    RUN[a.type]($("#app"),a,{s,split:c=>{if(!b)launch(a,c)}});
+    if(b)RUN[b.type]($("#app2"),b,{s,split(){}});
+    window.scrollTo(0,0)}
 
   function save(){
+    document.body.classList.remove("wide");
     const f=ST.get("files"),u=ST.get("unl"),srcs=s.apps.filter(a=>a.files.some((_,i)=>f[fid(a,i)]));
     tab.innerHTML=`<div class="panel"><div>▓ SAUVEGARDE DES INFOS — ${nbf()} FICHIER(S) ENREGISTRÉ(S)</div>${srcs.map(a=>`<h3>${esc(a.nom)} <small>${a.files.filter((_,i)=>f[fid(a,i)]).length}/${a.files.length}</small></h3>${a.files.map((x,i)=>f[fid(a,i)]?`<button class="file" data-a="${a.id}" data-i="${i}"><span>▓ ${esc(x.titre)}</span><small>${new Date(f[fid(a,i)]).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</small></button>`:"").join("")}`).join("")||"<p><small>AUCUN FICHIER. DÉCOUVREZ-EN EN JOUANT AUX APPLICATIONS.</small></p>"}</div>`;
     tab.querySelectorAll(".file").forEach(b=>b.onclick=()=>{const a=s.apps.find(x=>x.id===b.dataset.a);openFiles(a,[+b.dataset.i],[])})}
@@ -255,6 +407,68 @@ RUN.feed=(root,app)=>{
       img.onload=()=>{img.style.visibility="visible";img.classList.add("glitch");tx.style.display="none";rec.style.display="block";ti.textContent="> CAMÉRA ACTIVE : "+name;if(c.f!==undefined&&app.files[c.f])reveal(app,[c.f])};
       img.onerror=()=>{ti.textContent="> LIAISON PERDUE : "+name;tx.textContent="SIGNAL PERDU — FLUX INDISPONIBLE"};
       img.src=c.img},1500)}};
+
+/* ============ APP : ARCHITECTURE NET (strates + nœuds) ============ */
+RUN.net=(root,app,ctx)=>{
+  const K="net:"+app.id,
+  LB={password:"MOT DE PASSE",cameras:"NŒUD DE CONTRÔLE",tourelles:"NŒUD DE CONTRÔLE",blackice:"PROGRAMME BLACK ICE",fichier:"FICHIER",paydata:"FICHIER PAYDATA"},
+  fresh=()=>({max:1,cracked:{},revealed:{},won:{},tourelles:true});
+  let st=Object.assign(fresh(),ST.get(K));
+  const keep=()=>ST.set(K,st),
+  opened=nd=>!!ST.get("files")[fid(app,nd.f)],
+  camApp=nd=>ctx.s.apps.find(a=>a.id===nd.cams),
+  unlockCam=c=>{if(!c)return;const u=ST.get("unl");if(!u[c.id]){u[c.id]=1;ST.set("unl",u)}},
+  close=()=>{ovLock=false;ov.classList.remove("show")},
+  FERMER=["FERMER"],
+  T=(on,t)=>`<span class="nt-tag ${on?"on":"off"}">${t}</span>`;
+  function modal(html,btns,lock){
+    ovLock=!!lock;
+    ov.innerHTML=`<div class="panel">${html}<div class="row"></div></div>`;
+    const r=$(".row",ov);
+    btns.forEach(([l,fn])=>{const b=document.createElement("button");b.textContent=l;b.onclick=fn||close;r.append(b)});
+    ov.classList.add("show")}
+  function tag(nd){
+    if(nd.type==="password"||nd.type==="cameras")return st.cracked[nd.id]?T(1,"ACCÈS OBTENU"):T(0,"VERROUILLÉ");
+    if(nd.type==="blackice")return st.won[nd.id]?T(1,"NEUTRALISÉE"):T(0,"HOSTILE");
+    if(nd.type==="tourelles")return !st.cracked[nd.id]?T(0,"VERROUILLÉ"):st.tourelles?T(0,"ACTIVÉ"):T(1,"DÉSACTIVÉ");
+    return ""}
+  root.innerHTML=`<div class="nt-head"><h2>${esc(app.nom)}</h2><button class="nt-rs">↻ RÉINITIALISER</button></div><div class="nt-body"></div>`;
+  const B=$(".nt-body",root);
+  function render(){
+    B.innerHTML=app.strates.map((s,i)=>i+1>st.max?"":`<section class="nt-strate"><h3>&gt; ${esc(s.nom)}</h3><div class="nt-nodes">${s.nodes.map(nd=>{
+      if(!st.revealed[nd.id])return `<button class="nt-node" data-n="${nd.id}"><span>[ ??? ] Donnée non identifiée<small>Cliquer pour analyser</small></span></button>`;
+      const done=st.cracked[nd.id]||st.won[nd.id]||(nd.f!==undefined&&opened(nd));
+      return `<button class="nt-node${done?" done":""}" data-n="${nd.id}"><span>[${LB[nd.type]}] ${esc(nd.nom)}${nd.diff?`<small>Difficulté : ${esc(nd.diff)}</small>`:""}</span>${tag(nd)}</button>`}).join("")}</div></section>`).join("")
+      +(st.max<app.strates.length?`<div class="nt-locked">&gt; STRATE ${st.max+1} : ACCÈS VERROUILLÉ</div>`:"")}
+  function openNode(nd){
+    if(!st.revealed[nd.id]){st.revealed[nd.id]=true;keep();render()}
+    const head=`<h3>[${LB[nd.type]}] ${esc(nd.nom)}</h3>${nd.diff?`<p>Difficulté : ${esc(nd.diff)}</p>`:""}`,ok=st.cracked[nd.id];
+    switch(nd.type){
+    case "password":
+      if(ok)return modal(head+"<p>Accès déjà obtenu.</p>",[FERMER]);
+      return modal(head+`<p>Le mot de passe protège l’accès à la strate ${nd.ouvre}.</p>`,[["JET RÉUSSI (1 ACTION)",()=>{
+        st.cracked[nd.id]=true;st.max=Math.max(st.max,nd.ouvre);keep();render();
+        modal(`<h3>&gt; ACCÈS OBTENU</h3><p>La strate ${nd.ouvre} est maintenant accessible.</p>`,[FERMER])}],FERMER]);
+    case "cameras":case "tourelles":
+      if(!ok)return modal(head+"<p>Le nœud de contrôle est verrouillé.</p>",[["JET RÉUSSI (1 ACTION)",()=>{st.cracked[nd.id]=true;keep();render();openNode(nd)}],FERMER]);
+      if(nd.type==="cameras"){
+        const c=camApp(nd);unlockCam(c);
+        if(!c)return modal(head+"<p>Accès au nœud obtenu.</p>",[FERMER]);
+        return modal(head+`<p>Accès au nœud obtenu. Flux de surveillance disponible.</p><p>CODE D’ACCÈS : <span class="hl">${esc(c.code)}</span></p><p><small>Application « ${esc(c.nom)} » déverrouillée.</small></p>`,
+          [["▶ ACCÉDER AUX CAMÉRAS (1 ACTION)",()=>{close();ctx.split(c)}],FERMER])}
+      return modal(head+`<p>Accès au nœud obtenu. État : <b class="${st.tourelles?"warn":""}">${st.tourelles?"ACTIVÉ":"DÉSACTIVÉ"}</b></p>`,
+        [[`${st.tourelles?"DÉSACTIVER":"ACTIVER"} LES TOURELLES (1 ACTION)`,()=>{st.tourelles=!st.tourelles;keep();render();openNode(nd)}],FERMER]);
+    case "blackice":
+      if(st.won[nd.id])return modal(head+`<p>Glace <b>${esc(nd.nomIA)}</b> neutralisée.</p>`,[FERMER]);
+      return modal(head+`<img class="nt-img" src="${esc(nd.image)}" alt="${esc(nd.nomIA)}" onerror="this.remove()"><p>Nom de Glace : <b>${esc(nd.nomIA)}</b> - ${esc(nd.stats)}</p><p class="warn">Combat en cours : impossible de quitter sans choisir.</p>`,
+        [["FUIR (1 ACTION)",close],["VICTOIRE",()=>{st.won[nd.id]=true;keep();render();close()}]],true);
+    default:
+      if(opened(nd))return openFiles(app,[nd.f],[]);
+      return modal(head+"<p>Fichier verrouillé : il faut l’analyser pour le lire.</p>",[["ANALYSER (1 ACTION)",()=>{reveal(app,[nd.f]);render()}],FERMER])}}
+  root.onclick=e=>{
+    if(e.target.closest(".nt-rs")){st=fresh();keep();render();return}
+    const b=e.target.closest("[data-n]");if(b)openNode(app.strates.flatMap(s=>s.nodes).find(n=>n.id===b.dataset.n))};
+  render()};
 
 route();
 </script>
