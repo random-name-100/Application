@@ -167,7 +167,7 @@ const QUARTIERS=[
          rues:["Furnace","Turbine","Piston","Boiler","Assembly","Warehouse","Smokestack","Rail Yard","Lathe","Crucible"],avenues:["Ironworks","Factory","Zhirafa"]}],
  hw:[{nom:"US-828",pts:[[0.56,0],[0.6,0.4],[0.7,0.7],[0.75,1]]},{nom:"US-126",pts:[[0.2,1],[0.35,0.62],[0.6,0.42],[0.9,0.22],[1,0.18]]},{nom:"I-101",pts:[[0.95,0],[0.93,0.6],[0.98,1]]}],
  voisins:[["↓ RANCHO CORONADO",0.2,0.985],["← PACIFICA (PONT)",0.05,0.5]],
- lm:[["CR12","Zhirafa Office Park",0.33,0.13],["CC08","Old Ironworks",0.48,0.52],["HB08","MetalStorm",0.08,0.52],["PU04","NCPD Precinct #2",0.14,0.76],["CC10","East Cargo Village",0.88,0.86]],
+ lm:[["CR12","Zhirafa Office Park",0.5,0.12],["CC08","Old Ironworks",0.48,0.52],["HB08","MetalStorm",0.08,0.52],["PU04","NCPD Precinct #2",0.14,0.76],["CC10","East Cargo Village",0.88,0.86]],
  rues:["Valentino","Esperanza","Santa Rosa","Del Sol","Los Feliz","Encanto","Alameda","Mariposa","Hacienda","La Paloma","Bonita","Cielo","Corazón","Guadalupe","Las Palmas","Mercado","Rosario","Tierra","Vista","Zapata","Coyote","Escondido","Fiesta","Solano","Tranquilo","Montaña","Abuela","Cantina","Sombra","Luna","Estrella","Pueblo","Plaza Mayor","Dolores","Primavera","Marisol"],
  avenues:["Heywood","Valentinos","Mission","Camino Real","Glory Hill","Vallarta","Industrial","Sierra"],num:"H "},
 
@@ -207,7 +207,7 @@ function polyCross(a,b,poly){let best=null;for(let i=0;i<poly.length;i++){const 
 const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 const ord=n=>{const m=n%100;return n+(m>10&&m<14?"th":["th","st","nd","rd"][n%10]||"th")};
 const circle=(cx,cy,r,n=56)=>Array.from({length:n},(_,k)=>[cx+r*Math.cos(k/n*2*Math.PI),cy+r*Math.sin(k/n*2*Math.PI)]);
-const ref=p=>String.fromCharCode(65+Math.max(0,Math.min(15,Math.floor(p[0]/100))))+(Math.max(0,Math.min(10,Math.floor(p[1]/100)))+1);
+const ref=(p,G={cell:100,W:1600,H:1100})=>{const c=G.cell;return String.fromCharCode(65+Math.max(0,Math.min(Math.ceil(G.W/c)-1,Math.floor(p[0]/c))))+(Math.max(0,Math.min(Math.ceil(G.H/c)-1,Math.floor(p[1]/c)))+1)};
 /* réserve de noms commune (quand la liste du quartier est épuisée) */
 const FALL=["Neon","Voltage","Circuit","Synapse","Glitch","Cipher","Pulse","Signal","Vortex","Ember","Onyx","Argent","Quartz","Carbon","Tungsten","Halogen","Plasma","Photon","Echo","Shadow","Talon","Viper","Jackal","Falcon","Wolf","Hornet","Mantis","Cobra","Scorpion","Lynx","Panther","Kestrel","Heron","Osprey","Mercury","Cinnabar","Sulfur","Basalt","Granite","Flint"];
 const CAT={CR:"#4fd18b",PU:"#ff5a6a",HB:"#3ad1d1",CH:"#b07cff",CC:"#e6c84a",NL:"#5a8cff",AS:"#ff7ad9",CA:"#ff9a3c",OT:"#ff4040"};
@@ -339,81 +339,159 @@ function build(q){
   const gates=[];
   zones.forEach(z=>{if(!z.walled)return;nodeEnds.forEach(n=>{if(n.border==="bd:"+z.k&&!gates.some(g=>dist(g.p,n.p)<30))gates.push({p:n.p,rue:lines[n.line].name})})});
 
-  /* ---------------------------- rendu SVG ---------------------------- */
+  /* ---- géométrie du quartier (réutilisée par le plan complet) ---- */
+  edges.forEach(e=>{const l=lines[e.line];e.cls=l?.cls||"loc";e.name=l?.name||""});
+  const G={id:q.id,W,H,cell:100,
+    edges:edges.filter(e=>e.name||e.cls==="wall"),
+    water:water.map(w=>({p:w.p,nom:w.nom,lp:[(w.lx??0.5)*W,(w.ly??0.5)*H]})),
+    parks:parks.map(k=>({p:k.p,nom:k.nom})),
+    plazas:zones.filter(z=>z.style==="radial").map(z=>({c:z.c,r:z.plazaR,nom:z.plaza})),
+    restr:restr.map(k=>({p:k.p,nom:k.nom})),area,
+    hws:hws.map(h=>({p:h.p,nom:h.nom})),exits,gates,inter,
+    lms:(q.lm||[]).map(([code,nom,x,y])=>({code,nom,p:[x*W,y*H],col:CAT[code.slice(0,2)]||"#ccc"})),
+    voisins:(q.voisins||[]).map(([t,x,y])=>({t,p:[x*W,y*H]})),
+    nbStreets:new Set(Object.values(lines).filter(l=>l.name&&present[l.key]>60).map(l=>l.name)).size};
+  return CACHE[q.id]=renderSVG(G);
+}
+
+/* ------------------------------ rendu SVG ------------------------------ */
+function renderSVG(G){
+  const {W,H,cell:CELL}=G,area=G.area,id=G.id;
   const pth=poly=>"M"+poly.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")+"Z";
   const segs={loc:"",av:"",bd:"",wall:""};
-  edges.forEach(e=>{const c=lines[e.line]?.cls||"loc";segs[c]+=`M${e.a[0].toFixed(1)} ${e.a[1].toFixed(1)}L${e.b[0].toFixed(1)} ${e.b[1].toFixed(1)}`});
+  G.edges.forEach(e=>{segs[e.cls]+=`M${e.a[0].toFixed(1)} ${e.a[1].toFixed(1)}L${e.b[0].toFixed(1)} ${e.b[1].toFixed(1)}`});
   let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="nc-svg">`;
-  s+=`<defs><pattern id="hatch-${q.id}" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="14" height="14" fill="#1a0a0c"/><line x1="0" y1="0" x2="0" y2="14" stroke="#ff2a3d" stroke-opacity=".35" stroke-width="5"/></pattern>
-    <pattern id="waves-${q.id}" width="60" height="20" patternUnits="userSpaceOnUse"><rect width="60" height="20" fill="#05141d"/><path d="M0 12 Q15 6 30 12 T60 12" fill="none" stroke="#0e3346" stroke-width="1.5"/></pattern></defs>`;
-  s+=`<rect width="${W}" height="${H}" fill="#0b120e"/>`;
-  /* grille de repérage */
-  let g="";for(let x=100;x<W;x+=100)g+=`M${x} 0V${H}`;for(let y=100;y<H;y+=100)g+=`M0 ${y}H${W}`;
+  s+=`<defs><pattern id="hatch-${id}" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="14" height="14" fill="#1a0a0c"/><line x1="0" y1="0" x2="0" y2="14" stroke="#ff2a3d" stroke-opacity=".35" stroke-width="5"/></pattern>
+    <pattern id="waves-${id}" width="60" height="20" patternUnits="userSpaceOnUse"><rect width="60" height="20" fill="#05141d"/><path d="M0 12 Q15 6 30 12 T60 12" fill="none" stroke="#0e3346" stroke-width="1.5"/></pattern>${G.defs||""}</defs>`;
+  s+=G.base!==undefined?G.base:`<rect width="${W}" height="${H}" fill="#0b120e"/>`;
+  let g="";for(let x=CELL;x<W;x+=CELL)g+=`M${x} 0V${H}`;for(let y=CELL;y<H;y+=CELL)g+=`M0 ${y}H${W}`;
   s+=`<path d="${g}" stroke="#00ff9c" stroke-opacity=".06" stroke-width="1"/>`;
-  parks.forEach(k=>s+=`<path d="${pth(k.p)}" fill="#0f3320" stroke="#1d6b3f" stroke-width="2"/>`);
-  zones.forEach(z=>{if(z.style==="radial")s+=`<circle cx="${z.c[0]}" cy="${z.c[1]}" r="${z.plazaR}" fill="#123d2a" stroke="#1d6b3f" stroke-width="2"/>`});
-  restr.forEach(k=>s+=`<path d="${pth(k.p)}" fill="url(#hatch-${q.id})" stroke="#ff2a3d" stroke-width="2" stroke-dasharray="10 6"/>`);
-  water.forEach(w=>s+=`<path d="${pth(w.p)}" fill="url(#waves-${q.id})" stroke="#1f6f8f" stroke-width="2.5"/>`);
-  /* routes : bordure sombre puis chaussée */
+  const clipOpen=k=>k.clip?`<g clip-path="url(#${k.clip})">`:"",clipClose=k=>k.clip?"</g>":"";
+  G.parks.forEach(k=>s+=`${clipOpen(k)}<path d="${pth(k.p)}" fill="#0f3320" stroke="#1d6b3f" stroke-width="2"/>${clipClose(k)}`);
+  G.plazas.forEach(z=>s+=`<circle cx="${z.c[0]}" cy="${z.c[1]}" r="${z.r}" fill="#123d2a" stroke="#1d6b3f" stroke-width="2"/>`);
+  G.restr.forEach(k=>s+=`${clipOpen(k)}<path d="${pth(k.p)}" fill="url(#hatch-${id})" stroke="#ff2a3d" stroke-width="2" stroke-dasharray="10 6"/>${clipClose(k)}`);
+  G.water.forEach(w=>{if(w.p.length>2)s+=`${clipOpen(w)}<path d="${pth(w.p)}" fill="url(#waves-${id})" stroke="#1f6f8f" stroke-width="2.5"/>${clipClose(w)}`});
   s+=`<g fill="none" stroke-linecap="round" stroke-linejoin="round">
     <path d="${segs.loc}" stroke="#020604" stroke-width="9"/><path d="${segs.av}${segs.bd}" stroke="#020604" stroke-width="15"/>
     <path d="${segs.loc}" stroke="#2b6b4f" stroke-width="5"/>
     <path d="${segs.av}" stroke="#00c27a" stroke-width="10"/><path d="${segs.bd}" stroke="#00e08d" stroke-width="11"/>
     <path d="${segs.av}${segs.bd}" stroke="#003b24" stroke-width="1.2" stroke-dasharray="10 10"/>
     <path d="${segs.wall}" stroke="#ff2a3d" stroke-width="9" stroke-dasharray="4 3"/></g>`;
-  /* assombrir hors du quartier */
   if(area)s+=`<path d="M0 0H${W}V${H}H0Z ${pth(area)}" fill="#000" fill-opacity=".45" fill-rule="evenodd"/>`;
-  /* autoroutes */
-  hws.forEach(h=>{const d="M"+h.p.map(p=>p.join(" ")).join("L");
+  (G.outlines||[]).forEach(o=>s+=`<path d="${pth(o)}" fill="none" stroke="#00ff9c" stroke-opacity=".35" stroke-width="4" stroke-dasharray="18 10"/>`);
+  G.hws.forEach(h=>{const d=h.d||("M"+h.p.map(p=>p.join(" ")).join("L"));
     s+=`<path d="${d}" fill="none" stroke="#000" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#ffb000" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#5a3a00" stroke-width="1.6" stroke-dasharray="16 12"/>`});
-  /* étiquettes : rues */
-  const occ={},cell=p=>Math.floor(p[0]/26)+":"+Math.floor(p[1]/26);
-  const free=(pts)=>pts.every(p=>!occ[cell(p)]),mark=pts=>pts.forEach(p=>occ[cell(p)]=1);
+  /* étiquettes */
+  const occ={},oc=p=>Math.floor(p[0]/26)+":"+Math.floor(p[1]/26);
+  const free=pts=>pts.every(p=>!occ[oc(p)]),mark=pts=>pts.forEach(p=>occ[oc(p)]=1);
   const labels=[];
-  const place=(pts,name,cls,fs,at)=>{ /* pts : polyligne ; at : distance */
+  const place=(pts,name,cls,fs,at)=>{
     let d=0;for(let i=0;i<pts.length-1;i++){const L=dist(pts[i],pts[i+1]);if(d+L>=at){const t=(at-d)/L,p=[pts[i][0]+(pts[i+1][0]-pts[i][0])*t,pts[i][1]+(pts[i+1][1]-pts[i][1])*t];
       let ang=Math.atan2(pts[i+1][1]-pts[i][1],pts[i+1][0]-pts[i][0])*180/Math.PI;if(ang>90)ang-=180;if(ang<-90)ang+=180;
       const half=name.length*fs*0.31,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180),samp=[];
       for(let k=-half;k<=half;k+=10)samp.push([p[0]+ca*k,p[1]+sa*k]);
       if(p[0]<half*0.3||p[0]>W-20||p[1]<14||p[1]>H-10||!free(samp))return false;if(area&&!inPoly(p,area))return false;
       mark(samp);labels.push(`<text class="${cls}" x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" transform="rotate(${ang.toFixed(1)} ${p[0].toFixed(1)} ${p[1].toFixed(1)})" font-size="${fs}" dy="${(fs*0.35).toFixed(1)}">${esc(name)}</text>`);return true}d+=L}return false};
-  /* priorité : autoroutes > boulevards > avenues > rues */
-  const byLine={};edges.forEach(e=>(byLine[e.line]||(byLine[e.line]=[])).push(e));
+  const byLine={};G.edges.forEach(e=>{if(e.name)(byLine[e.line]||(byLine[e.line]=[])).push(e)});
   const runsOf=k=>{const es=byLine[k].slice().sort((a,b)=>a.ord-b.ord),runs=[];let cur=null;
     es.forEach(e=>{if(cur&&dist(cur[cur.length-1],e.a)<1.5)cur.push(e.b);else{cur=[e.a,e.b];runs.push(cur)}});return runs};
   const plen=pts=>pts.reduce((t,p,i)=>i?t+dist(pts[i-1],p):t,0);
-  hws.forEach(h=>{const L=plen(h.p);for(let f of [0.3,0.75])place(h.p,h.nom,"t-hw",17,L*f)});
-  const order=Object.keys(byLine).filter(k=>lines[k]?.name).sort((a,b)=>({bd:0,wall:0,av:1,loc:2}[lines[a].cls]-{bd:0,wall:0,av:1,loc:2}[lines[b].cls]));
-  order.forEach(k=>{const l=lines[k],cls=l.cls==="loc"?"t-loc":"t-av",fs=l.cls==="loc"?10.5:13,step=l.cls==="loc"?520:430;
-    runsOf(k).forEach(r=>{const L=plen(r);if(L<l.name.length*fs*0.62+20)return;const n=Math.max(1,Math.floor(L/step));
-      for(let m=0;m<n;m++){const base=L*(m+0.5)/n;for(const off of [0,-0.18,0.18,-0.32,0.32]){const at=base+off*L/n;if(at>10&&at<L-10&&place(r,l.name,cls,fs,at))break}}})});
+  G.hws.forEach(h=>(h.runs||[h.p]).forEach(r=>{const L=plen(r);if(L<160)return;for(let f of (L>900?[0.3,0.75]:[0.5]))place(r,h.nom,"t-hw",17,L*f)}));
+  const RK={bd:0,wall:0,av:1,loc:2};
+  Object.keys(byLine).sort((a,b)=>RK[byLine[a][0].cls]-RK[byLine[b][0].cls]).forEach(k=>{const e0=byLine[k][0],cls=e0.cls==="loc"?"t-loc":"t-av",fs=e0.cls==="loc"?10.5:13,step=e0.cls==="loc"?520:430;
+    runsOf(k).forEach(r=>{const L=plen(r);if(L<e0.name.length*fs*0.62+20)return;const n=Math.max(1,Math.floor(L/step));
+      for(let m=0;m<n;m++){const base=L*(m+0.5)/n;for(const off of [0,-0.18,0.18,-0.32,0.32]){const at=base+off*L/n;if(at>10&&at<L-10&&place(r,e0.name,cls,fs,at))break}}})});
   s+=`<g class="labels" font-family="'Courier New',monospace">${labels.join("")}</g>`;
-  /* sorties d'autoroute, portes */
-  exits.forEach(x=>s+=`<g class="exit"><circle cx="${x.p[0]}" cy="${x.p[1]}" r="11" fill="#ffb000" stroke="#000" stroke-width="2.5"/><text x="${x.p[0]}" y="${x.p[1]}" dy="4" font-size="11" font-weight="bold" text-anchor="middle" fill="#000" font-family="monospace">${x.n}</text></g>`);
-  gates.forEach(gt=>s+=`<rect x="${gt.p[0]-9}" y="${gt.p[1]-9}" width="18" height="18" fill="#ff2a3d" stroke="#000" stroke-width="2"/><text x="${gt.p[0]}" y="${gt.p[1]}" dy="4" font-size="11" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="bold">⛨</text>`);
-  /* lieux */
-  const lms=(q.lm||[]).map(([code,nom,x,y])=>({code,nom,p:[x*W,y*H],col:CAT[code.slice(0,2)]||"#ccc"}));
-  lms.forEach(l=>s+=`<g class="lm"><rect x="${l.p[0]-22}" y="${l.p[1]-11}" width="44" height="22" rx="3" fill="${l.col}" stroke="#000" stroke-width="2"/><text x="${l.p[0]}" y="${l.p[1]}" dy="4.5" font-size="12" font-weight="bold" text-anchor="middle" fill="#000" font-family="monospace">${l.code}</text><text class="t-lm" x="${l.p[0]}" y="${l.p[1]+25}" font-size="12" text-anchor="middle" fill="${l.col}" font-family="'Courier New',monospace">${esc(l.nom)}</text></g>`);
-  /* noms d'eau, parcs, zones interdites, voisins */
+  G.exits.forEach(x=>s+=`<g class="exit"><circle cx="${x.p[0]}" cy="${x.p[1]}" r="11" fill="#ffb000" stroke="#000" stroke-width="2.5"/><text x="${x.p[0]}" y="${x.p[1]}" dy="4" font-size="11" font-weight="bold" text-anchor="middle" fill="#000" font-family="monospace">${x.n}</text></g>`);
+  G.gates.forEach(gt=>s+=`<rect x="${gt.p[0]-9}" y="${gt.p[1]-9}" width="18" height="18" fill="#ff2a3d" stroke="#000" stroke-width="2"/><text x="${gt.p[0]}" y="${gt.p[1]}" dy="4" font-size="11" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="bold">⛨</text>`);
+  G.lms.forEach(l=>s+=`<g class="lm"><rect x="${l.p[0]-22}" y="${l.p[1]-11}" width="44" height="22" rx="3" fill="${l.col}" stroke="#000" stroke-width="2"/><text x="${l.p[0]}" y="${l.p[1]}" dy="4.5" font-size="12" font-weight="bold" text-anchor="middle" fill="#000" font-family="monospace">${l.code}</text><text class="t-lm" x="${l.p[0]}" y="${l.p[1]+25}" font-size="12" text-anchor="middle" fill="${l.col}" font-family="'Courier New',monospace">${esc(l.nom)}</text></g>`);
   const big=(t,x,y,fill,fs,cls="")=>`<text class="${cls}" x="${x}" y="${y}" font-size="${fs}" fill="${fill}" text-anchor="middle" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="3">${esc(t)}</text>`;
-  water.forEach(w=>{if(w.nom)s+=big(w.nom,(w.lx??0.5)*W,(w.ly??0.5)*H,"#2a85ad",18,"t-big")});
-  parks.forEach(k=>{const c=k.p.reduce((a,p)=>[a[0]+p[0]/k.p.length,a[1]+p[1]/k.p.length],[0,0]);s+=big(k.nom,c[0],c[1],"#3fae6a",20,"t-big")});
-  zones.forEach(z=>{if(z.plaza)s+=big(z.plaza,z.c[0],z.c[1]+6,"#3fae6a",15,"t-big")});
-  restr.forEach(k=>{const c=k.p.reduce((a,p)=>[a[0]+p[0]/k.p.length,a[1]+p[1]/k.p.length],[0,0]);s+=big(k.nom,c[0],c[1]+6,"#ff5a6a",17,"t-big")});
-  (q.voisins||[]).forEach(([t,x,y])=>s+=`<text x="${x*W}" y="${y*H}" font-size="16" fill="#9fb8aa" fill-opacity=".55" text-anchor="middle" font-family="'Courier New',monospace" letter-spacing="2">${esc(t)}</text>`);
+  const cen=p=>p.reduce((a,q)=>[a[0]+q[0]/p.length,a[1]+q[1]/p.length],[0,0]);
+  G.water.forEach(w=>{if(w.nom&&w.lp)s+=big(w.nom,w.lp[0],w.lp[1],"#2a85ad",w.fs||18,"t-big")});
+  G.parks.forEach(k=>{if(!k.nom)return;const c=k.lp||cen(k.p);s+=big(k.nom,c[0],c[1],"#3fae6a",20,"t-big")});
+  G.plazas.forEach(z=>{if(z.nom)s+=big(z.nom,z.c[0],z.c[1]+6,"#3fae6a",15,"t-big")});
+  G.restr.forEach(k=>{if(!k.nom)return;const c=k.lp||cen(k.p);s+=big(k.nom,c[0],c[1]+6,"#ff5a6a",17,"t-big")});
+  G.voisins.forEach(v=>s+=`<text x="${v.p[0]}" y="${v.p[1]}" font-size="16" fill="#9fb8aa" fill-opacity=".55" text-anchor="middle" font-family="'Courier New',monospace" letter-spacing="2">${esc(v.t)}</text>`);
+  (G.titles||[]).forEach(t=>s+=`<text class="t-dist" x="${t.p[0]}" y="${t.p[1]}" font-size="${t.fs||46}" text-anchor="middle" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="6">${esc(t.t)}</text>`);
   /* repères de grille */
-  let gr="";for(let i=0;i<16;i++)gr+=`<text x="${i*100+50}" y="16" font-size="13" text-anchor="middle">${String.fromCharCode(65+i)}</text><text x="${i*100+50}" y="${H-6}" font-size="13" text-anchor="middle">${String.fromCharCode(65+i)}</text>`;
-  for(let j=0;j<11;j++)gr+=`<text x="8" y="${j*100+55}" font-size="13">${j+1}</text><text x="${W-8}" y="${j*100+55}" font-size="13" text-anchor="end">${j+1}</text>`;
+  const nc=Math.ceil(W/CELL),nr=Math.ceil(H/CELL),gfs=CELL>100?22:13;
+  let gr="";for(let i=0;i<nc;i++){const L=String.fromCharCode(65+i);gr+=`<text x="${i*CELL+CELL/2}" y="${gfs+3}" font-size="${gfs}" text-anchor="middle">${L}</text><text x="${i*CELL+CELL/2}" y="${H-6}" font-size="${gfs}" text-anchor="middle">${L}</text>`}
+  for(let j=0;j<nr;j++)gr+=`<text x="8" y="${j*CELL+CELL/2+5}" font-size="${gfs}">${j+1}</text><text x="${W-8}" y="${j*CELL+CELL/2+5}" font-size="${gfs}" text-anchor="end">${j+1}</text>`;
   s+=`<g fill="#00ff9c" fill-opacity=".5" font-family="monospace" font-weight="bold">${gr}</g>`;
-  /* cibles tactiles */
   let hit="";
-  inter.forEach((it,i)=>hit+=`<circle data-i="${i}" cx="${it.p[0].toFixed(1)}" cy="${it.p[1].toFixed(1)}" r="11"/>`);
-  exits.forEach((x,i)=>hit+=`<circle data-x="${i}" cx="${x.p[0].toFixed(1)}" cy="${x.p[1].toFixed(1)}" r="14"/>`);
-  gates.forEach((x,i)=>hit+=`<circle data-g="${i}" cx="${x.p[0].toFixed(1)}" cy="${x.p[1].toFixed(1)}" r="14"/>`);
-  lms.forEach((l,i)=>hit+=`<rect data-l="${i}" x="${l.p[0]-24}" y="${l.p[1]-13}" width="48" height="26"/>`);
+  G.inter.forEach((it,i)=>hit+=`<circle data-i="${i}" cx="${it.p[0].toFixed(1)}" cy="${it.p[1].toFixed(1)}" r="11"/>`);
+  G.exits.forEach((x,i)=>hit+=`<circle data-x="${i}" cx="${x.p[0].toFixed(1)}" cy="${x.p[1].toFixed(1)}" r="14"/>`);
+  G.gates.forEach((x,i)=>hit+=`<circle data-g="${i}" cx="${x.p[0].toFixed(1)}" cy="${x.p[1].toFixed(1)}" r="14"/>`);
+  G.lms.forEach((l,i)=>hit+=`<rect data-l="${i}" x="${l.p[0]-24}" y="${l.p[1]-13}" width="48" height="26"/>`);
   s+=`<g class="hit" fill="#fff" fill-opacity="0">${hit}</g><circle class="sel" r="14" cx="-50" cy="-50" fill="none" stroke="#fff" stroke-width="3"/></svg>`;
-  const nbStreets=new Set(Object.values(lines).filter(l=>l.name&&present[l.key]>60).map(l=>l.name)).size;
-  return CACHE[q.id]={svg:s,inter,exits,gates,lms,nbStreets};
+  G.svg=s;return G;
+}
+
+/* ===================== PLAN COMPLET : assemblage des quartiers =====================
+   Repère de la carte officielle : 2000 × 1332 (comme l'image fournie, réduite).
+   r  : [x, y, largeur, hauteur?] du plan du quartier posé sur la carte officielle (hauteur absente = proportions conservées)
+   fp : emprise du quartier (les emprises se partagent la ville ; ordre = priorité)
+   t  : position du nom du quartier                                                    */
+const VILLE={OX:450,K:3,W:3900,H:3996,
+ ordre:["executive-zone","city-center","upper-marina","little-china","old-combat-zone","the-glen","little-europe","south-night-city","watson","new-westbrook","heywood","rancho-coronado","pacifica"],
+ pos:{
+  "executive-zone":{r:[1285,342,389],t:[1478,352]},
+  "city-center":{r:[729,442,480],fp:[[870,445],[1080,445],[1080,520],[1200,540],[1210,610],[1150,660],[1040,700],[880,690],[875,560]],t:[985,515]},
+  "upper-marina":{r:[1000,340,400],fp:[[1080,400],[1160,395],[1250,430],[1300,480],[1330,540],[1210,610],[1200,540],[1080,520]],t:[1195,470]},
+  "little-china":{r:[1000,520,400],fp:[[1210,610],[1330,540],[1365,590],[1250,700],[1150,780],[1040,760],[1040,700],[1150,660]],t:[1235,650]},
+  "old-combat-zone":{r:[1030,690,250,215],fp:[[1040,760],[1150,780],[1250,700],[1200,790],[1100,880],[1060,900]],t:[1135,815]},
+  "the-glen":{r:[850,680,230,300],fp:[[880,690],[1040,700],[1040,760],[1060,900],[1000,960],[930,975],[880,940],[860,720]],t:[965,835]},
+  "little-europe":{r:[590,390,480],fp:[[625,470],[700,415],[800,400],[1080,400],[1080,445],[870,445],[875,560],[880,690],[860,720],[700,725],[630,700],[640,600]],t:[750,560]},
+  "south-night-city":{r:[600,690,440],fp:[[630,700],[700,725],[860,720],[880,940],[930,975],[1000,960],[990,1000],[830,1000],[720,965],[660,880],[625,780]],t:[765,860]},
+  "watson":{r:[650,-10,560],fp:[[715,0],[1100,0],[1100,335],[960,345],[900,335],[800,285],[730,180]],t:[905,180]},
+  "new-westbrook":{r:[1060,0,700,640],fp:[[1100,0],[1700,0],[1700,620],[1365,620],[1365,590],[1330,500],[1300,430],[1180,345],[1100,335]],t:[1320,240]},
+  "heywood":{r:[1100,620,620,712],fp:[[1365,620],[1700,620],[1700,1332],[1300,1332],[1250,1120],[1150,1100],[1080,1040],[1150,960],[1260,830],[1365,700]],t:[1470,1000]},
+  "rancho-coronado":{r:[800,1000,560],fp:[[840,1080],[1080,1040],[1150,1100],[1250,1120],[1300,1332],[840,1332]],t:[1060,1210]},
+  "pacifica":{r:[470,1000,560],fp:[[530,1090],[700,1085],[840,1080],[840,1332],[530,1332]],t:[690,1250]}},
+ ponts:[{nom:"US-16",pts:[[992,330],[996,452]]},{nom:"PONT DE PACIFICA",pts:[[921,975],[876,1090]]},{nom:"US-828",pts:[[1411,612],[1459,650]]},{nom:"I-101",pts:[[1666,612],[1699,650]]}],
+ eau:[["SAN MORRO BAY",780,360],["PACIFIC OCEAN",520,860],["DEL CORONADO BAY",1080,1040],["BAIE DE NIGHT CITY",1330,830]],
+ terres:[{nom:"MORRO ROCK",c:[508,385],rx:62,ry:58}]};
+
+function buildCity(){
+  if(CACHE.__ville)return CACHE.__ville;
+  const {OX,K}=VILLE,C=p=>[(p[0]-OX)*K,p[1]*K],lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],mid=(a,b)=>lerp(a,b,.5);
+  const items=VILLE.ordre.map(id=>{const q=QUARTIERS.find(x=>x.id===id),G=build(q),P=VILLE.pos[id],[x0,y0,w,hh]=P.r,k=w/1600,ky=hh?hh/1100:k;
+    const T=p=>C([x0+p[0]*k,y0+p[1]*ky]);
+    return {id,q,G,T,k,fp:P.fp?P.fp.map(C):G.area.map(T),t:C(P.t)}});
+  const owner=p=>{for(let i=0;i<items.length;i++)if(inPoly(p,items[i].fp))return i;return -1};
+  const pth=poly=>"M"+poly.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")+"Z";
+  const V={id:"ville",W:VILLE.W,H:VILLE.H,cell:200,edges:[],water:[],parks:[],plazas:[],restr:[],area:null,hws:[],exits:[],gates:[],inter:[],lms:[],voisins:[],titles:[],outlines:[]};
+  let defs="",land="";const names=new Set(),lmBest={};let ex=1;
+  items.forEach((it,i)=>{
+    const {G,T}=it,clip="fp-"+it.id;
+    defs+=`<clipPath id="${clip}"><path d="${pth(it.fp)}"/></clipPath>`;land+=`<path d="${pth(it.fp)}" fill="#0b120e"/>`;
+    G.edges.forEach(e=>{const a=T(e.a),b=T(e.b);if(owner(mid(a,b))!==i)return;V.edges.push({a,b,cls:e.cls,name:e.name,line:it.id+"|"+e.line,ord:e.ord});if(e.name)names.add(it.id+"|"+e.name)});
+    G.water.forEach(w=>V.water.push({p:w.p.map(T),clip}));
+    G.parks.forEach(k=>{const p=k.p.map(T);V.parks.push({p,clip,nom:owner(p.reduce((a,q)=>[a[0]+q[0]/p.length,a[1]+q[1]/p.length],[0,0]))===i?k.nom:""})});
+    G.restr.forEach(k=>V.restr.push({p:k.p.map(T),clip,nom:k.nom}));
+    G.plazas.forEach(z=>{const c=T(z.c);if(owner(c)===i)V.plazas.push({c,r:z.r*it.k*K,nom:z.nom})});
+    G.hws.forEach(h=>{const P=h.p.map(T),runs=[];let cur=null;
+      for(let s=0;s<P.length-1;s++){const n=Math.max(1,Math.ceil(dist(P[s],P[s+1])/25));
+        for(let m=0;m<n;m++){const a=lerp(P[s],P[s+1],m/n),b=lerp(P[s],P[s+1],(m+1)/n);
+          if(owner(mid(a,b))===i){if(cur&&dist(cur[cur.length-1],a)<0.5)cur.push(b);else{cur=[a,b];runs.push(cur)}}else cur=null}}
+      if(runs.length)V.hws.push({nom:h.nom,runs,d:runs.map(r=>"M"+r.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")).join("")})});
+    G.exits.forEach(x=>{const p=T(x.p);if(owner(p)===i)V.exits.push({...x,p,n:ex++,q:it.q.nom})});
+    G.gates.forEach(x=>{const p=T(x.p);if(owner(p)===i)V.gates.push({...x,p,q:it.q.nom})});
+    G.inter.forEach(x=>{const p=T(x.p);if(owner(p)===i)V.inter.push({...x,p,q:it.q.nom})});
+    G.lms.forEach(l=>{const p=T(l.p),o=owner(p),own=o===i,cur=lmBest[l.code];if(o<0)return;if(!cur||(own&&!cur.own))lmBest[l.code]={...l,p,own}});
+    V.outlines.push(it.fp);
+    V.titles.push({t:it.q.nom.split(/ [—&]/)[0].toUpperCase(),p:it.t,fs:it.id==="executive-zone"?30:46});
+  });
+  V.lms=Object.values(lmBest);
+  /* ponts reliant les quartiers */
+  VILLE.ponts.forEach(b=>{const p=b.pts.map(C);V.hws.push({nom:b.nom,runs:[p],d:"M"+p.map(q=>q.join(" ")).join("L")})});
+  /* fond : eau partout, terres = emprises des quartiers + îles */
+  VILLE.terres.forEach(t=>{const c=C(t.c);land+=`<ellipse cx="${c[0]}" cy="${c[1]}" rx="${t.rx*K}" ry="${t.ry*K}" fill="#0b120e" stroke="#1f6f8f" stroke-width="3"/>`;V.titles.push({t:t.nom,p:[c[0],c[1]+12],fs:34})});
+  V.base=`<rect width="${V.W}" height="${V.H}" fill="url(#waves-ville)"/>${land}`;
+  V.defs=defs;
+  VILLE.eau.forEach(([t,x,y])=>V.water.push({p:[[0,0]],nom:t,lp:C([x,y]),fs:40}));
+  V.nbStreets=names.size;
+  return CACHE.__ville=renderSVG(V);
 }
 
 /* ------------------------- visionneuse zoomable ------------------------- */
@@ -457,6 +535,16 @@ const CSS=`
 .nc-svg text.t-loc{fill:#b9f5d6}.nc-svg text.t-av{fill:#eafff4;font-weight:bold}.nc-svg text.t-hw{fill:#ffcf57;font-weight:bold;letter-spacing:2px}
 .nc-svg text.t-lm{paint-order:stroke;stroke:#020604;stroke-width:3px}
 .nc-box.z0 .t-loc,.nc-box.z0 .t-av,.nc-box.z0 .t-lm,.nc-box.z1 .t-loc,.nc-box.z1 .t-lm{display:none}
+.nc-leg{position:absolute;left:8px;top:8px;z-index:3;width:250px;max-height:calc(100% - 52px);overflow:auto;background:#000d;border:1px solid var(--c);box-shadow:0 0 12px var(--dim);padding:8px 10px;font-size:11px;line-height:1.35;cursor:default}
+.nc-leg.off{display:none}
+.nc-leg-h{font-weight:bold;letter-spacing:.15em;display:flex;justify-content:space-between;border-bottom:1px solid var(--dim);padding-bottom:4px;margin-bottom:4px}
+.nc-north{letter-spacing:0}
+.nc-leg-r{display:flex;align-items:center;gap:8px;padding:1px 0}.nc-leg-r svg{flex:none}
+.nc-leg-s{margin-top:6px;font-weight:bold;letter-spacing:.08em;opacity:.8}
+.nc-leg-lm div{padding:1px 0}.nc-leg-lm b{display:inline-block;min-width:26px;text-align:center;color:#000;margin-right:6px}
+.nc-leg-t{opacity:.85}
+.nc-scale{margin-top:6px;display:flex;align-items:center;gap:6px}.nc-scale i{display:block;height:6px;border:2px solid var(--c);border-top:0}
+.nc-svg text.t-dist{fill:#00ff9c;fill-opacity:.55;paint-order:stroke;stroke:#020604;stroke-width:6px}
 .nc-legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 14px;font-size:12px;margin-top:8px}
 .nc-legend span{display:inline-block;width:26px;height:8px;margin-right:8px;vertical-align:middle}
 .nc-lms{columns:2 240px;font-size:12px;margin-top:8px}
@@ -469,65 +557,96 @@ const CSS=`
 `;
 let cssDone=false;const css=()=>{if(cssDone)return;cssDone=true;const st=document.createElement("style");st.textContent=CSS;document.head.append(st)};
 
+/* ------------------------- légende affichée sur la carte ------------------------- */
+const CATN={CR:"Corporations",PU:"Services publics",HB:"Hôtels, bars, restaurants",CH:"Cube hotels",CC:"Camps de conteneurs",NL:"Clubs, vie nocturne",AS:"Spectacles, sport",CA:"Culture, art",OT:"Autres lieux"};
+function legendHTML(G,ville){
+  const has=c=>G.edges.some(e=>e.cls===c),sw=(st)=>`<svg width="34" height="12" viewBox="0 0 34 12">${st}</svg>`;
+  const line=(c,w,dash)=>sw(`<line x1="2" y1="6" x2="32" y2="6" stroke="#020604" stroke-width="${w+3}" stroke-linecap="round"/><line x1="2" y1="6" x2="32" y2="6" stroke="${c}" stroke-width="${w}" stroke-linecap="round" ${dash?`stroke-dasharray="${dash}"`:""}/>`);
+  const box=(f,s,extra="")=>sw(`<rect x="3" y="1" width="28" height="10" fill="${f}" stroke="${s}" stroke-width="1.5" ${extra}/>`);
+  const r=[];
+  if(G.hws.length)r.push([line("#ffb000",7),"Autoroute / pont"]);
+  if(G.exits.length)r.push([sw(`<circle cx="17" cy="6" r="5.5" fill="#ffb000" stroke="#000" stroke-width="1.5"/><text x="17" y="8.6" font-size="7" text-anchor="middle" font-weight="bold" font-family="monospace">1</text>`),"Sortie d'autoroute numérotée"]);
+  if(has("bd"))r.push([line("#00e08d",5),"Boulevard (limite de secteur)"]);
+  if(has("av"))r.push([line("#00c27a",4.5),"Avenue / route côtière"]);
+  if(has("loc"))r.push([line("#2b6b4f",2.5),"Rue"]);
+  if(has("wall"))r.push([line("#ff2a3d",4,"2 1.5"),"Mur d'enceinte"]);
+  if(G.gates.length)r.push([sw(`<rect x="11" y="0" width="12" height="12" fill="#ff2a3d" stroke="#000"/>`),"Porte / poste de contrôle"]);
+  if(G.parks.length||G.plazas.length)r.push([box("#0f3320","#1d6b3f"),"Parc, place"]);
+  if(G.water.length)r.push([box("#05141d","#1f6f8f"),"Eau"]);
+  if(G.restr.length)r.push([box("#3a0f14","#ff2a3d",'stroke-dasharray="3 2"'),"Zone interdite"]);
+  if(ville)r.push([sw(`<line x1="2" y1="6" x2="32" y2="6" stroke="#00ff9c" stroke-opacity=".6" stroke-width="2" stroke-dasharray="5 3"/>`),"Limite de quartier"]);
+  const cats=[...new Set(G.lms.map(l=>l.code.slice(0,2)))].sort();
+  const lm=cats.map(c=>`<div><b style="background:${CAT[c]||"#ccc"}">${c}</b>${CATN[c]||c}</div>`).join("");
+  const nc=Math.ceil(G.W/G.cell),nr=Math.ceil(G.H/G.cell);
+  return `<div class="nc-leg-h">LÉGENDE <span class="nc-north" title="Nord">▲ N</span></div>
+    ${r.map(([s,t])=>`<div class="nc-leg-r">${s}<span>${t}</span></div>`).join("")}
+    ${lm?`<div class="nc-leg-s">LIEUX (CODE DE LA CARTE OFFICIELLE)</div><div class="nc-leg-lm">${lm}</div>`:""}
+    <div class="nc-leg-s">REPÉRAGE</div><div class="nc-leg-t">Grille A–${String.fromCharCode(64+nc)} / 1–${nr} (ex. « F7 »)${ville?"":", une case ≈ 100 m"}.<br>Toucher un carrefour, une sortie ou un lieu pour son nom.</div>
+    <div class="nc-scale"><i></i><span></span></div>`;
+}
+
 /* ---------------------------- page CARTE ---------------------------- */
 function render(view,id){
   css();document.body.classList.add("wide");
-  const q=QUARTIERS.find(x=>x.id===id);
+  const ville=id==="ville",q=ville?{id:"ville",nom:"Night City — plan complet",desc:"Assemblage des 13 plans de quartier à leur place sur la carte de Night City : mêmes rues, mêmes noms, mêmes carrefours. Zoomer pour faire apparaître les noms des rues."}:QUARTIERS.find(x=>x.id===id);
+  const tab=(h,t,on)=>`<a href="${h}"><button class="${on?"on":""}">${t}</button></a>`;
   view.innerHTML=`<a href="#">← INDEX</a><h2>▓ CARTE // ${q?esc(q.nom.toUpperCase()):"NIGHT CITY"}</h2>
-    <div class="nc-tabs"><a href="#carte"><button class="${q?"":"on"}">NIGHT CITY</button></a>${QUARTIERS.map(x=>`<a href="#carte-${x.id}"><button class="${q&&q.id===x.id?"on":""}">${esc(x.nom.split(/ [—&]/)[0].toUpperCase())}</button></a>`).join("")}</div>
+    <div class="nc-tabs">${tab("#carte","NIGHT CITY",!q)}${tab("#carte-ville","▦ PLAN COMPLET",ville)}${QUARTIERS.map(x=>tab("#carte-"+x.id,esc(x.nom.split(/ [—&]/)[0].toUpperCase()),q&&q.id===x.id)).join("")}</div>
     ${q?`<p><small>${esc(q.desc)}</small></p>`:""}
-    <div class="nc-box"><div class="nc-inner"></div><div class="nc-tools"><button data-z="in" title="Zoomer">+</button><button data-z="out" title="Dézoomer">−</button><button data-z="fit" title="Vue entière">⤢</button><button data-z="fs" title="Plein écran">⛶</button></div><div class="nc-tip"></div>
-    <div class="nc-hint">${q?"MOLETTE / PINCER : ZOOM · GLISSER : DÉPLACER · TOUCHER UN CARREFOUR : NOMS DES RUES":"MOLETTE / PINCER : ZOOM · GLISSER : DÉPLACER · DOUBLE-CLIC : ZOOM"}</div></div>
+    <div class="nc-box"><div class="nc-inner"></div>
+      <div class="nc-tools"><button data-z="in" title="Zoomer">+</button><button data-z="out" title="Dézoomer">−</button><button data-z="fit" title="Vue entière">⤢</button><button data-z="fs" title="Plein écran">⛶</button>${q?`<button data-z="leg" title="Légende">ⓘ</button>`:""}</div>
+      ${q?`<div class="nc-leg"></div>`:""}<div class="nc-tip"></div>
+      <div class="nc-hint">MOLETTE / PINCER : ZOOM · GLISSER : DÉPLACER${q?" · TOUCHER UN CARREFOUR : NOMS DES RUES":""}</div></div>
     <div id="nc-info"></div>`;
-  const box=$(".nc-box",view),inner=$(".nc-inner",view),tip=$(".nc-tip",view);
+  const box=$(".nc-box",view),inner=$(".nc-inner",view),tip=$(".nc-tip",view),leg=$(".nc-leg",view);
   let w,h,data=null;
-  if(q){data=build(q);w=W;h=H;inner.innerHTML=data.svg}
+  if(q){data=ville?buildCity():build(q);w=data.W;h=data.H;inner.innerHTML=data.svg}
   else{w=IMG.w;h=IMG.h;inner.innerHTML=`<img src="${IMG.src}" alt="Carte de Night City" width="${w}" height="${h}" draggable="false">`}
   inner.style.width=w+"px";inner.style.height=h+"px";
+  const R=p=>ref(p,data);
   const sel=q?inner.querySelector(".sel"):null;
   const showTip=(html,scr,p)=>{tip.innerHTML=html;tip.style.display="block";const r=box.getBoundingClientRect();
     tip.style.left=Math.min(Math.max(8,scr[0]+14),r.width-290)+"px";tip.style.top=Math.min(Math.max(8,scr[1]+14),r.height-90)+"px";
     if(sel&&p){sel.setAttribute("cx",p[0]);sel.setAttribute("cy",p[1])}};
   const hideTip=()=>{tip.style.display="none";if(sel){sel.setAttribute("cx",-50);sel.setAttribute("cy",-50)}};
+  const qd=o=>o.q?`<br><small>${esc(o.q)}</small>`:"";
   let lod=()=>{};
   const z=zoomable(box,inner,w,h,()=>lod(),(t,p,scr)=>{
     if(!data){hideTip();return}
     const el=t&&t.closest&&t.closest("[data-i],[data-x],[data-g],[data-l]");
     if(!el){hideTip();return}
-    if(el.dataset.i){const it=data.inter[+el.dataset.i];showTip(`<b>▓ CARREFOUR ${ref(it.p)}</b>${esc(it.a)}<br>× ${esc(it.b)}`,scr,it.p)}
-    else if(el.dataset.x){const x=data.exits[+el.dataset.x];showTip(`<b>▓ ${esc(x.hw)} — SORTIE ${x.n}</b>${esc(x.rue)} · ${ref(x.p)}`,scr,x.p)}
-    else if(el.dataset.g){const g=data.gates[+el.dataset.g];showTip(`<b>▓ PORTE — POSTE DE CONTRÔLE</b>${esc(g.rue)} · ${ref(g.p)}`,scr,g.p)}
-    else if(el.dataset.l){const l=data.lms[+el.dataset.l];showTip(`<b>▓ ${esc(l.code)}</b>${esc(l.nom)} · ${ref(l.p)}`,scr,l.p)}});
-  /* niveaux de détail selon le zoom (taille réelle des textes à l'écran) */
-  lod=()=>{const k=z.scale()*Math.min(box.clientWidth/w,box.clientHeight/h);box.classList.toggle("z0",k<0.5);box.classList.toggle("z1",k>=0.5&&k<0.85)};
+    if(el.dataset.i){const it=data.inter[+el.dataset.i];showTip(`<b>▓ CARREFOUR ${R(it.p)}</b>${esc(it.a)}<br>× ${esc(it.b)}${qd(it)}`,scr,it.p)}
+    else if(el.dataset.x){const x=data.exits[+el.dataset.x];showTip(`<b>▓ ${esc(x.hw)} — SORTIE ${x.n}</b>${esc(x.rue)} · ${R(x.p)}${qd(x)}`,scr,x.p)}
+    else if(el.dataset.g){const g=data.gates[+el.dataset.g];showTip(`<b>▓ PORTE — POSTE DE CONTRÔLE</b>${esc(g.rue)} · ${R(g.p)}`,scr,g.p)}
+    else if(el.dataset.l){const l=data.lms[+el.dataset.l];showTip(`<b>▓ ${esc(l.code)}</b>${esc(l.nom)} · ${R(l.p)}`,scr,l.p)}});
+  /* niveaux de détail + échelle selon le zoom */
+  const MPP=ville?1/1.25:1; /* mètres par unité de carte (indicatif sur le plan complet) */
+  lod=()=>{const fs=Math.min(box.clientWidth/w,box.clientHeight/h),k=z.scale()*fs;
+    box.classList.toggle("z0",k<0.5);box.classList.toggle("z1",k>=0.5&&k<0.85);
+    if(leg){const pxm=k/MPP,m=[10,20,50,100,200,500,1000,2000].find(v=>v*pxm>=60)||2000;
+      const sc=leg.querySelector(".nc-scale");if(sc){sc.querySelector("i").style.width=(m*pxm).toFixed(0)+"px";sc.querySelector("span").textContent=(m>=1000?m/1000+" km":m+" m")+(ville?" (approx.)":"")}}};
+  if(leg){leg.innerHTML=legendHTML(data,ville);if(box.clientWidth<700)leg.classList.add("off")}
   $(".nc-tools",view).onclick=e=>{const a=e.target.closest("button")?.dataset.z;if(!a)return;hideTip();
     if(a==="in")z.zin();if(a==="out")z.zout();if(a==="fit")z.fit();
+    if(a==="leg")leg.classList.toggle("off");
     if(a==="fs"){if(document.fullscreenElement)document.exitFullscreen();else box.requestFullscreen?.().catch(()=>{})}};
   document.addEventListener("fullscreenchange",()=>{if(box.isConnected)setTimeout(z.fit,60)});
-  box.addEventListener("pointerdown",e=>{if(!e.target.closest(".nc-tools"))hideTip()});
+  box.addEventListener("pointerdown",e=>{if(!e.target.closest(".nc-tools,.nc-leg"))hideTip()});
   requestAnimationFrame(z.fit);
-  /* légende */
+  /* sous la carte : chiffres, recherche, liste des lieux */
   const info=$("#nc-info",view);
-  if(!q){info.innerHTML=`<p><small>CARTE GÉNÉRALE (SOURCE : CARTE NON OFFICIELLE CYBERPUNK RED). CHOISISSEZ UN QUARTIER CI-DESSUS POUR SON PLAN ROUTIER DÉTAILLÉ.</small></p>`;return}
-  info.innerHTML=`<div class="panel" style="margin-top:10px"><div>▓ LÉGENDE — ${data.nbStreets} RUES · ${data.inter.length} CARREFOURS${data.exits.length?" · "+data.exits.length+" SORTIES D'AUTOROUTE":""}</div>
-    <div class="nc-legend"><div><span style="background:#ffb000"></span>Autoroute / pont (sorties numérotées)</div><div><span style="background:#00e08d"></span>Boulevard / route côtière</div>
-    <div><span style="background:#00c27a"></span>Avenue (axe principal)</div><div><span style="background:#2b6b4f"></span>Rue</div>
-    ${data.gates.length?`<div><span style="background:#ff2a3d"></span>Mur d'enceinte · ⛨ porte</div>`:""}
-    <div><span style="background:#0f3320;border:1px solid #1d6b3f"></span>Parc</div><div><span style="background:#05141d;border:1px solid #1f6f8f"></span>Eau</div>
-    ${q.restricted?`<div><span style="background:repeating-linear-gradient(45deg,#ff2a3d55 0 4px,#1a0a0c 4px 8px)"></span>Zone interdite</div>`:""}
-    <div>A–P / 1–11 : grille de repérage (100 m env.)</div></div>
+  if(!q){info.innerHTML=`<p><small>CARTE GÉNÉRALE (SOURCE : CARTE NON OFFICIELLE CYBERPUNK RED). « PLAN COMPLET » : TOUTE LA VILLE AU STYLE DES PLANS DE QUARTIER. LES AUTRES ONGLETS : PLAN ROUTIER DÉTAILLÉ DE CHAQUE QUARTIER.</small></p>`;return}
+  info.innerHTML=`<div class="panel" style="margin-top:10px"><div>▓ ${data.nbStreets} RUES · ${data.inter.length} CARREFOURS${data.exits.length?" · "+data.exits.length+" SORTIES D'AUTOROUTE":""}${data.lms.length?" · "+data.lms.length+" LIEUX":""}</div>
     <div class="nc-search"><input id="nc-q" placeholder="Chercher une rue ou un lieu…" autocomplete="off" spellcheck="false"></div><div class="nc-res" id="nc-r"></div>
-    ${data.lms.length?`<div class="nc-lms">${data.lms.map(l=>`<div><b style="background:${l.col}">${esc(l.code)}</b>${esc(l.nom)} · ${ref(l.p)}</div>`).join("")}</div>`:""}</div>`;
-  /* recherche : centre la carte sur le résultat */
+    ${data.lms.length?`<div class="nc-lms">${data.lms.map(l=>`<div><b style="background:${l.col}">${esc(l.code)}</b>${esc(l.nom)} · ${R(l.p)}</div>`).join("")}</div>`:""}</div>`;
   const qi=$("#nc-q",view),res=$("#nc-r",view);
   qi.oninput=()=>{const v=qi.value.trim().toLowerCase();if(v.length<2){res.innerHTML="";return}
-    const hits=[];data.lms.forEach((l,i)=>{if((l.code+" "+l.nom).toLowerCase().includes(v))hits.push({t:`${l.code} — ${l.nom}`,p:l.p})});
-    const seenN=new Set();data.inter.forEach(it=>{[it.a,it.b].forEach(n=>{if(n.toLowerCase().includes(v)&&!seenN.has(n)){seenN.add(n);hits.push({t:n,p:it.p})}})});
-    res.innerHTML=hits.slice(0,30).map((h,i)=>`<button data-k="${i}">${esc(h.t)} · ${ref(h.p)}</button>`).join("")||"<small>AUCUN RÉSULTAT</small>";
-    res.querySelectorAll("button").forEach(b=>b.onclick=()=>{const h=hits[+b.dataset.k];center(h.p);showTip(`<b>▓ ${esc(h.t)}</b>${ref(h.p)}`,[box.clientWidth/2,box.clientHeight/2],h.p)})};
-  const center=p=>{z.centerOn(p,3);box.scrollIntoView({behavior:"smooth",block:"center"})};
+    const hits=[];data.lms.forEach(l=>{if((l.code+" "+l.nom).toLowerCase().includes(v))hits.push({t:`${l.code} — ${l.nom}`,p:l.p})});
+    const seenN=new Set();data.inter.forEach(it=>{[it.a,it.b].forEach(n=>{const key=n+(it.q||"");if(n.toLowerCase().includes(v)&&!seenN.has(key)){seenN.add(key);hits.push({t:n+(it.q?" ("+it.q.split(/ [—&]/)[0]+")":""),p:it.p})}})});
+    res.innerHTML=hits.slice(0,30).map((h,i)=>`<button data-k="${i}">${esc(h.t)} · ${R(h.p)}</button>`).join("")||"<small>AUCUN RÉSULTAT</small>";
+    res.querySelectorAll("button").forEach(b=>b.onclick=()=>{const h=hits[+b.dataset.k];z.centerOn(h.p,ville?6:3);lod();box.scrollIntoView({behavior:"smooth",block:"center"});showTip(`<b>▓ ${esc(h.t)}</b>${R(h.p)}`,[box.clientWidth/2,box.clientHeight/2],h.p)})};
 }
 const $=(s,e=document)=>e.querySelector(s);
 
-window.NC_CARTE={render,QUARTIERS,build};
+window.NC_CARTE={render,QUARTIERS,build,buildCity};
 })();
