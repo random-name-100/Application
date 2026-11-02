@@ -1,200 +1,36 @@
 /* =====================================================================
    BEYOND HUMAN // CARTES DE NIGHT CITY
-   - Onglet CARTE : carte générale (image) + cartes routières par quartier
-   - Les cartes de quartier sont générées (SVG) à partir de la configuration
-     QUARTIERS ci-dessous : réseau routier, noms de rues, carrefours,
-     autoroutes et sorties, lieux de la carte générale, grille de repérage.
-   - Coordonnées des configurations : 0 → 1 (x de gauche à droite, y de haut en bas)
+   - Une seule ville cohérente : chaque quartier remplit son emprise sur la
+     carte officielle avec son propre réseau de rues (style, densité, noms).
+   - Les plans de quartier sont des vues du plan complet : mêmes rues,
+     mêmes autoroutes, mêmes lieux, même grille de repérage partout.
+   - Coordonnées de configuration : repère de la carte officielle (2000 × 1332).
    ===================================================================== */
 (function(){
 "use strict";
-const W=1600,H=1100;
 const IMG={src:"Images/Carte/night-city.jpg",w:3615,h:2408};
 
 /* ---------------------------------------------------------------------
-   CONFIGURATION DES QUARTIERS
-   zones  : 1re zone = tout le plan ; les suivantes remplacent la 1re dans leur polygone.
-            angle (°), sx/sy (espacement des rues en px), drop (part de tronçons supprimés),
-            av:[n,m] (une avenue toutes les n colonnes / m rangées), warp:[amplitude,longueur],
-            border (nom du boulevard qui borde la zone), walled (mur avec portes sur les avenues),
-            style:"radial" (anneaux + rayons : cx,cy,r,rings,spokes)
-   water / parks / restricted : polygones ; hw : autoroutes ; lm : lieux [code,nom,x,y]
+   QUARTIERS (ordre = priorité quand deux emprises se chevauchent)
+   fp : emprise sur la carte officielle · t : position du nom · coast : route côtière
+   limite : nom du boulevard de limite · zones : 1re = tout le quartier, suivantes = secteurs
+   (poly), avec angle, espacement sx/sy, drop, av, warp, border, rues/avenues propres ;
+   style "radial" : c (centre), r, rings, spokes
    --------------------------------------------------------------------- */
-const QUARTIERS=[
-{id:"watson",nom:"Watson",seed:11,
- desc:"Ancien district industriel au nord, docks et usines au sud-est, base militaire de NorCal au nord.",
- water:[{poly:[[0,0],[0.1,0],[0.08,0.35],[0.13,0.62],[0.24,0.8],[0.34,0.88],[0.4,1],[0,1]],nom:"SAN MORRO BAY",lx:0.05,ly:0.62},
-        {poly:[[0.47,1],[0.5,0.94],[0.62,0.91],[0.75,0.94],[0.79,1]],nom:"CHENAL DE WATSON",lx:0.63,ly:0.97}],
- coast:"Waterfront Dr",
- restricted:[{poly:[[0.14,0],[0.7,0],[0.68,0.12],[0.16,0.12]],nom:"NORCAL MILITARY BASE — ZONE INTERDITE"}],
- zones:[{angle:-6,sx:78,sy:66,warp:[6,180],drop:.07,av:[5,4]},
-        {poly:[[0.46,0.48],[0.86,0.42],[0.88,0.92],[0.5,0.92]],angle:18,sx:118,sy:94,drop:.15,av:[3,3],border:"Foundry Blvd",
-         rues:["Container","Forklift","Freight","Cargo","Stevedore","Bollard","Hoist","Tanker","Barge","Drydock","Welder","Conveyor"],avenues:["Dockyard","Shipyard","Longshore"]}],
- hw:[{nom:"US-16",pts:[[0.43,0],[0.44,0.2],[0.47,0.45],[0.55,0.7],[0.6,0.88],[0.62,1]]}],
- voisins:[["NEW WESTBROOK →",0.93,0.62],["↓ CITY CENTER",0.66,0.985]],
- lm:[["CR11","Militech",0.24,0.16],["CR09","SovOil",0.55,0.16],["CR08","Petrochem",0.75,0.24],["CR10","Trauma Team Tower",0.4,0.33],
-     ["CH07","Watson Central Cubelife",0.33,0.45],["PU05","NCPD Precinct #3",0.27,0.62],["CC06","North Cargo Village",0.93,0.4],["CR15","WorldSat",0.94,0.18]],
- rues:["Kabuki","Ishikawa","Ginza","Sakura","Hanami","Kowloon","Shinbashi","Morita","Docklands","Rivet","Anvil","Crane","Ironworks","Sentinel","Pylon","Harbor","Kiyomi","Nakano","Tetsuo","Akasaka","Yokohama","Bluewater","Smelter","Gantry","Cobalt","Slag"],
- avenues:["Northside","Watson","Arroyo","Kenji","Militech","Tsunami","Gateway","Meridian"],num:"N "},
+const QUARTIERS=[{"id":"executive-zone","nom":"Executive Zone","court":"EXECUTIVE ZONE","seed":101,"desc":"Enclave fortifiée des élites corporatistes : mur à bastions, accès uniquement par les portes des avenues.","fp":[[1430,395],[1530,395],[1556,368],[1546,410],[1546,470],[1556,500],[1530,482],[1430,482],[1404,500],[1414,470],[1414,410],[1404,368]],"t":[1480,355],"coast":null,"limite":"Mur d'enceinte","walled":true,"num":"X ","zones":[{"angle":0,"sx":46,"sy":42,"drop":0.02,"av":[4,4]}],"rues":["Platinum","Sovereign","Aurora","Monarch","Regent","Opal","Sapphire","Ivory","Gilded","Prestige","Belvedere","Majestic","Solstice","Celestial","Crystal","Marquis","Diamond","Pinnacle","Laureate","Emerald","Aristocrat","Orchid","Ambassador","Grandview","Bellevue","Riviera","Cashmere","Velour","Champagne","Caviar","Penthouse","Concierge","Yacht","Chateau","Villa","Marble"],"avenues":["Executive","Summit","Zenith","Olympus","Elysium","Crown","Apex","Panorama"]},
+{"id":"city-center","nom":"City Center — Corp Center, Bank Block, Med Center","court":"CITY CENTER","seed":37,"desc":"Cœur corporatiste : Corp Plaza en anneaux, tours bancaires au nord-est, Med Center à l'est, Lake Park au sud-ouest.","fp":[[870,445],[1080,445],[1080,520],[1200,540],[1210,610],[1150,660],[1040,700],[880,690],[875,560]],"t":[985,515],"coast":null,"limite":"Downtown Blvd","walled":false,"num":"C ","zones":[{"angle":0,"sx":70,"sy":62,"warp":[3,220],"drop":0.03,"av":[4,4]},{"angle":24,"sx":72,"sy":62,"drop":0.05,"av":[3,3],"border":"Med Center Pkwy","rues":["Pulse","Scalpel","Suture","Triage","Cortex","Synapse","Marrow","Plasma","Vital","Serum","Neuron","Retina","Clinic","Ward","Pharma","Surgeon"],"avenues":["Hippocrates","Trauma","Caduceus","Remedy"],"poly":[[1080,520],[1200,540],[1210,610],[1150,660],[1080,640]]},{"style":"radial","c":[955,598],"r":215,"rings":[55,110,165],"spokes":16,"rot":0,"border":"Grand Circle Blvd","plaza":"CORP PLAZA"}],"rues":["Arasaka","Kang Tao","Petrochem","Biotech","Zetatech","Kiroshi","Dynalar","Orbital","Netwatch","Ziggurat","Ironcrown","Raven","Merrill","Asukaga","Finch","Highcourt","Halcyon","Sterling","Obsidian","Paragon","Vantage","Chrome","Ledger","Bourse","Tycoon","Mercator","Dividend","Holding","Trust","Capital","Equity","Futures"],"avenues":["Corporation","Plaza","Bank","Exchange","Capitol","Concord","Senate","Sovereign","Obelisk","Spire","Meridian","Atlas","Pinnacle","Monolith","Helix","Quantum","Vector","Cortex","Axiom","Nexus","Prism","Titan"]},
+{"id":"upper-marina","nom":"Upper Marina","court":"UPPER MARINA","seed":41,"desc":"Front de mer huppé au nord-est : port de plaisance, ferry, stade McCartney, l'Afterlife.","fp":[[1080,400],[1160,395],[1250,430],[1300,480],[1330,540],[1210,610],[1200,540],[1080,520]],"t":[1195,470],"coast":"Bayfront Esplanade","limite":"Harborline Ave","walled":false,"num":"E ","zones":[{"angle":30,"sx":72,"sy":64,"warp":[5,200],"drop":0.05,"av":[4,4]},{"angle":0,"sx":72,"sy":62,"drop":0.04,"av":[4,4],"border":"Marina Blvd","rues":["Stadium","Bleacher","Touchdown","Marquee","Encore","Matinee","Velvet","Spotlight","Jukebox","Cabaret","Ticket","Arcade","Premiere","Ballroom"],"avenues":["Cinemaxus","Broadway","Showtime"],"poly":[[1080,470],[1170,470],[1200,540],[1080,520]]}],"rues":["Anchor","Harbor","Pier","Seawall","Spinnaker","Regatta","Lighthouse","Mariner","Coral","Keel","Galleon","Compass","Tidewater","Driftwood","Saltair","Bayview","Clipper","Starboard","Pelican","Breakwater","Mooring","Schooner","Ferry","Gull","Kelp","Neptune","Sailcloth","Buoy","Rigging","Gangway","Halyard","Mast","Tiller","Bowline","Capstan","Fathom"],"avenues":["Marina","Ocean","McCartney","Afterlife","Admiral","Pacific","Commodore","Shoreline"]},
+{"id":"little-china","nom":"Little China & Old Japan Town","court":"LITTLE CHINA","seed":53,"desc":"Rues denses en diagonale de Little China, damier d'Old Japan Town à l'ouest, US-16 le long de la baie.","fp":[[1210,610],[1330,540],[1380,600],[1275,705],[1150,780],[1040,760],[1040,700],[1150,660]],"t":[1240,650],"coast":"Bayfront Rd","limite":"Pagoda Gate Blvd","walled":false,"num":"E ","zones":[{"angle":35,"sx":70,"sy":60,"warp":[4,200],"drop":0.06,"av":[4,4]},{"angle":0,"sx":68,"sy":58,"drop":0.05,"av":[4,4],"border":"Nihonmachi Ave","rues":["Yamato","Shogun","Kyoto","Osaka","Hokkaido","Torii","Bonsai","Ronin","Shibuya","Asakusa","Nagoya","Matsuri","Sakai","Kobe","Sendai","Hiroshima","Okinawa","Tatami","Origami","Samurai","Ginkgo","Fuji","Kamakura","Nara"],"avenues":["Japantown","Tokugawa","Meiji","Edo","Rising Sun","Sakuragi"],"poly":[[1040,700],[1150,660],[1185,700],[1150,780],[1040,760]]}],"rues":["Canton","Pagoda","Jade","Lotus","Shanghai","Mahjong","Lantern","Phoenix","Jasmine","Bamboo","Ginseng","Macau","Silk","Oolong","Fortune","Cathay","Peking","Ming","Tang","Han","Kowloon Gate","Wonton","Dim Sum","Abacus","Koi","Teahouse","Firecracker","Golden Lion","Harmony","Sampan"],"avenues":["Chinatown","Dragon","Jade Empire","Japantown","Pearl","Imperial","Emperor","Tiger"]},
+{"id":"old-combat-zone","nom":"Old Combat Zone","court":"OLD COMBAT ZONE","seed":83,"desc":"Ancienne zone de combat au sud-est, traversée en diagonale par l'US-16.","fp":[[1040,760],[1150,780],[1275,705],[1225,800],[1120,885],[1060,900]],"t":[1130,815],"coast":"Breakwater Rd","limite":"Firebreak Blvd","walled":false,"num":"SE ","zones":[{"angle":40,"sx":70,"sy":62,"warp":[6,170],"drop":0.14,"av":[4,4]},{"angle":0,"sx":72,"sy":62,"drop":0.1,"av":[4,4],"border":"Kennedy St","poly":[[1040,760],[1100,770],[1100,880],[1060,900]]}],"rues":["Mercenary","Napalm","Bunker","Ambush","Trench","Tracer","Bullet","Molotov","Grenade","Sniper","Barrage","Outpost","Siege","Patrol","Mortar","Flak","Recon","Sabotage","Fortress","Bastion","Garrison","Rampart","Flank","Raider","Volley","Sortie","Shellshock","Crossfire","Tripwire","Claymore","Foxhole","Bayonet","Kevlar","Hardpoint","Firebase","Dogtag","Ammo","Breach","Overwatch","Holdout","Sandbag","Killbox","Gunsmoke","Rifle","Muzzle","Payload","Warhead","Ricochet","Salvo","Skirmish","Cordon"],"avenues":["Combat Zone","Old Industrial","Precinct","Lockjaw","Ironside","Warpath","Arsenal","Kevlar"]},
+{"id":"the-glen","nom":"The Glen & Lake Park","court":"THE GLEN","seed":61,"desc":"Quartier civique : mairie, palais de justice, banques ; Lake Park au nord-ouest.","fp":[[880,690],[1040,700],[1040,760],[1060,900],[1000,960],[930,975],[880,940],[860,720]],"t":[945,830],"coast":"Southshore Dr","limite":"Civic Line","walled":false,"num":"S ","zones":[{"angle":-3,"sx":76,"sy":66,"warp":[4,200],"drop":0.04,"av":[4,4]},{"angle":30,"sx":72,"sy":62,"drop":0.1,"av":[3,3],"border":"Glen Blvd","poly":[[990,700],[1040,700],[1040,760],[1060,900],[1000,960],[990,900]]}],"rues":["Justice","Liberty","Charter","Union","Magistrate","Lakeview","Willow","Juniper","Sycamore","Elm","Cypress","Magnolia","Laurel","Linden","Poplar","Rosewood","Hawthorne","Ash","Birch","Cedar","Maple","Aspen","Chestnut","Alder","Hickory","Tribune","Courthouse","Gavel","Verdict","Jury","Docket","Statute","Ballot","Treasury","Archive","Mint","Census","Oath","Decree","Petition","Quorum","Bylaw","Amendment","Consul"],"avenues":["Glen","Mayor","Civic","Federal","Constitution","Founders","Republic","Senate"]},
+{"id":"little-europe","nom":"Little Europe & University District","court":"LITTLE EUROPE","seed":23,"desc":"Quartiers européens au nord, campus de la NCU au sud, côte ouest sur San Morro Bay.","fp":[[625,470],[700,415],[800,400],[1080,400],[1080,445],[870,445],[875,560],[880,690],[860,720],[700,725],[630,700],[640,600]],"t":[750,560],"coast":"Seawall Promenade","limite":"Old Town Blvd","walled":false,"num":"W ","zones":[{"angle":4,"sx":74,"sy":64,"warp":[5,200],"drop":0.06,"av":[4,4]},{"angle":-12,"sx":96,"sy":80,"drop":0.08,"av":[3,3],"border":"University Ave","rues":["Dean","Faculty","Thesis","Lecture","Tenure","Alumni","Library","Quad","Laboratory","Diploma","Seminar","Chancellor","Varsity","Fellowship","Graduate","Archive"],"avenues":["Campus","Scholar","Academy","Provost"],"poly":[[625,640],[880,630],[880,690],[860,720],[700,725],[630,700]]}],"rues":["Marseille","Vienna","Bruges","Kraków","Lisbon","Montmartre","Bavaria","Seville","Florence","Prague","Rotterdam","Lyon","Salzburg","Antwerp","Napoli","Bordeaux","Dublin","Geneva","Turin","Ghent","Porto","Hamburg","Verona","Sorbonne","Oxford","Bologna","Utrecht","Leuven","Basel","Ljubljana","Tallinn","Riga","Krakow Gate","Valencia","Toulouse","Strasbourg"],"avenues":["Europa","Heidelberg","Champs","Danube","Rhine","Campus","Scholar","Academy"]},
+{"id":"south-night-city","nom":"South Night City","court":"SOUTH NIGHT CITY","seed":73,"desc":"Zone de combat : rues défoncées, docks au sud-ouest, pont vers Pacifica au sud.","fp":[[630,700],[700,725],[860,720],[880,940],[930,975],[1000,960],[990,1000],[830,1000],[720,965],[660,880],[625,780]],"t":[770,860],"coast":"Dockside Rd","limite":"Southline Blvd","walled":false,"num":"S ","zones":[{"angle":2,"sx":72,"sy":62,"warp":[7,160],"drop":0.13,"av":[4,4]},{"angle":-25,"sx":110,"sy":90,"drop":0.15,"av":[3,3],"border":"Dock Rd","poly":[[625,800],[740,850],[790,1000],[720,965],[660,880]]}],"rues":["Rust","Gutter","Scrap","Ashfall","Razorwire","Burnout","Cinder","Brimstone","Slagheap","Junkyard","Lockdown","Static","Barricade","Shrapnel","Blackout","Hollow","Vermin","Rubble","Graveyard","Tombstone","Smog","Grime","Shank","Cutthroat","Bleak","Gallows","Ratline","Scrapyard","Dumpster","Furnace Row","Crowbar","Lead Pipe","Chainlink","Barbwire","Sewer","Wreckage"],"avenues":["Combat","South","Warlord","Boneyard","Fallout","Chrome Skull","Salvage","Ironclad"]},
+{"id":"watson","nom":"Watson","court":"WATSON","seed":11,"desc":"Ancien district industriel au nord, docks et usines au sud-est, base militaire de NorCal au nord.","fp":[[715,0],[1100,0],[1100,335],[960,345],[900,335],[800,285],[730,180]],"t":[905,180],"coast":"Waterfront Dr","limite":"Watson Blvd","walled":false,"num":"N ","zones":[{"angle":-6,"sx":78,"sy":66,"warp":[6,180],"drop":0.07,"av":[5,4]},{"angle":18,"sx":118,"sy":94,"drop":0.15,"av":[3,3],"border":"Foundry Blvd","rues":["Container","Forklift","Freight","Cargo","Stevedore","Bollard","Hoist","Tanker","Barge","Drydock","Welder","Conveyor"],"avenues":["Dockyard","Shipyard","Longshore"],"poly":[[960,160],[1100,150],[1100,335],[960,345]]}],"rues":["Kabuki","Ishikawa","Ginza","Sakura","Hanami","Kowloon","Shinbashi","Morita","Docklands","Rivet","Anvil","Crane","Ironworks","Sentinel","Pylon","Harbor","Kiyomi","Nakano","Tetsuo","Akasaka","Yokohama","Bluewater","Smelter","Gantry","Cobalt","Slag"],"avenues":["Northside","Watson","Arroyo","Kenji","Militech","Tsunami","Gateway","Meridian"]},
+{"id":"new-westbrook","nom":"New Westbrook","court":"NEW WESTBROOK","seed":97,"desc":"Banlieue surpeuplée à l'est, entre l'US-828 et l'I-101, aux portes de l'Executive Zone.","fp":[[1100,0],[1700,0],[1700,620],[1365,620],[1365,590],[1330,500],[1300,430],[1180,345],[1100,335]],"t":[1320,250],"coast":"Bayview Dr","limite":"Northgate Blvd","walled":false,"num":"NE ","zones":[{"angle":12,"sx":66,"sy":58,"warp":[5,190],"drop":0.06,"av":[4,4]},{"angle":-20,"sx":70,"sy":60,"drop":0.06,"av":[3,3],"border":"Westbrook Blvd","poly":[[1420,0],[1570,0],[1570,300],[1440,280]]},{"poly":[[1570,0],[1700,0],[1700,620],[1580,620]],"angle":8,"sx":140,"sy":120,"warp":[10,200],"drop":0.3,"av":[2,2],"border":"Perimeter Rd"}],"rues":["Charter Hill","Northoak","Elmwood","Silverlake","Hillcrest","Oakmont","Pinecrest","Briarwood","Redwood","Fairview","Glenwood","Ridgeview","Brookside","Meadow","Kingsley","Ashford","Wellington","Belmont","Ivy","Windsor","Highland","Prescott","Crestwood","Sunset","Stonegate","Foxglove","Applewood","Bramble","Cherrywood","Dogwood","Evergreen","Fernhill","Goldenrod","Hazelnut","Ironwood","Lakeside","Mapleton","Northgate","Orchard","Primrose","Quailridge","Rosemont","Sagewood","Thornbury","Valleyview","Westgate","Wildflower","Woodbine","Yarrow","Ashgrove"],"avenues":["Westbrook","Northridge","Empire","Rockling","Skyline","Horizon","Network","Summit Ridge"]},
+{"id":"heywood","nom":"Heywood & Heywood Industrial Zone","court":"HEYWOOD","seed":113,"desc":"Territoire des Valentinos : rues en diagonale, zone industrielle au nord-est, trois autoroutes.","fp":[[1365,620],[1700,620],[1700,1332],[1300,1332],[1250,1120],[1150,1100],[1080,1040],[1150,960],[1260,830],[1365,700]],"t":[1470,1000],"coast":"Bayside Dr","limite":"Valentino Blvd","walled":false,"num":"H ","zones":[{"angle":25,"sx":70,"sy":60,"warp":[5,190],"drop":0.07,"av":[4,4]},{"angle":8,"sx":150,"sy":120,"drop":0.1,"av":[2,2],"border":"Industrial Pkwy","rues":["Furnace","Turbine","Piston","Boiler","Assembly","Warehouse","Smokestack","Rail Yard","Lathe","Crucible"],"avenues":["Ironworks","Factory","Zhirafa"],"poly":[[1380,640],[1570,640],[1560,900],[1400,880]]},{"poly":[[1580,620],[1700,620],[1700,1332],[1600,1332]],"angle":8,"sx":140,"sy":120,"warp":[10,200],"drop":0.3,"av":[2,2],"border":"Eastgate Rd"}],"rues":["Valentino","Esperanza","Santa Rosa","Del Sol","Los Feliz","Encanto","Alameda","Mariposa","Hacienda","La Paloma","Bonita","Cielo","Corazón","Guadalupe","Las Palmas","Mercado","Rosario","Tierra","Vista","Zapata","Coyote","Escondido","Fiesta","Solano","Tranquilo","Montaña","Abuela","Cantina","Sombra","Luna","Estrella","Pueblo","Plaza Mayor","Dolores","Primavera","Marisol"],"avenues":["Heywood","Valentinos","Mission","Camino Real","Glory Hill","Vallarta","Industrial","Sierra"]},
+{"id":"rancho-coronado","nom":"Rancho Coronado","court":"RANCHO CORONADO","seed":139,"desc":"Lotissements sinueux et impasses de banlieue, au sud de la baie de Del Coronado.","fp":[[840,1080],[1080,1040],[1150,1100],[1250,1120],[1300,1332],[840,1332]],"t":[960,1230],"coast":"Bayshore Dr","limite":"Ranchline Rd","walled":false,"num":"R ","zones":[{"angle":15,"sx":90,"sy":75,"warp":[28,140],"drop":0.2,"av":[4,3]},{"angle":-10,"sx":88,"sy":74,"warp":[30,120],"drop":0.2,"av":[3,3],"border":"Coronado Pkwy","poly":[[1080,1100],[1250,1120],[1300,1332],[1100,1332]]}],"rues":["Mesa Verde","Rancho","Sunnyvale","Palomino","Mustang","Bluebonnet","Prairie","Sagebrush","Cottonwood","Lariat","Saddleback","Canyon","Arroyo Seco","Juniper Hill","Pinto","Bronco","Stagecoach","Buckskin","Wagon Wheel","Rodeo","Cactus","Chaparral","Yucca","Tumbleweed","Corral","Mesquite","Bridle","Spur","Haystack","Buckboard","Rawhide","Barnwood","Silo","Windmill","Prairie Dog","Branding"],"avenues":["Rancho Coronado","Eagle Rock","Sunset Ranch","Del Coronado","Homestead","Frontier","Pioneer","Vaquero"]},
+{"id":"pacifica","nom":"Pacifica","court":"PACIFICA","seed":127,"desc":"Station balnéaire abandonnée : Playland by the Sea, front de mer, pont vers South Night City.","fp":[[600,1100],[700,1090],[840,1080],[840,1332],[560,1332],[540,1250],[570,1170]],"t":[700,1255],"coast":"Beachfront Rd","limite":"Pacific Line","walled":false,"num":"P ","zones":[{"angle":-4,"sx":82,"sy":70,"warp":[8,170],"drop":0.12,"av":[4,4]},{"angle":30,"sx":76,"sy":66,"drop":0.1,"av":[3,3],"border":"Boardwalk","poly":[[600,1100],[700,1090],[720,1230],[590,1240],[570,1170]]}],"rues":["Carnival","Sandcastle","Palisade","Surf","Seabreeze","Coconut","Paradise","Tiki","Sunrise","Oasis","Cabana","Flamingo","Lagoon","Dune","Riptide","Seashell","Promenade","Calypso","Mirage","Aloha","Malibu","Bayshore","Tropic","Coastline","Voodoo","Dogtown","Sunbather","Lifeguard","Parasol","Seagull","Starfish","Wave Rider","Driftwood","Shoreline","Tidepool","Sandbar"],"avenues":["Pacifica","Coastview","Grand Resort","Playland","West Wind","Seaside","Sunset Pier","Ocean Park"]}];
 
-{id:"little-europe",nom:"Little Europe & University District",seed:23,
- desc:"Quartiers européens au nord, campus de la NCU au sud, côte ouest sur San Morro Bay.",
- water:[{poly:[[0,0],[1,0],[1,0.05],[0.62,0.07],[0.32,0.05],[0.14,0.1],[0.1,0.28],[0.06,0.5],[0.1,0.72],[0.03,0.9],[0,0.92]],nom:"SAN MORRO BAY",lx:0.04,ly:0.3}],
- coast:"Seawall Promenade",
- zones:[{angle:4,sx:74,sy:64,warp:[5,200],drop:.06,av:[4,4]},
-        {poly:[[0.04,0.56],[1,0.5],[1,1],[0.04,1]],angle:-12,sx:96,sy:80,drop:.08,av:[3,3],border:"University Ave",
-         rues:["Dean","Faculty","Thesis","Lecture","Tenure","Alumni","Library","Quad","Laboratory","Diploma","Seminar","Chancellor","Varsity","Fellowship","Graduate","Archive"],avenues:["Campus","Scholar","Academy","Provost"]}],
- hw:[{nom:"US-16",pts:[[0,0.88],[0.18,0.83],[0.4,0.8],[0.7,0.84],[1,0.9]]}],
- voisins:[["CITY CENTER →",0.94,0.4]],
- lm:[["OT01","Camden Court",0.62,0.11],["OT02","Holy Angels Church",0.5,0.15],["CR05","Danger Girl",0.22,0.18],["PU08","NCFD Firestation #2",0.2,0.33],
-     ["CR04","Continental Brands",0.45,0.3],["HB12","Franciscini's Cafe",0.56,0.33],["HB10","Knight-Marriot Hotel",0.67,0.24],["CH04","Cube-A-Rama",0.75,0.3],
-     ["CH03","University Cubes",0.14,0.48],["NL03","Delirium",0.5,0.45],["HB06","Short Circuit",0.86,0.42],["PU11","Stuart Hospital",0.3,0.6],
-     ["CA02","NCU Fine Arts Campus",0.45,0.6],["CA03","Serengeti Gallery",0.6,0.6],["AS02","Biograph Theater",0.24,0.69],["CA01","Night City University",0.4,0.71],
-     ["HB17","Metro Café",0.27,0.78],["HB05","The Paragon",0.33,0.9],["HB16","McDonnell's",0.47,0.92],["NL04","MindNutz Lover",0.66,0.76],["CC01","University Cargo Bay",0.2,0.95]],
- rues:["Marseille","Vienna","Bruges","Kraków","Lisbon","Montmartre","Bavaria","Seville","Florence","Prague","Rotterdam","Lyon","Salzburg","Antwerp","Napoli","Bordeaux","Dublin","Geneva","Turin","Ghent","Porto","Hamburg","Verona","Sorbonne","Oxford","Bologna","Utrecht","Leuven","Basel","Ljubljana","Tallinn","Riga","Krakow Gate","Valencia","Toulouse","Strasbourg"],
- avenues:["Europa","Heidelberg","Champs","Danube","Rhine","Campus","Scholar","Academy"],num:"W "},
-
-{id:"city-center",nom:"City Center — Corp Center, Bank Block, Med Center",seed:37,
- desc:"Cœur corporatiste : Corp Plaza en anneaux, tours bancaires au nord-est, Med Center à l'est, Lake Park au sud-ouest.",
- parks:[{poly:[[0,0.74],[0.24,0.68],[0.34,0.88],[0.3,1],[0,1]],nom:"LAKE PARK",route:"Lakeshore Dr"}],
- zones:[{angle:0,sx:70,sy:62,warp:[3,220],drop:.03,av:[4,4]},
-        {poly:[[0.7,0.28],[1,0.22],[1,0.86],[0.74,0.82]],angle:24,sx:72,sy:62,drop:.05,av:[3,3],border:"Med Center Pkwy",
-         rues:["Pulse","Scalpel","Suture","Triage","Cortex","Synapse","Marrow","Plasma","Vital","Serum","Neuron","Retina","Clinic","Ward","Pharma","Surgeon"],avenues:["Hippocrates","Trauma","Caduceus","Remedy"]},
-        {style:"radial",cx:0.47,cy:0.48,r:270,rings:[70,135,200],spokes:16,rot:0,border:"Grand Circle Blvd",plaza:"CORP PLAZA"}],
- voisins:[["← LITTLE EUROPE",0.05,0.3],["UPPER MARINA ↗",0.92,0.06],["LITTLE CHINA →",0.94,0.93],["↓ THE GLEN",0.5,0.985]],
- lm:[["HB15","Metropolitan BBQ & Grill",0.44,0.07],["CH06","A dilapidated Cube Hotel",0.27,0.15],["HB03","Totentanz",0.57,0.13],
-     ["PU12","West Hill Library",0.1,0.4],["CR03","Biotechnica Campus",0.12,0.6],["PU09","City Medical Center",0.86,0.4],
-     ["HB02","Highcourt Plaza Hotel",0.86,0.6],["CC05","The Precipe",0.7,0.78],["PU17","Ling Po Public Library",0.93,0.16]],
- rues:["Arasaka","Kang Tao","Petrochem","Biotech","Zetatech","Kiroshi","Dynalar","Orbital","Netwatch","Ziggurat","Ironcrown","Raven","Merrill","Asukaga","Finch","Highcourt","Halcyon","Sterling","Obsidian","Paragon","Vantage","Chrome","Ledger","Bourse","Tycoon","Mercator","Dividend","Holding","Trust","Capital","Equity","Futures"],
- avenues:["Corporation","Plaza","Bank","Exchange","Capitol","Concord","Senate","Sovereign","Obelisk","Spire","Meridian","Atlas","Pinnacle","Monolith","Helix","Quantum","Vector","Cortex","Axiom","Nexus","Prism","Titan"],num:"C "},
-
-{id:"upper-marina",nom:"Upper Marina",seed:41,
- desc:"Front de mer huppé au nord-est : port de plaisance, ferry, stade McCartney, l'Afterlife.",
- water:[{poly:[[0,0],[1,0],[1,1],[0.92,1],[0.88,0.62],[0.79,0.36],[0.6,0.22],[0.4,0.15],[0.15,0.12],[0,0.14]],nom:"BAIE DE NIGHT CITY",lx:0.82,ly:0.12}],
- coast:"Bayfront Esplanade",
- zones:[{angle:30,sx:72,sy:64,warp:[5,200],drop:.05,av:[4,4]},
-        {poly:[[0,0.56],[0.55,0.6],[0.6,1],[0,1]],angle:0,sx:72,sy:62,drop:.04,av:[4,4],border:"Marina Blvd",
-         rues:["Stadium","Bleacher","Touchdown","Marquee","Encore","Matinee","Velvet","Spotlight","Jukebox","Cabaret","Ticket","Arcade","Premiere","Ballroom"],avenues:["Cinemaxus","Broadway","Showtime"]}],
- voisins:[["← CITY CENTER",0.05,0.8]],
- lm:[["PU14","Ferry building",0.53,0.22],["AS05","Yacht club",0.67,0.28],["CH09","McCartney Cubes",0.3,0.24],["AS04","McCartney Field Stadium",0.4,0.42],
-     ["AS03","Cinemaxus",0.27,0.55],["PU13","NC Postal Service",0.46,0.52],["HB14","American Bar",0.62,0.42],["HB01","The Afterlife",0.5,0.66],
-     ["CR07","Ziggurat",0.78,0.55],["HB20","La Lune Bleu",0.72,0.68],["CR06","REO Meatwagon",0.76,0.86],["HB13","24 Hour Cafe",0.58,0.92]],
- rues:["Anchor","Harbor","Pier","Seawall","Spinnaker","Regatta","Lighthouse","Mariner","Coral","Keel","Galleon","Compass","Tidewater","Driftwood","Saltair","Bayview","Clipper","Starboard","Pelican","Breakwater","Mooring","Schooner","Ferry","Gull","Kelp","Neptune","Sailcloth","Buoy","Rigging","Gangway","Halyard","Mast","Tiller","Bowline","Capstan","Fathom"],
- avenues:["Marina","Ocean","McCartney","Afterlife","Admiral","Pacific","Commodore","Shoreline"],num:"E "},
-
-{id:"little-china",nom:"Little China & Old Japan Town",seed:53,
- desc:"Rues denses en diagonale de Little China, damier d'Old Japan Town à l'ouest, US-16 le long de la baie.",
- water:[{poly:[[0.88,0],[1,0],[1,1],[0.62,1],[0.74,0.8],[0.84,0.5],[0.9,0.2]],nom:"BAIE DE NIGHT CITY",lx:0.92,ly:0.7}],
- coast:"Bayfront Rd",
- zones:[{angle:35,sx:70,sy:60,warp:[4,200],drop:.06,av:[4,4]},
-        {poly:[[0,0.34],[0.48,0.4],[0.52,1],[0,1]],angle:0,sx:68,sy:58,drop:.05,av:[4,4],border:"Nihonmachi Ave",
-         rues:["Yamato","Shogun","Kyoto","Osaka","Hokkaido","Torii","Bonsai","Ronin","Shibuya","Asakusa","Nagoya","Matsuri","Sakai","Kobe","Sendai","Hiroshima","Okinawa","Tatami","Origami","Samurai","Ginkgo","Fuji","Kamakura","Nara"],
-         avenues:["Japantown","Tokugawa","Meiji","Edo","Rising Sun","Sakuragi"]}],
- hw:[{nom:"US-16",pts:[[0.4,1],[0.55,0.75],[0.68,0.5],[0.78,0.25],[0.84,0]]}],
- voisins:[["← CITY CENTER",0.05,0.1],["↓ OLD COMBAT ZONE",0.3,0.985]],
- lm:[["PU17","Ling Po Public Library",0.52,0.08],["CC09","Bridgetown",0.76,0.12],["HB04","The Forlorn Hope",0.7,0.3],["PU10","Crisis Medical Center",0.24,0.3],
-     ["HB18","Chen's Oriental Garden",0.42,0.42],["AS01","Colonial Studios",0.55,0.48],["HB11","Yamagumi Hotel",0.15,0.52],["HB19","The Silver Dragon",0.6,0.62],
-     ["PU03","NCPD Precinct #1",0.2,0.8],["CH10","Unnamed Cube Hotel",0.6,0.85]],
- rues:["Canton","Pagoda","Jade","Lotus","Shanghai","Mahjong","Lantern","Phoenix","Jasmine","Bamboo","Ginseng","Macau","Silk","Oolong","Fortune","Cathay","Peking","Ming","Tang","Han","Kowloon Gate","Wonton","Dim Sum","Abacus","Koi","Teahouse","Firecracker","Golden Lion","Harmony","Sampan"],
- avenues:["Chinatown","Dragon","Jade Empire","Japantown","Pearl","Imperial","Emperor","Tiger"],num:"E "},
-
-{id:"the-glen",nom:"The Glen & Lake Park",seed:61,
- desc:"Quartier civique : mairie, palais de justice, banques ; Lake Park au nord-ouest.",
- parks:[{poly:[[0,0],[0.44,0],[0.42,0.3],[0.2,0.36],[0,0.3]],nom:"LAKE PARK",route:"Lake Park Dr"}],
- zones:[{angle:-3,sx:76,sy:66,warp:[4,200],drop:.04,av:[4,4]},
-        {poly:[[0.76,0],[1,0],[1,1],[0.68,1],[0.7,0.5]],angle:30,sx:72,sy:62,drop:.1,av:[3,3],border:"Glen Blvd"}],
- voisins:[["↑ CITY CENTER",0.6,0.03],["OLD COMBAT ZONE →",0.92,0.5],["↓ SOUTH NIGHT CITY",0.25,0.985]],
- lm:[["CR02","Raven Microcybernetics",0.5,0.1],["CH08","Seafoam",0.58,0.18],["NL01","The Atlantis",0.67,0.2],["CR03","Biotechnica Campus",0.15,0.45],
-     ["PU01","First Night City Bank",0.4,0.5],["CR01","Merrill, Asukaga & Finch",0.6,0.5],["PU06","Hall of Justice",0.82,0.63],["PU02","City Hall",0.62,0.82],
-     ["HB09","Red Door Inn",0.42,0.92],["CC03","South Cargo Village",0.55,0.96]],
- rues:["Justice","Liberty","Charter","Union","Magistrate","Lakeview","Willow","Juniper","Sycamore","Elm","Cypress","Magnolia","Laurel","Linden","Poplar","Rosewood","Hawthorne","Ash","Birch","Cedar","Maple","Aspen","Chestnut","Alder","Hickory","Tribune","Courthouse","Gavel","Verdict","Jury","Docket","Statute","Ballot","Treasury","Archive","Mint","Census","Oath","Decree","Petition","Quorum","Bylaw","Amendment","Consul"],
- avenues:["Glen","Mayor","Civic","Federal","Constitution","Founders","Republic","Senate"],num:"S "},
-
-{id:"south-night-city",nom:"South Night City",seed:73,
- desc:"Zone de combat : rues défoncées, docks au sud-ouest, pont vers Pacifica au sud.",
- water:[{poly:[[0,0],[0.12,0],[0.06,0.3],[0.1,0.6],[0.25,0.82],[0.5,0.92],[0.8,0.9],[1,0.88],[1,1],[0,1]],nom:"DEL CORONADO BAY",lx:0.45,ly:0.97}],
- coast:"Dockside Rd",
- zones:[{angle:2,sx:72,sy:62,warp:[7,160],drop:.13,av:[4,4]},
-        {poly:[[0,0.5],[0.45,0.62],[0.5,1],[0,1]],angle:-25,sx:110,sy:90,drop:.15,av:[3,3],border:"Dock Rd"}],
- hw:[{nom:"PONT DE PACIFICA",pts:[[0.72,0.72],[0.74,0.88],[0.75,1]]}],
- voisins:[["THE GLEN →",0.93,0.2],["↑ UNIVERSITY DISTRICT",0.35,0.03],["↓ PACIFICA",0.8,0.985]],
- lm:[["CC01","University Cargo Bay",0.3,0.08],["PU15","Medical Technologies",0.22,0.38],["PU16","Savage Docs",0.55,0.25],
-     ["CC02","Dock Cargo Community",0.32,0.8],["NL02","The Slammer",0.62,0.8]],
- rues:["Rust","Gutter","Scrap","Ashfall","Razorwire","Burnout","Cinder","Brimstone","Slagheap","Junkyard","Lockdown","Static","Barricade","Shrapnel","Blackout","Hollow","Vermin","Rubble","Graveyard","Tombstone","Smog","Grime","Shank","Cutthroat","Bleak","Gallows","Ratline","Scrapyard","Dumpster","Furnace Row","Crowbar","Lead Pipe","Chainlink","Barbwire","Sewer","Wreckage"],
- avenues:["Combat","South","Warlord","Boneyard","Fallout","Chrome Skull","Salvage","Ironclad"],num:"S "},
-
-{id:"old-combat-zone",nom:"Old Combat Zone",seed:83,
- desc:"Ancienne zone de combat au sud-est, traversée en diagonale par l'US-16.",
- water:[{poly:[[1,0],[1,1],[0.42,1],[0.56,0.86],[0.8,0.56],[0.93,0.26]],nom:"DEL CORONADO BAY",lx:0.88,ly:0.8}],
- coast:"Breakwater Rd",
- zones:[{angle:40,sx:70,sy:62,warp:[6,170],drop:.14,av:[4,4]},
-        {poly:[[0,0],[0.42,0],[0.38,1],[0,1]],angle:0,sx:72,sy:62,drop:.1,av:[4,4],border:"Kennedy St"}],
- hw:[{nom:"US-16",pts:[[0.1,1],[0.3,0.75],[0.5,0.5],[0.66,0.28],[0.78,0]]}],
- voisins:[["← THE GLEN",0.05,0.45],["↑ LITTLE CHINA",0.55,0.03]],
- lm:[["PU03","NCPD Precinct #1",0.2,0.15],["CH10","Unnamed Cube Hotel",0.6,0.2],["CC07","NC Ionic Semiconductor",0.72,0.36],["CC03","South Cargo Village",0.15,0.86]],
- rues:["Mercenary","Napalm","Bunker","Ambush","Trench","Tracer","Bullet","Molotov","Grenade","Sniper","Barrage","Outpost","Siege","Patrol","Mortar","Flak","Recon","Sabotage","Fortress","Bastion","Garrison","Rampart","Flank","Raider","Volley","Sortie","Shellshock","Crossfire","Tripwire","Claymore","Foxhole","Bayonet","Kevlar","Hardpoint","Firebase","Dogtag","Ammo","Breach","Overwatch","Holdout","Sandbag","Killbox","Gunsmoke","Rifle","Muzzle","Payload","Warhead","Ricochet","Salvo","Skirmish","Cordon"],
- avenues:["Combat Zone","Old Industrial","Precinct","Lockjaw","Ironside","Warpath","Arsenal","Kevlar"],num:"SE "},
-
-{id:"new-westbrook",nom:"New Westbrook",seed:97,
- desc:"Banlieue surpeuplée à l'est, entre l'US-828 et l'I-101, aux portes de l'Executive Zone.",
- zones:[{angle:12,sx:66,sy:58,warp:[5,190],drop:.06,av:[4,4]},
-        {poly:[[0.5,0],[1,0],[1,0.45],[0.55,0.4]],angle:-20,sx:70,sy:60,drop:.06,av:[3,3],border:"Westbrook Blvd"}],
- hw:[{nom:"US-828",pts:[[0.2,0],[0.3,0.3],[0.42,0.6],[0.5,1]]},{nom:"I-101",pts:[[0.78,0],[0.74,0.4],[0.82,0.7],[0.86,1]]}],
- voisins:[["← WATSON",0.05,0.15],["EXECUTIVE ZONE →",0.93,0.55]],
- lm:[["CR15","WorldSat",0.14,0.1],["CC06","North Cargo Village",0.1,0.35],["CR13","Network 54",0.36,0.24],
-     ["PU07","NCFD Firestation #1",0.56,0.76],["CR14","Rockling Augmentics Campus",0.33,0.84]],
- rues:["Charter Hill","Northoak","Elmwood","Silverlake","Hillcrest","Oakmont","Pinecrest","Briarwood","Redwood","Fairview","Glenwood","Ridgeview","Brookside","Meadow","Kingsley","Ashford","Wellington","Belmont","Ivy","Windsor","Highland","Prescott","Crestwood","Sunset","Stonegate","Foxglove","Applewood","Bramble","Cherrywood","Dogwood","Evergreen","Fernhill","Goldenrod","Hazelnut","Ironwood","Lakeside","Mapleton","Northgate","Orchard","Primrose","Quailridge","Rosemont","Sagewood","Thornbury","Valleyview","Westgate","Wildflower","Woodbine","Yarrow","Ashgrove"],
- avenues:["Westbrook","Northridge","Empire","Rockling","Skyline","Horizon","Network","Summit Ridge"],num:"NE "},
-
-{id:"executive-zone",nom:"Executive Zone",seed:101,
- desc:"Enclave fortifiée des élites corporatistes : mur à bastions, accès uniquement par les portes des avenues.",
- zones:[{angle:8,sx:140,sy:120,warp:[10,200],drop:.3,av:[2,2]},
-        {poly:[[0.35,0.2],[0.65,0.2],[0.73,0.1],[0.68,0.26],[0.68,0.74],[0.73,0.9],[0.65,0.8],[0.35,0.8],[0.27,0.9],[0.32,0.74],[0.32,0.26],[0.27,0.1]],
-         angle:0,sx:52,sy:46,drop:.02,av:[5,5],walled:true,border:"Mur d'enceinte"}],
- area:[[0.35,0.2],[0.65,0.2],[0.73,0.1],[0.68,0.26],[0.68,0.74],[0.73,0.9],[0.65,0.8],[0.35,0.8],[0.27,0.9],[0.32,0.74],[0.32,0.26],[0.27,0.1]],
- hw:[{nom:"I-101",pts:[[0.95,0],[0.92,0.5],[0.96,1]]}],
- voisins:[["← NEW WESTBROOK",0.08,0.5],["RECLAIMED PERIMETER",0.85,0.12]],
- lm:[],
- rues:["Platinum","Sovereign","Aurora","Monarch","Regent","Opal","Sapphire","Ivory","Gilded","Prestige","Belvedere","Majestic","Solstice","Celestial","Crystal","Marquis","Diamond","Pinnacle","Laureate","Emerald","Aristocrat","Orchid","Ambassador","Grandview","Bellevue","Riviera","Cashmere","Velour","Champagne","Caviar","Penthouse","Concierge","Yacht","Chateau","Villa","Marble"],
- avenues:["Executive","Summit","Zenith","Olympus","Elysium","Crown","Apex","Panorama"],num:"X "},
-
-{id:"heywood",nom:"Heywood & Heywood Industrial Zone",seed:113,
- desc:"Territoire des Valentinos : rues en diagonale, zone industrielle au nord-est, trois autoroutes.",
- water:[{poly:[[0,0],[0.34,0],[0.25,0.2],[0.1,0.3],[0,0.32]],nom:"DEL CORONADO BAY",lx:0.08,ly:0.1}],
- coast:"Bayside Dr",
- zones:[{angle:25,sx:70,sy:60,warp:[5,190],drop:.07,av:[4,4]},
-        {poly:[[0.4,0],[0.85,0],[0.8,0.45],[0.45,0.4]],angle:8,sx:150,sy:120,drop:.1,av:[2,2],border:"Industrial Pkwy",
-         rues:["Furnace","Turbine","Piston","Boiler","Assembly","Warehouse","Smokestack","Rail Yard","Lathe","Crucible"],avenues:["Ironworks","Factory","Zhirafa"]}],
- hw:[{nom:"US-828",pts:[[0.56,0],[0.6,0.4],[0.7,0.7],[0.75,1]]},{nom:"US-126",pts:[[0.2,1],[0.35,0.62],[0.6,0.42],[0.9,0.22],[1,0.18]]},{nom:"I-101",pts:[[0.95,0],[0.93,0.6],[0.98,1]]}],
- voisins:[["↓ RANCHO CORONADO",0.2,0.985],["← PACIFICA (PONT)",0.05,0.5]],
- lm:[["CR12","Zhirafa Office Park",0.5,0.12],["CC08","Old Ironworks",0.48,0.52],["HB08","MetalStorm",0.08,0.52],["PU04","NCPD Precinct #2",0.14,0.76],["CC10","East Cargo Village",0.88,0.86]],
- rues:["Valentino","Esperanza","Santa Rosa","Del Sol","Los Feliz","Encanto","Alameda","Mariposa","Hacienda","La Paloma","Bonita","Cielo","Corazón","Guadalupe","Las Palmas","Mercado","Rosario","Tierra","Vista","Zapata","Coyote","Escondido","Fiesta","Solano","Tranquilo","Montaña","Abuela","Cantina","Sombra","Luna","Estrella","Pueblo","Plaza Mayor","Dolores","Primavera","Marisol"],
- avenues:["Heywood","Valentinos","Mission","Camino Real","Glory Hill","Vallarta","Industrial","Sierra"],num:"H "},
-
-{id:"pacifica",nom:"Pacifica",seed:127,
- desc:"Station balnéaire abandonnée : Playland by the Sea, front de mer, pont vers South Night City.",
- water:[{poly:[[0,0],[1,0],[1,0.12],[0.6,0.15],[0.35,0.25],[0.15,0.4],[0.2,0.6],[0.12,0.85],[0.05,1],[0,1]],nom:"PACIFIC OCEAN",lx:0.05,ly:0.3}],
- coast:"Beachfront Rd",
- zones:[{angle:-4,sx:82,sy:70,warp:[8,170],drop:.12,av:[4,4]},
-        {poly:[[0.17,0.4],[0.46,0.33],[0.52,0.75],[0.2,0.8]],angle:30,sx:76,sy:66,drop:.1,av:[3,3],border:"Boardwalk"}],
- hw:[{nom:"US-126",pts:[[0.55,1],[0.58,0.75],[0.7,0.55],[1,0.5]]},{nom:"PONT DE PACIFICA",pts:[[0.72,0],[0.73,0.18]]}],
- voisins:[["RANCHO CORONADO →",0.92,0.75],["↑ SOUTH NIGHT CITY",0.85,0.03]],
- lm:[["OT04","Playland by the Sea",0.3,0.34],["CH05","Cubeland by the Sea",0.5,0.24],["CH02","Scenic Cubes",0.18,0.62],["HB08","MetalStorm",0.78,0.2]],
- rues:["Carnival","Sandcastle","Palisade","Surf","Seabreeze","Coconut","Paradise","Tiki","Sunrise","Oasis","Cabana","Flamingo","Lagoon","Dune","Riptide","Seashell","Promenade","Calypso","Mirage","Aloha","Malibu","Bayshore","Tropic","Coastline","Voodoo","Dogtown","Sunbather","Lifeguard","Parasol","Seagull","Starfish","Wave Rider","Driftwood","Shoreline","Tidepool","Sandbar"],
- avenues:["Pacifica","Coastview","Grand Resort","Playland","West Wind","Seaside","Sunset Pier","Ocean Park"],num:"P "},
-
-{id:"rancho-coronado",nom:"Rancho Coronado",seed:139,
- desc:"Lotissements sinueux et impasses de banlieue, au sud de la baie de Del Coronado.",
- water:[{poly:[[0,0],[0.6,0],[0.5,0.12],[0.2,0.18],[0,0.15]],nom:"DEL CORONADO BAY",lx:0.1,ly:0.06}],
- coast:"Bayshore Dr",
- zones:[{angle:15,sx:90,sy:75,warp:[28,140],drop:.2,av:[4,3]},
-        {poly:[[0.55,0.4],[1,0.35],[1,1],[0.6,1]],angle:-10,sx:88,sy:74,warp:[30,120],drop:.2,av:[3,3],border:"Coronado Pkwy"}],
- hw:[{nom:"US-126",pts:[[0.05,1],[0.15,0.7],[0.3,0.45],[0.55,0.3],[0.8,0.25],[1,0.22]]}],
- voisins:[["← PACIFICA",0.04,0.6],["HEYWOOD ↗",0.9,0.06]],
- lm:[["CC04","Eagle Rock Stadium",0.25,0.36],["PU04","NCPD Precinct #2",0.62,0.22]],
- rues:["Mesa Verde","Rancho","Sunnyvale","Palomino","Mustang","Bluebonnet","Prairie","Sagebrush","Cottonwood","Lariat","Saddleback","Canyon","Arroyo Seco","Juniper Hill","Pinto","Bronco","Stagecoach","Buckskin","Wagon Wheel","Rodeo","Cactus","Chaparral","Yucca","Tumbleweed","Corral","Mesquite","Bridle","Spur","Haystack","Buckboard","Rawhide","Barnwood","Silo","Windmill","Prairie Dog","Branding"],
- avenues:["Rancho Coronado","Eagle Rock","Sunset Ranch","Del Coronado","Homestead","Frontier","Pioneer","Vaquero"],num:"R "}
-];
 
 /* ------------------------------ outils ------------------------------ */
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -207,151 +43,193 @@ function polyCross(a,b,poly){let best=null;for(let i=0;i<poly.length;i++){const 
 const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 const ord=n=>{const m=n%100;return n+(m>10&&m<14?"th":["th","st","nd","rd"][n%10]||"th")};
 const circle=(cx,cy,r,n=56)=>Array.from({length:n},(_,k)=>[cx+r*Math.cos(k/n*2*Math.PI),cy+r*Math.sin(k/n*2*Math.PI)]);
-const ref=(p,G={cell:100,W:1600,H:1100})=>{const c=G.cell;return String.fromCharCode(65+Math.max(0,Math.min(Math.ceil(G.W/c)-1,Math.floor(p[0]/c))))+(Math.max(0,Math.min(Math.ceil(G.H/c)-1,Math.floor(p[1]/c)))+1)};
+const ref=(p,G)=>{const c=G.cell;return String.fromCharCode(65+Math.max(0,Math.min(Math.ceil(G.W/c)-1,Math.floor(p[0]/c))))+(Math.max(0,Math.min(Math.ceil(G.H/c)-1,Math.floor(p[1]/c)))+1)};
 /* réserve de noms commune (quand la liste du quartier est épuisée) */
 const FALL=["Neon","Voltage","Circuit","Synapse","Glitch","Cipher","Pulse","Signal","Vortex","Ember","Onyx","Argent","Quartz","Carbon","Tungsten","Halogen","Plasma","Photon","Echo","Shadow","Talon","Viper","Jackal","Falcon","Wolf","Hornet","Mantis","Cobra","Scorpion","Lynx","Panther","Kestrel","Heron","Osprey","Mercury","Cinnabar","Sulfur","Basalt","Granite","Flint"];
 const CAT={CR:"#4fd18b",PU:"#ff5a6a",HB:"#3ad1d1",CH:"#b07cff",CC:"#e6c84a",NL:"#5a8cff",AS:"#ff7ad9",CA:"#ff9a3c",OT:"#ff4040"};
 
 /* ---------------------------- génération ---------------------------- */
+const OX=450,K=3,CW=3900,CH=3996,CELL=200;          /* plan : repère officiel (2000 × 1332) × 3, à partir de x = 450 */
+const C=([x,y])=>[(x-OX)*K,y*K],CP=poly=>poly.map(C);
+const bbox=poly=>{let a=1e9,b=1e9,c=-1e9,d=-1e9;poly.forEach(([x,y])=>{a=Math.min(a,x);b=Math.min(b,y);c=Math.max(c,x);d=Math.max(d,y)});return[a,b,c,d]};
+const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+
+/* ---------------------------------------------------------------------
+   ÉLÉMENTS COMMUNS (repère de la carte officielle : 2000 × 1332)
+   --------------------------------------------------------------------- */
+const PARCS=[{poly:[[872,640],[905,632],[935,672],[995,676],[990,722],[872,722]],nom:"LAKE PARK",route:"Lake Park Dr"}];
+const INTERDIT=[{poly:[[830,0],[1100,0],[1100,58],[840,58]],nom:"NORCAL MILITARY BASE — ZONE INTERDITE"}];
+/* autoroutes : tracés continus d'après la carte officielle */
+const AUTOROUTES=[
+ {nom:"US-16",pts:[[935,0],[945,170],[930,330],[925,425]]},
+ {nom:"US-828",pts:[[1310,0],[1296,228],[1360,420],[1392,520],[1497,633],[1450,850],[1377,1150],[1360,1332]]},
+ {nom:"US-16",pts:[[1296,228],[1268,330],[1300,450],[1365,560],[1300,640],[1200,740],[1130,820],[1060,920],[985,990]]},
+ {nom:"US-16",pts:[[625,735],[720,742],[820,738],[872,724]]},
+ {nom:"PONT DE PACIFICA",pts:[[985,990],[978,1100]]},
+ {nom:"I-101",pts:[[1640,0],[1622,310],[1600,500],[1630,800],[1665,1220],[1680,1332]]},
+ {nom:"US-126",pts:[[1700,860],[1345,990],[1150,1090],[978,1100],[880,1180],[800,1290],[780,1332]]}];
+/* lieux : codes et positions de la carte officielle */
+const LIEUX=[["CA01","Night City University",717,672],["CA02","NCU Fine Arts Campus",723,644],["CA03","Serengeti Gallery",766,639],
+ ["NL01","The Atlantis",1009,721],["NL02","The Slammer",820,972],["NL03","Delirium",760,612],["NL04","MindNutz Lover",799,716],
+ ["AS01","Colonial Studios",1168,715],["AS02","Biograph Theater",690,672],["AS03","Cinemaxus",1097,492],["AS04","McCartney Field Stadium",1118,463],["AS05","Yacht club",1167,400],
+ ["OT01","Camden Court",815,430],["OT02","Holy Angels Church",805,460],["OT03","Orbital Mass Driver",574,363],["OT04","Playland by the Sea",734,1140],["OT05","Aldecaldo Camp",1630,1295],
+ ["PU01","First Night City Bank",918,799],["PU02","City Hall",987,905],["PU03","NCPD Precinct #1",1035,772],["PU04","NCPD Precinct #2",1120,1083],["PU05","NCPD Precinct #3",916,209],
+ ["PU06","Hall of Justice",1021,844],["PU07","NCFD Firestation #1",1468,578],["PU08","NCFD Firestation #2",692,535],["PU09","City Medical Center",1170,583],["PU10","Crisis Medical Center",1073,684],
+ ["PU11","Stuart Hospital",693,654],["PU12","West Hill Library",870,592],["PU13","NC Postal Service",1135,489],["PU14","Ferry building",1137,408],["PU15","Medical Technologies",695,803],
+ ["PU16","Savage Docs",803,775],["PU17","Ling Po Public Library",1250,602],
+ ["CR01","Merrill, Asukaga & Finch",980,796],["CR02","Raven Microcybernetics",927,715],["CR03","Biotechnica Campus",859,658],["CR04","Continental Brands",761,532],["CR05","Danger Girl",688,489],
+ ["CR06","REO Meatwagon",1310,552],["CR07","Ziggurat",1240,477],["CR08","Petrochem",1088,66],["CR09","SovOil",1040,38],["CR10","Trauma Team Tower",920,90],["CR11","Militech",883,27],
+ ["CR12","Zhirafa Office Park",1331,889],["CR13","Network 54",1305,188],["CR14","Rockling Augmentics Campus",1395,551],["CR15","WorldSat",1265,87],
+ ["HB01","The Afterlife",1128,509],["HB02","Highcourt Plaza Hotel",1157,646],["HB03","Totentanz",993,490],["HB04","The Forlorn Hope",1295,664],["HB05","The Paragon",690,738],
+ ["HB06","Short Circuit",862,573],["HB08","MetalStorm",978,1127],["HB09","Red Door Inn",962,926],["HB10","Knight-Marriot Hotel",826,503],["HB11","Yamagumi Hotel",1059,711],
+ ["HB12","Franciscini's Cafe",795,527],["HB13","24 Hour Cafe",1284,572],["HB14","American Bar",1172,457],["HB15","Metropolitan BBQ & Grill",972,449],["HB16","McDonnell's",723,740],
+ ["HB17","Metro Café",686,720],["HB18","Chen's Oriental Garden",1140,701],["HB19","The Silver Dragon",1190,741],["HB20","La Lune Bleu",1237,507],
+ ["CH01","Orbital Air Housing Block #1",526,342],["CH02","Scenic Cubes",600,1189],["CH03","University Cubes",673,597],["CH04","Cube-A-Rama",860,515],["CH05","Cubeland by the Sea",816,1160],
+ ["CH06","A dilapidated Cube Hotel",937,466],["CH07","Watson Central Cubelife",957,128],["CH08","Seafoam",977,718],["CH09","McCartney Cubes",1101,433],["CH10","Unnamed Cube Hotel",1203,790],
+ ["CC01","University Cargo Bay",695,762],["CC02","Dock Cargo Community",738,944],["CC03","South Cargo Village",982,950],["CC04","Eagle Rock Stadium",1043,1168],["CC05","The Precipe",1098,664],
+ ["CC06","North Cargo Village",1203,123],["CC07","NC Ionic Semiconductor",1172,823],["CC08","Old Ironworks",1276,1032],["CC09","Bridgetown",1317,630],["CC10","East Cargo Village",1553,1272]];
+const EAUX=[["SAN MORRO BAY",790,350],["PACIFIC OCEAN",520,860],["DEL CORONADO BAY",1030,1022],["BAIE DE NIGHT CITY",1150,905]];
+const ILES=[{nom:"MORRO ROCK",c:[508,385],rx:62,ry:58}];
+
+/* ------------------------------ génération de la ville ------------------------------ */
 const CACHE={};
-function build(q){
-  if(CACHE[q.id])return CACHE[q.id];
-  const R=rng(q.seed);
-  const water=(q.water||[]).map(w=>({...w,p:px(w.poly)})),parks=(q.parks||[]).map(k=>({...k,p:px(k.poly)})),
-        restr=(q.restricted||[]).map(k=>({...k,p:px(k.poly)})),area=q.area?px(q.area):null;
-  const zones=q.zones.map((z,k)=>{const o={...z,k};
-    if(z.style==="radial"){o.c=[z.cx*W,z.cy*H];o.p=circle(o.c[0],o.c[1],z.r)}
-    else o.p=z.poly?px(z.poly):null;return o});
-  const inCanvas=p=>p[0]>-80&&p[0]<W+80&&p[1]>-80&&p[1]<H+80;
-  const wet=p=>water.some(w=>inPoly(p,w.p)),inPark=p=>parks.some(k=>inPoly(p,k.p))||restr.some(k=>inPoly(p,k.p));
-  const zoneOf=p=>{for(let k=zones.length-1;k>0;k--)if(inPoly(p,zones[k].p))return k;return 0};
-  const land=p=>inCanvas(p)&&!wet(p)&&!inPark(p);
-
-  const edges=[];          /* {a,b,line,ord} */
-  const lines={};          /* key -> {key,cls,name,dir} */
-  const nodeEnds=[];       /* points d'extrémité sur une bordure : {p,line,border} */
+function buildCity(){
+  if(CACHE.v)return CACHE.v;
+  const Q=QUARTIERS,fps=Q.map(q=>CP(q.fp)),bbs=fps.map(bbox);
+  const own=p=>{for(let i=0;i<fps.length;i++)if(p[0]>=bbs[i][0]&&p[0]<=bbs[i][2]&&p[1]>=bbs[i][1]&&p[1]<=bbs[i][3]&&inPoly(p,fps[i]))return i;return -1};
+  const parks=PARCS.map(k=>({...k,p:CP(k.poly)})),restr=INTERDIT.map(k=>({...k,p:CP(k.poly)}));
+  const blocked=p=>parks.some(k=>inPoly(p,k.p))||restr.some(k=>inPoly(p,k.p));
+  const edges=[],lines={},nodeEnds=[],radInter=[];
   const addLine=(key,cls,extra)=>lines[key]||(lines[key]={key,cls,...extra});
+  const bKey=(i,j)=>`B:${Math.min(i,j)}-${Math.max(i,j)}`;
+  /* lignes de limite : nom donné par le quartier prioritaire */
+  for(let i=0;i<Q.length;i++)for(let j=i+1;j<Q.length;j++)addLine(bKey(i,j),Q[i].walled||Q[j].walled?"wall":"bd",{name:Q[i].walled?Q[i].limite:Q[j].walled?Q[j].limite:Q[i].limite,d:i,dir:"b"});
+  parks.forEach((k,n)=>addLine("park:"+n,"loc",{name:k.route,d:-1,dir:"b"}));
 
-  /* ---- zones en damier ---- */
-  zones.forEach(z=>{
-    if(z.style==="radial")return;
-    const th=z.angle*Math.PI/180,c=Math.cos(th),s=Math.sin(th),cx=W/2,cy=H/2,D=Math.hypot(W,H)/2+160;
-    const ni=Math.ceil(D/z.sx),nj=Math.ceil(D/z.sy),[A,L]=z.warp||[0,200],ph1=R()*6,ph2=R()*6,jit=Math.min(z.sx,z.sy)*0.12;
-    const N={};
-    for(let i=-ni;i<=ni;i++)for(let j=-nj;j<=nj;j++){
-      const u=i*z.sx+(R()-.5)*jit,v=j*z.sy+(R()-.5)*jit;
-      let x=cx+u*c-v*s,y=cy+u*s+v*c;
-      const x2=x+A*Math.sin(y/L+ph1),y2=y+A*Math.sin(x/L*1.3+ph2);
-      const p=[x2,y2];N[i+","+j]={p,ok:inCanvas(p)&&zoneOf(p)===z.k&&land(p),zone:zoneOf(p)};
-    }
-    const avI=i=>((i%z.av[0])+z.av[0])%z.av[0]===0,avJ=j=>((j%z.av[1])+z.av[1])%z.av[1]===0;
-    const link=(n1,n2,key,cls,o)=>{
-      if(!n1||!n2)return;
-      if(!n1.ok&&!n2.ok)return;
-      const isAv=cls==="av";
-      if(n1.ok&&n2.ok){if(!isAv&&R()<(z.drop||0))return;edges.push({a:n1.p,b:n2.p,line:key,ord:o});return}
-      /* une extrémité hors zone : tronquer sur la bordure franchie */
-      const [inN,outN,rev]=n1.ok?[n1,n2,false]:[n2,n1,true];
-      const q2=outN.p;let cut=null,border=null;
-      if(wet(q2)){for(const w of water){const h=polyCross(inN.p,q2,w.p);if(h&&(!cut||h.t<cut.t)){cut=h;border=q.coast?"coast":null}}}
-      else if(inPark(q2)){for(const k of parks.concat(restr)){const h=polyCross(inN.p,q2,k.p);if(h&&(!cut||h.t<cut.t)){cut=h;border=k.route?"park:"+k.nom:null}}}
-      else if(inCanvas(q2)){
-        const zk=Math.max(z.k,outN.zone),zz=zones[zk];
-        if(zz.walled&&!(isAv&&z.k===zk))return; /* seules les avenues intérieures franchissent le mur */
-        const h=polyCross(inN.p,q2,zz.p);if(h){cut=h;border="bd:"+zk}
-      }else{edges.push({a:rev?q2:inN.p,b:rev?inN.p:q2,line:key,ord:o});return}
-      if(!cut){if(R()<.5)return;cut={p:[(inN.p[0]+q2[0])/2,(inN.p[1]+q2[1])/2]}}
-      edges.push(rev?{a:cut.p,b:inN.p,line:key,ord:o}:{a:inN.p,b:cut.p,line:key,ord:o});
-      if(border)nodeEnds.push({p:cut.p,line:key,border});
-    };
-    for(let i=-ni;i<=ni;i++)for(let j=-nj;j<=nj;j++){
-      const rk=`z${z.k}:r:${j}`,ck=`z${z.k}:c:${i}`;
-      addLine(rk,avJ(j)?"av":"loc",{dir:"r",zk:z.k,idx:j});addLine(ck,avI(i)?"av":"loc",{dir:"c",zk:z.k,idx:i});
-      link(N[i+","+j],N[(i+1)+","+j],rk,lines[rk].cls,i);
-      link(N[i+","+j],N[i+","+(j+1)],ck,lines[ck].cls,j);
-    }
-    z.N=N;z.ni=ni;z.nj=nj;
+  Q.forEach((q,di)=>{
+    const R=rng(q.seed),fp=fps[di],bb=bbs[di],mine=p=>own(p)===di;
+    const zones=q.zones.map((z,k)=>{const o={...z,k};
+      if(z.style==="radial"){o.c=C(z.c);o.p=circle(o.c[0],o.c[1],z.r)}else o.p=k?CP(z.poly):fp;return o});
+    const zoneOf=p=>{for(let k=zones.length-1;k>0;k--)if(inPoly(p,zones[k].p))return k;return 0};
+    if(q.coast)addLine(q.id+":coast","av",{name:q.coast,d:di,dir:"b"});
+    /* coupure d'un tronçon qui sort du quartier : bord de l'emprise ou d'un quartier prioritaire */
+    const cutOut=(a,b)=>{let best=null,who=-2;
+      const h=polyCross(a,b,fp);if(h){best=h;who=own([b[0],b[1]])}
+      for(let j=0;j<di;j++){if(!inPoly(b,fps[j])&&!polyCross(a,b,fps[j]))continue;const h2=polyCross(a,b,fps[j]);if(h2&&(!best||h2.t<best.t)){best=h2;who=j}}
+      return best?{...best,who}:null};
+
+    zones.forEach(z=>{
+      if(z.style==="radial")return;
+      const zb=bbox(z.p),th=z.angle*Math.PI/180,c=Math.cos(th),s=Math.sin(th),cx=(zb[0]+zb[2])/2,cy=(zb[1]+zb[3])/2,D=Math.hypot(zb[2]-zb[0],zb[3]-zb[1])/2+120;
+      const ni=Math.ceil(D/z.sx),nj=Math.ceil(D/z.sy),[A,L]=z.warp||[0,200],ph1=R()*6,ph2=R()*6,jit=Math.min(z.sx,z.sy)*0.12,N={};
+      for(let i=-ni;i<=ni;i++)for(let j=-nj;j<=nj;j++){
+        const u=i*z.sx+(R()-.5)*jit,v=j*z.sy+(R()-.5)*jit;let x=cx+u*c-v*s,y=cy+u*s+v*c;
+        const p=[x+A*Math.sin(y/L+ph1),y+A*Math.sin(x/L*1.3+ph2)];
+        const m=mine(p);N[i+","+j]={p,ok:m&&!blocked(p)&&zoneOf(p)===z.k,mine:m,zone:m?zoneOf(p):-1};
+      }
+      const avI=i=>((i%z.av[0])+z.av[0])%z.av[0]===0,avJ=j=>((j%z.av[1])+z.av[1])%z.av[1]===0;
+      const link=(n1,n2,key,cls,o)=>{
+        if(!n1||!n2||(!n1.ok&&!n2.ok))return;const isAv=cls==="av";
+        if(n1.ok&&n2.ok){if(!isAv&&R()<(z.drop||0))return;edges.push({a:n1.p,b:n2.p,line:key,ord:o,d:di});return}
+        const [inN,outN,rev]=n1.ok?[n1,n2,false]:[n2,n1,true],q2=outN.p;let cut=null,border=null;
+        if(outN.mine&&blocked(q2)){for(let n=0;n<parks.length;n++){const h=polyCross(inN.p,q2,parks[n].p);if(h&&(!cut||h.t<cut.t)){cut=h;border="park:"+n}}
+          restr.forEach(k=>{const h=polyCross(inN.p,q2,k.p);if(h&&(!cut||h.t<cut.t)){cut=h;border=null}})}
+        else if(outN.mine){const zk=Math.max(z.k,outN.zone),h=polyCross(inN.p,q2,zones[zk].p);if(h){cut=h;border=`${q.id}:bd:${zk}`}}
+        else{const h=cutOut(inN.p,q2);if(h){cut=h;const j=h.who;
+            if(j<0||j===undefined)border=q.coast?q.id+":coast":null;
+            else{if(q.walled&&!isAv)return;border=Q[j].walled?null:bKey(di,j)}}}
+        if(!cut){return}
+        edges.push(rev?{a:cut.p,b:inN.p,line:key,ord:o,d:di}:{a:inN.p,b:cut.p,line:key,ord:o,d:di});
+        if(border)nodeEnds.push({p:cut.p,line:key,border,d:di,gate:q.walled&&isAv});
+      };
+      for(let i=-ni;i<=ni;i++)for(let j=-nj;j<=nj;j++){
+        const rk=`${q.id}:z${z.k}:r:${j}`,ck=`${q.id}:z${z.k}:c:${i}`;
+        addLine(rk,avJ(j)?"av":"loc",{dir:"r",zk:z.k,idx:j,d:di});addLine(ck,avI(i)?"av":"loc",{dir:"c",zk:z.k,idx:i,d:di});
+        link(N[i+","+j],N[(i+1)+","+j],rk,lines[rk].cls,i);link(N[i+","+j],N[i+","+(j+1)],ck,lines[ck].cls,j);
+      }
+    });
+    /* zone radiale */
+    zones.forEach(z=>{
+      if(z.style!=="radial")return;
+      const [cx,cy]=z.c,radii=z.rings.concat([z.r]),n=z.spokes,a0=(z.rot||0)*Math.PI/180,P=(r,a)=>[cx+r*Math.cos(a),cy+r*Math.sin(a)];
+      const ok=(a,b)=>{const m=[(a[0]+b[0])/2,(a[1]+b[1])/2];return mine(m)&&!blocked(m)};
+      z.rings.forEach((r,k)=>{const key=`${q.id}:rg:${k}`;addLine(key,k===z.rings.length-1?"av":"loc",{dir:"g",d:di,name:["Inner Ring","Crown Circle","Halo Ring"][k]});
+        for(let m=0;m<n;m++)for(let s2=0;s2<4;s2++){const a=P(r,a0+(m+s2/4)/n*2*Math.PI),b=P(r,a0+(m+(s2+1)/4)/n*2*Math.PI);if(ok(a,b))edges.push({a,b,line:key,ord:m*4+s2,d:di})}});
+      for(let m=0;m<n;m++){const key=`${q.id}:sp:${m}`,a=a0+m/n*2*Math.PI;addLine(key,m%4===0?"av":"loc",{dir:"s",d:di});
+        for(let k=0;k<radii.length-1;k++){const p1=P(radii[k],a),p2=P(radii[k+1],a);if(ok(p1,p2))edges.push({a:p1,b:p2,line:key,ord:k,d:di})}
+        for(let k=0;k<radii.length;k++){const p=P(radii[k],a);if(mine(p))radInter.push({p,l1:key,l2:k<z.rings.length?`${q.id}:rg:${k}`:`${q.id}:bd:${z.k}`,d:di})}}
+      z.plazaR=z.rings[0];
+    });
+    /* bordures : sous-zones (boulevards), côte, limites avec les autres quartiers */
+    const pieces=(poly,cb)=>{for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],Lg=dist(a,b),n=Math.max(1,Math.ceil(Lg/36));
+        const nx=-(b[1]-a[1])/Lg,ny=(b[0]-a[0])/Lg;
+        for(let k=0;k<n;k++){const p1=lerp(a,b,k/n),p2=lerp(a,b,(k+1)/n),m=lerp(p1,p2,.5);cb(p1,p2,m,[m[0]+nx*7,m[1]+ny*7],[m[0]-nx*7,m[1]-ny*7],i*1000+k)}}};
+    zones.forEach(z=>{if(!z.k)return;const key=`${q.id}:bd:${z.k}`;addLine(key,"bd",{name:z.border,d:di,dir:"b"});
+      pieces(z.p,(p1,p2,m,A,B,o)=>{if(mine(m)&&!blocked(m)&&!zones.slice(z.k+1).some(x=>inPoly(m,x.p)))edges.push({a:p1,b:p2,line:key,ord:o,d:di})})});
+    pieces(fp,(p1,p2,m,A,B,o)=>{const oa=own(A),ob=own(B);if(oa!==di&&ob!==di)return;const other=oa===di?ob:oa;if(other===di)return;
+      if(other<0){if(q.coast&&!blocked(m))edges.push({a:p1,b:p2,line:q.id+":coast",ord:o,d:di})}
+      else if(di<other)edges.push({a:p1,b:p2,line:bKey(di,other),ord:o,d:di})});
+    q._zones=zones;
   });
+  /* périmètre des parcs */
+  parks.forEach((k,n)=>{for(let i=0;i<k.p.length;i++){const a=k.p[i],b=k.p[(i+1)%k.p.length],m=lerp(a,b,.5);if(own(m)>=0)edges.push({a,b,line:"park:"+n,ord:i,d:own(m)})}});
 
-  /* ---- zone radiale (anneaux + rayons) ---- */
-  const radInter=[];
-  zones.forEach(z=>{
-    if(z.style!=="radial")return;
-    const [cx,cy]=z.c,radii=z.rings.concat([z.r]),n=z.spokes,a0=(z.rot||0)*Math.PI/180;
-    const P=(r,a)=>[cx+r*Math.cos(a),cy+r*Math.sin(a)];
-    z.rings.forEach((r,k)=>{const key=`rg:${k}`;addLine(key,k===z.rings.length-1?"av":"loc",{dir:"g"});
-      for(let m=0;m<n;m++)for(let q2=0;q2<4;q2++){const t1=a0+(m+q2/4)/n*2*Math.PI,t2=a0+(m+(q2+1)/4)/n*2*Math.PI;edges.push({a:P(r,t1),b:P(r,t2),line:key,ord:m*4+q2})}});
-    for(let m=0;m<n;m++){const key=`sp:${m}`,a=a0+m/n*2*Math.PI;addLine(key,m%4===0?"av":"loc",{dir:"s"});
-      for(let k=0;k<radii.length-1;k++)edges.push({a:P(radii[k],a),b:P(radii[k+1],a),line:key,ord:k});
-      for(let k=0;k<radii.length;k++)radInter.push({p:P(radii[k],a),l1:key,l2:k<z.rings.length?`rg:${k}`:`bd:${z.k}`})}
-    z.plazaR=z.rings[0];
-  });
-
-  /* ---- bordures : boulevards, murs, parcs, côte ---- */
-  const borderPieces=(poly,key,keep)=>{let o=0;for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],L=dist(a,b),n=Math.max(1,Math.ceil(L/40));
-      for(let k=0;k<n;k++){const p1=[a[0]+(b[0]-a[0])*k/n,a[1]+(b[1]-a[1])*k/n],p2=[a[0]+(b[0]-a[0])*(k+1)/n,a[1]+(b[1]-a[1])*(k+1)/n],mid=[(p1[0]+p2[0])/2,(p1[1]+p2[1])/2];
-        if(keep(mid))edges.push({a:p1,b:p2,line:key,ord:o});o++}}};
-  zones.forEach(z=>{if(!z.k)return;const key="bd:"+z.k;addLine(key,z.walled?"wall":"bd",{name:z.border,dir:"b"});
-    borderPieces(z.p,key,m=>inCanvas(m)&&!wet(m)&&!zones.slice(z.k+1).some(o=>inPoly(m,o.p)))});
-  parks.forEach(k=>{if(!k.route)return;const key="park:"+k.nom;addLine(key,"loc",{name:k.route,dir:"b"});
-    borderPieces(k.p,key,m=>m[0]>2&&m[0]<W-2&&m[1]>2&&m[1]<H-2&&!wet(m))});
-  if(q.coast){addLine("coast","av",{name:q.coast,dir:"b"});
-    water.forEach(w=>borderPieces(w.p,"coast",m=>m[0]>4&&m[0]<W-4&&m[1]>4&&m[1]<H-4&&!zones.some(z=>z.k&&z.walled&&inPoly(m,z.p))))}
-
-  /* ---- noms des rues ---- */
-  const pool=q.rues.slice(),avp=q.avenues.slice();
-  for(let i=pool.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
-  /* chaque nom de base n'est utilisé qu'une fois par quartier */
-  const usedBase=new Set();Object.values(lines).forEach(l=>{if(l.name)usedBase.add(l.name.replace(/ \S+$/,""))});
-  const src=arr=>({arr,i:0}),P1=src(pool),P2=src(avp),PF=src(FALL);
-  const ZP={},ZA={};zones.forEach(z=>{ZP[z.k]=src(z.rues||[]);ZA[z.k]=src(z.avenues||[])});
-  const pick=list=>{for(const o of list)while(o.i<o.arr.length){const w=o.arr[o.i++];if(!usedBase.has(w)){usedBase.add(w);return w}}return null};
-  let num=1,letter=0,na=0,nr=0,extra=1;
-  const SUF=["St","St","Way","St","Lane","Rd","St","Pl"],AVS=["Ave","Blvd","Ave","Pkwy","Ave"];
+  /* ---- noms des rues, quartier par quartier ---- */
   const present={};edges.forEach(e=>present[e.line]=(present[e.line]||0)+dist(e.a,e.b));
-  const keys=Object.keys(lines).filter(k=>present[k]>60).sort((x,y)=>{const a=lines[x],b=lines[y];return (a.zk??9)-(b.zk??9)||String(a.dir).localeCompare(String(b.dir))||(a.idx??0)-(b.idx??0)||x.localeCompare(y)});
-  keys.forEach(k=>{const l=lines[k];if(l.name)return;
-    if(l.cls==="av"){const w=pick([ZA[l.zk]||src([]),P2,P1,PF]);l.name=w?`${w} ${AVS[na++%AVS.length]}`:`Route ${extra++}`}
-    else if(l.dir==="c"&&l.zk===0)l.name=`${q.num||""}${ord(num++)} St`;
-    else if(l.dir==="c"&&l.zk>0&&letter<26)l.name=`${String.fromCharCode(65+letter++)} St`;
-    else{const w=pick([ZP[l.zk]||src([]),P1,PF]);l.name=w?`${w} ${SUF[nr++%SUF.length]}`:`Alley ${extra++}`}});
-  zones.forEach(z=>{if(z.style==="radial"){z.rings.forEach((r,k)=>{const l=lines[`rg:${k}`];if(l)l.name=["Inner Ring","Crown Circle","Halo Ring"][k]||l.name})}});
+  const fixed=new Set(Object.values(lines).filter(l=>l.name).map(l=>l.name.replace(/ \S+$/,"")));
+  Q.forEach((q,di)=>{
+    const R=rng(q.seed+7),pool=q.rues.slice();for(let i=pool.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+    const usedBase=new Set(fixed),src=arr=>({arr,i:0}),P1=src(pool),P2=src(q.avenues.slice()),PF=src(FALL);
+    const ZP={},ZA={};q._zones.forEach(z=>{ZP[z.k]=src(z.rues||[]);ZA[z.k]=src(z.avenues||[])});
+    const pick=list=>{for(const o of list)while(o.i<o.arr.length){const w=o.arr[o.i++];if(!usedBase.has(w)){usedBase.add(w);return w}}return null};
+    let num=1,letter=0,na=0,nr=0,extra=1;const SUF=["St","St","Way","St","Lane","Rd","St","Pl"],AVS=["Ave","Blvd","Ave","Pkwy","Ave"];
+    Object.keys(lines).filter(k=>lines[k].d===di&&!lines[k].name&&present[k]>40)
+      .sort((x,y)=>{const a=lines[x],b=lines[y];return (a.zk??9)-(b.zk??9)||String(a.dir).localeCompare(String(b.dir))||(a.idx??0)-(b.idx??0)||x.localeCompare(y)})
+      .forEach(k=>{const l=lines[k];
+        if(l.cls==="av"){const w=pick([ZA[l.zk]||src([]),P2,P1,PF]);l.name=w?`${w} ${AVS[na++%AVS.length]}`:`Route ${extra++}`}
+        else if(l.dir==="c"&&(l.zk??0)===0)l.name=`${q.num||""}${ord(num++)} St`;
+        else if(l.dir==="c"&&l.zk>0&&letter<26)l.name=`${String.fromCharCode(65+letter++)} St`;
+        else{const w=pick([ZP[l.zk]||src([]),P1,PF]);l.name=w?`${w} ${SUF[nr++%SUF.length]}`:`Alley ${extra++}`}});
+  });
+  edges.forEach(e=>{const l=lines[e.line];e.cls=l?.cls||"loc";e.name=l?.name||""});
 
   /* ---- carrefours ---- */
   const inter=[],seen={};
-  const addI=(p,l1,l2)=>{if(!lines[l1]?.name||!lines[l2]?.name||l1===l2)return;if(p[0]<0||p[0]>W||p[1]<0||p[1]>H)return;
-    const g=Math.round(p[0]/14)+":"+Math.round(p[1]/14);if(seen[g])return;seen[g]=1;inter.push({p,a:lines[l1].name,b:lines[l2].name,av:lines[l1].cls!=="loc"&&lines[l2].cls!=="loc"})};
-  const byPt={};const pk=p=>Math.round(p[0])+":"+Math.round(p[1]);
-  edges.forEach(e=>{[e.a,e.b].forEach(p=>{const k=pk(p);(byPt[k]||(byPt[k]={p,ls:new Set()})).ls.add(e.line)})});
-  Object.values(byPt).forEach(o=>{const ls=[...o.ls];if(ls.length>=2)addI(o.p,ls[0],ls[1])});
-  nodeEnds.forEach(n=>addI(n.p,n.line,n.border));
-  radInter.forEach(r=>addI(r.p,r.l1,r.l2));
+  const addI=(p,l1,l2,d)=>{if(!lines[l1]?.name||!lines[l2]?.name||l1===l2||lines[l1].name===lines[l2].name)return;
+    const g=Math.round(p[0]/14)+":"+Math.round(p[1]/14);if(seen[g])return;seen[g]=1;const o=own(p);inter.push({p,a:lines[l1].name,b:lines[l2].name,d:o>=0?o:d,q:Q[o>=0?o:d].nom})};
+  const byPt={},pk=p=>Math.round(p[0])+":"+Math.round(p[1]);
+  edges.forEach(e=>[e.a,e.b].forEach(p=>{const k=pk(p);(byPt[k]||(byPt[k]={p,ls:new Set(),d:e.d})).ls.add(e.line)}));
+  Object.values(byPt).forEach(o=>{const ls=[...o.ls];if(ls.length>=2)addI(o.p,ls[0],ls[1],o.d)});
+  nodeEnds.forEach(n=>addI(n.p,n.line,n.border,n.d));
+  radInter.forEach(r=>addI(r.p,r.l1,r.l2,r.d));
 
-  /* ---- autoroutes et sorties ---- */
-  const hws=(q.hw||[]).map(h=>({...h,p:px(h.pts)}));
-  const exits=[];let ex=1;
-  hws.forEach(h=>{for(let i=0;i<h.p.length-1;i++)edges.forEach(e=>{const l=lines[e.line];if(!l||l.cls==="loc"||l.cls==="wall")return;
-    const hit=segInt(h.p[i],h.p[i+1],e.a,e.b);if(!hit||wet(hit.p))return;
-    if(exits.some(x=>dist(x.p,hit.p)<70))return;if(hit.p[0]<10||hit.p[0]>W-10||hit.p[1]<10||hit.p[1]>H-10)return;
-    exits.push({p:hit.p,n:ex++,hw:h.nom,rue:l.name})})});
-
+  /* ---- autoroutes et sorties (numérotées le long de chaque autoroute) ---- */
+  const hws=AUTOROUTES.map(h=>({nom:h.nom,p:CP(h.pts)}));
+  const exits=[],cnt={};
+  hws.forEach(h=>{const hits=[];let acc=0;
+    for(let i=0;i<h.p.length-1;i++){edges.forEach(e=>{if(e.cls==="loc"||e.cls==="wall")return;const x=segInt(h.p[i],h.p[i+1],e.a,e.b);if(!x)return;const o=own(x.p);if(o<0)return;
+        hits.push({p:x.p,s:acc+x.t*dist(h.p[i],h.p[i+1]),rue:e.name,d:o})});acc+=dist(h.p[i],h.p[i+1])}
+    hits.sort((a,b)=>a.s-b.s).forEach(x=>{if(exits.some(y=>dist(y.p,x.p)<75))return;cnt[h.nom]=(cnt[h.nom]||0)+1;exits.push({p:x.p,n:cnt[h.nom],hw:h.nom,rue:x.rue,d:x.d,q:Q[x.d].nom})})});
   /* ---- portes de l'enceinte ---- */
-  const gates=[];
-  zones.forEach(z=>{if(!z.walled)return;nodeEnds.forEach(n=>{if(n.border==="bd:"+z.k&&!gates.some(g=>dist(g.p,n.p)<30))gates.push({p:n.p,rue:lines[n.line].name})})});
+  const gates=[];nodeEnds.forEach(n=>{if(n.gate&&!gates.some(g=>dist(g.p,n.p)<30))gates.push({p:n.p,rue:lines[n.line].name,d:n.d,q:Q[n.d].nom})});
+  /* ---- lieux ---- */
+  const lms=LIEUX.map(([code,nom,x,y])=>{const p=C([x,y]),o=own(p);return{code,nom,p,col:CAT[code.slice(0,2)]||"#ccc",d:o,q:o>=0?Q[o].nom:""}});
 
-  /* ---- géométrie du quartier (réutilisée par le plan complet) ---- */
-  edges.forEach(e=>{const l=lines[e.line];e.cls=l?.cls||"loc";e.name=l?.name||""});
-  const G={id:q.id,W,H,cell:100,
-    edges:edges.filter(e=>e.name||e.cls==="wall"),
-    water:water.map(w=>({p:w.p,nom:w.nom,lp:[(w.lx??0.5)*W,(w.ly??0.5)*H]})),
-    parks:parks.map(k=>({p:k.p,nom:k.nom})),
-    plazas:zones.filter(z=>z.style==="radial").map(z=>({c:z.c,r:z.plazaR,nom:z.plaza})),
-    restr:restr.map(k=>({p:k.p,nom:k.nom})),area,
-    hws:hws.map(h=>({p:h.p,nom:h.nom})),exits,gates,inter,
-    lms:(q.lm||[]).map(([code,nom,x,y])=>({code,nom,p:[x*W,y*H],col:CAT[code.slice(0,2)]||"#ccc"})),
-    voisins:(q.voisins||[]).map(([t,x,y])=>({t,p:[x*W,y*H]})),
-    nbStreets:new Set(Object.values(lines).filter(l=>l.name&&present[l.key]>60).map(l=>l.name)).size};
-  return CACHE[q.id]=renderSVG(G);
+  /* ---- assemblage pour le rendu ---- */
+  const pth=poly=>"M"+poly.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")+"Z";
+  let land=fps.map(f=>`<path d="${pth(f)}" fill="#0b120e"/>`).join("");
+  const titles=Q.map((q,i)=>({t:q.court,p:C(q.t),fs:q.walled?30:46}));
+  ILES.forEach(t=>{const c=C(t.c);land+=`<ellipse cx="${c[0]}" cy="${c[1]}" rx="${t.rx*K}" ry="${t.ry*K}" fill="#0b120e" stroke="#1f6f8f" stroke-width="3"/>`;titles.push({t:t.nom,p:[c[0],c[1]-40],fs:30})});
+  const V={id:"ville",W:CW,H:CH,cell:CELL,edges:edges.filter(e=>e.name||e.cls==="wall"),
+    water:EAUX.map(([t,x,y])=>({p:[[0,0]],nom:t,lp:C([x,y]),fs:40})),
+    parks:parks.map(k=>({p:k.p,nom:k.nom})),plazas:[],restr:restr.map(k=>({p:k.p,nom:k.nom})),area:null,
+    hws,exits,gates,inter,lms,voisins:[],titles,outlines:fps,base:`<rect width="${CW}" height="${CH}" fill="url(#waves-ville)"/>${land}`,mask:true};
+  Q.forEach(q=>q._zones.forEach(z=>{if(z.style==="radial")V.plazas.push({c:z.c,r:z.plazaR,nom:z.plaza})}));
+  /* statistiques par quartier */
+  V.dist={};Q.forEach((q,i)=>{const names=new Set(V.edges.filter(e=>e.d===i&&e.name).map(e=>e.name));
+    V.dist[q.id]={i,bb:bbs[i],fp:fps[i],nb:names.size,cls:new Set(V.edges.filter(e=>e.d===i).map(e=>e.cls))}});
+  V.nbStreets=new Set(V.edges.filter(e=>e.name).map(e=>e.d+"|"+e.name)).size;
+  return CACHE.v=renderSVG(V);
 }
 
 /* ------------------------------ rendu SVG ------------------------------ */
@@ -413,6 +291,7 @@ function renderSVG(G){
   G.restr.forEach(k=>{if(!k.nom)return;const c=k.lp||cen(k.p);s+=big(k.nom,c[0],c[1]+6,"#ff5a6a",17,"t-big")});
   G.voisins.forEach(v=>s+=`<text x="${v.p[0]}" y="${v.p[1]}" font-size="16" fill="#9fb8aa" fill-opacity=".55" text-anchor="middle" font-family="'Courier New',monospace" letter-spacing="2">${esc(v.t)}</text>`);
   (G.titles||[]).forEach(t=>s+=`<text class="t-dist" x="${t.p[0]}" y="${t.p[1]}" font-size="${t.fs||46}" text-anchor="middle" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="6">${esc(t.t)}</text>`);
+  if(G.mask)s+=`<path class="nc-mask" d="" fill="#000" fill-opacity=".62" fill-rule="evenodd"/>`;
   /* repères de grille */
   const nc=Math.ceil(W/CELL),nr=Math.ceil(H/CELL),gfs=CELL>100?22:13;
   let gr="";for(let i=0;i<nc;i++){const L=String.fromCharCode(65+i);gr+=`<text x="${i*CELL+CELL/2}" y="${gfs+3}" font-size="${gfs}" text-anchor="middle">${L}</text><text x="${i*CELL+CELL/2}" y="${H-6}" font-size="${gfs}" text-anchor="middle">${L}</text>`}
@@ -427,80 +306,13 @@ function renderSVG(G){
   G.svg=s;return G;
 }
 
-/* ===================== PLAN COMPLET : assemblage des quartiers =====================
-   Repère de la carte officielle : 2000 × 1332 (comme l'image fournie, réduite).
-   r  : [x, y, largeur, hauteur?] du plan du quartier posé sur la carte officielle (hauteur absente = proportions conservées)
-   fp : emprise du quartier (les emprises se partagent la ville ; ordre = priorité)
-   t  : position du nom du quartier                                                    */
-const VILLE={OX:450,K:3,W:3900,H:3996,
- ordre:["executive-zone","city-center","upper-marina","little-china","old-combat-zone","the-glen","little-europe","south-night-city","watson","new-westbrook","heywood","rancho-coronado","pacifica"],
- pos:{
-  "executive-zone":{r:[1285,342,389],t:[1478,352]},
-  "city-center":{r:[729,442,480],fp:[[870,445],[1080,445],[1080,520],[1200,540],[1210,610],[1150,660],[1040,700],[880,690],[875,560]],t:[985,515]},
-  "upper-marina":{r:[1000,340,400],fp:[[1080,400],[1160,395],[1250,430],[1300,480],[1330,540],[1210,610],[1200,540],[1080,520]],t:[1195,470]},
-  "little-china":{r:[1000,520,400],fp:[[1210,610],[1330,540],[1365,590],[1250,700],[1150,780],[1040,760],[1040,700],[1150,660]],t:[1235,650]},
-  "old-combat-zone":{r:[1030,690,250,215],fp:[[1040,760],[1150,780],[1250,700],[1200,790],[1100,880],[1060,900]],t:[1135,815]},
-  "the-glen":{r:[850,680,230,300],fp:[[880,690],[1040,700],[1040,760],[1060,900],[1000,960],[930,975],[880,940],[860,720]],t:[965,835]},
-  "little-europe":{r:[590,390,480],fp:[[625,470],[700,415],[800,400],[1080,400],[1080,445],[870,445],[875,560],[880,690],[860,720],[700,725],[630,700],[640,600]],t:[750,560]},
-  "south-night-city":{r:[600,690,440],fp:[[630,700],[700,725],[860,720],[880,940],[930,975],[1000,960],[990,1000],[830,1000],[720,965],[660,880],[625,780]],t:[765,860]},
-  "watson":{r:[650,-10,560],fp:[[715,0],[1100,0],[1100,335],[960,345],[900,335],[800,285],[730,180]],t:[905,180]},
-  "new-westbrook":{r:[1060,0,700,640],fp:[[1100,0],[1700,0],[1700,620],[1365,620],[1365,590],[1330,500],[1300,430],[1180,345],[1100,335]],t:[1320,240]},
-  "heywood":{r:[1100,620,620,712],fp:[[1365,620],[1700,620],[1700,1332],[1300,1332],[1250,1120],[1150,1100],[1080,1040],[1150,960],[1260,830],[1365,700]],t:[1470,1000]},
-  "rancho-coronado":{r:[800,1000,560],fp:[[840,1080],[1080,1040],[1150,1100],[1250,1120],[1300,1332],[840,1332]],t:[1060,1210]},
-  "pacifica":{r:[470,1000,560],fp:[[530,1090],[700,1085],[840,1080],[840,1332],[530,1332]],t:[690,1250]}},
- ponts:[{nom:"US-16",pts:[[992,330],[996,452]]},{nom:"PONT DE PACIFICA",pts:[[921,975],[876,1090]]},{nom:"US-828",pts:[[1411,612],[1459,650]]},{nom:"I-101",pts:[[1666,612],[1699,650]]}],
- eau:[["SAN MORRO BAY",780,360],["PACIFIC OCEAN",520,860],["DEL CORONADO BAY",1080,1040],["BAIE DE NIGHT CITY",1330,830]],
- terres:[{nom:"MORRO ROCK",c:[508,385],rx:62,ry:58}]};
-
-function buildCity(){
-  if(CACHE.__ville)return CACHE.__ville;
-  const {OX,K}=VILLE,C=p=>[(p[0]-OX)*K,p[1]*K],lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],mid=(a,b)=>lerp(a,b,.5);
-  const items=VILLE.ordre.map(id=>{const q=QUARTIERS.find(x=>x.id===id),G=build(q),P=VILLE.pos[id],[x0,y0,w,hh]=P.r,k=w/1600,ky=hh?hh/1100:k;
-    const T=p=>C([x0+p[0]*k,y0+p[1]*ky]);
-    return {id,q,G,T,k,fp:P.fp?P.fp.map(C):G.area.map(T),t:C(P.t)}});
-  const owner=p=>{for(let i=0;i<items.length;i++)if(inPoly(p,items[i].fp))return i;return -1};
-  const pth=poly=>"M"+poly.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")+"Z";
-  const V={id:"ville",W:VILLE.W,H:VILLE.H,cell:200,edges:[],water:[],parks:[],plazas:[],restr:[],area:null,hws:[],exits:[],gates:[],inter:[],lms:[],voisins:[],titles:[],outlines:[]};
-  let defs="",land="";const names=new Set(),lmBest={};let ex=1;
-  items.forEach((it,i)=>{
-    const {G,T}=it,clip="fp-"+it.id;
-    defs+=`<clipPath id="${clip}"><path d="${pth(it.fp)}"/></clipPath>`;land+=`<path d="${pth(it.fp)}" fill="#0b120e"/>`;
-    G.edges.forEach(e=>{const a=T(e.a),b=T(e.b);if(owner(mid(a,b))!==i)return;V.edges.push({a,b,cls:e.cls,name:e.name,line:it.id+"|"+e.line,ord:e.ord});if(e.name)names.add(it.id+"|"+e.name)});
-    G.water.forEach(w=>V.water.push({p:w.p.map(T),clip}));
-    G.parks.forEach(k=>{const p=k.p.map(T);V.parks.push({p,clip,nom:owner(p.reduce((a,q)=>[a[0]+q[0]/p.length,a[1]+q[1]/p.length],[0,0]))===i?k.nom:""})});
-    G.restr.forEach(k=>V.restr.push({p:k.p.map(T),clip,nom:k.nom}));
-    G.plazas.forEach(z=>{const c=T(z.c);if(owner(c)===i)V.plazas.push({c,r:z.r*it.k*K,nom:z.nom})});
-    G.hws.forEach(h=>{const P=h.p.map(T),runs=[];let cur=null;
-      for(let s=0;s<P.length-1;s++){const n=Math.max(1,Math.ceil(dist(P[s],P[s+1])/25));
-        for(let m=0;m<n;m++){const a=lerp(P[s],P[s+1],m/n),b=lerp(P[s],P[s+1],(m+1)/n);
-          if(owner(mid(a,b))===i){if(cur&&dist(cur[cur.length-1],a)<0.5)cur.push(b);else{cur=[a,b];runs.push(cur)}}else cur=null}}
-      if(runs.length)V.hws.push({nom:h.nom,runs,d:runs.map(r=>"M"+r.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")).join("")})});
-    G.exits.forEach(x=>{const p=T(x.p);if(owner(p)===i)V.exits.push({...x,p,n:ex++,q:it.q.nom})});
-    G.gates.forEach(x=>{const p=T(x.p);if(owner(p)===i)V.gates.push({...x,p,q:it.q.nom})});
-    G.inter.forEach(x=>{const p=T(x.p);if(owner(p)===i)V.inter.push({...x,p,q:it.q.nom})});
-    G.lms.forEach(l=>{const p=T(l.p),o=owner(p),own=o===i,cur=lmBest[l.code];if(o<0)return;if(!cur||(own&&!cur.own))lmBest[l.code]={...l,p,own}});
-    V.outlines.push(it.fp);
-    V.titles.push({t:it.q.nom.split(/ [—&]/)[0].toUpperCase(),p:it.t,fs:it.id==="executive-zone"?30:46});
-  });
-  V.lms=Object.values(lmBest);
-  /* ponts reliant les quartiers */
-  VILLE.ponts.forEach(b=>{const p=b.pts.map(C);V.hws.push({nom:b.nom,runs:[p],d:"M"+p.map(q=>q.join(" ")).join("L")})});
-  /* fond : eau partout, terres = emprises des quartiers + îles */
-  VILLE.terres.forEach(t=>{const c=C(t.c);land+=`<ellipse cx="${c[0]}" cy="${c[1]}" rx="${t.rx*K}" ry="${t.ry*K}" fill="#0b120e" stroke="#1f6f8f" stroke-width="3"/>`;V.titles.push({t:t.nom,p:[c[0],c[1]+12],fs:34})});
-  V.base=`<rect width="${V.W}" height="${V.H}" fill="url(#waves-ville)"/>${land}`;
-  V.defs=defs;
-  VILLE.eau.forEach(([t,x,y])=>V.water.push({p:[[0,0]],nom:t,lp:C([x,y]),fs:40}));
-  V.nbStreets=names.size;
-  return CACHE.__ville=renderSVG(V);
-}
-
 /* ------------------------- visionneuse zoomable ------------------------- */
-function zoomable(box,inner,w,h,onScale,onTap){
+function zoomable(box,inner,w,h,onScale,onTap,home){
   let s=1,tx=0,ty=0,fitS=1;const pts=new Map();let moved=0,downT=null,last=null;
   const rect=()=>box.getBoundingClientRect();
   const apply=()=>{inner.style.transform=`translate(${tx}px,${ty}px) scale(${s})`;onScale&&onScale(s)};
-  const fit=()=>{const r=rect();fitS=Math.min(r.width/w,r.height/h);s=fitS;tx=(r.width-w*s)/2;ty=(r.height-h*s)/2;apply()};
-  const zoomAt=(f,cx,cy)=>{const ns=Math.max(fitS*0.8,Math.min(fitS*14,s*f));f=ns/s;tx=cx-(cx-tx)*f;ty=cy-(cy-ty)*f;s=ns;apply()};
+  const fit=()=>{const r=rect();fitS=Math.min(r.width/w,r.height/h);if(home){const [x0,y0,x1,y1]=home;s=Math.min(r.width/(x1-x0),r.height/(y1-y0));tx=r.width/2-(x0+x1)/2*s;ty=r.height/2-(y0+y1)/2*s}else{s=fitS;tx=(r.width-w*s)/2;ty=(r.height-h*s)/2}apply()};
+  const zoomAt=(f,cx,cy)=>{const ns=Math.max(fitS*0.8,Math.min(fitS*40,s*f));f=ns/s;tx=cx-(cx-tx)*f;ty=cy-(cy-ty)*f;s=ns;apply()};
   box.addEventListener("wheel",e=>{e.preventDefault();const r=rect();zoomAt(Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top)},{passive:false});
   box.addEventListener("pointerdown",e=>{if(e.target.closest(".nc-tools"))return;box.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);if(pts.size===1){moved=0;downT=e.target}last=null});
   box.addEventListener("pointermove",e=>{if(!pts.has(e.pointerId))return;const prev=pts.get(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);
@@ -513,8 +325,8 @@ function zoomable(box,inner,w,h,onScale,onTap){
   box.addEventListener("dblclick",e=>{const r=rect();zoomAt(2,e.clientX-r.left,e.clientY-r.top)});
   addEventListener("resize",()=>{if(box.isConnected)fit()});
   const c=()=>{const r=rect();return[r.width/2,r.height/2]};
-  return{fit,zin:()=>zoomAt(1.5,...c()),zout:()=>zoomAt(1/1.5,...c()),scale:()=>s/fitS,
-    centerOn:(p,k)=>{fit();const r=rect();s=fitS*k;tx=r.width/2-p[0]*s;ty=r.height/2-p[1]*s;apply()}};
+  return{fit,zin:()=>zoomAt(1.5,...c()),zout:()=>zoomAt(1/1.5,...c()),scale:()=>s/fitS,px:()=>s,
+    centerOn:(p,k)=>{const r=rect();s=Math.max(s,k);tx=r.width/2-p[0]*s;ty=r.height/2-p[1]*s;apply()}};
 }
 
 /* ---------------------------- styles ---------------------------- */
@@ -560,51 +372,51 @@ let cssDone=false;const css=()=>{if(cssDone)return;cssDone=true;const st=documen
 /* ------------------------- légende affichée sur la carte ------------------------- */
 const CATN={CR:"Corporations",PU:"Services publics",HB:"Hôtels, bars, restaurants",CH:"Cube hotels",CC:"Camps de conteneurs",NL:"Clubs, vie nocturne",AS:"Spectacles, sport",CA:"Culture, art",OT:"Autres lieux"};
 function legendHTML(G,ville){
-  const has=c=>G.edges.some(e=>e.cls===c),sw=(st)=>`<svg width="34" height="12" viewBox="0 0 34 12">${st}</svg>`;
+  const has=c=>G.cls.has(c),sw=st=>`<svg width="34" height="12" viewBox="0 0 34 12">${st}</svg>`;
   const line=(c,w,dash)=>sw(`<line x1="2" y1="6" x2="32" y2="6" stroke="#020604" stroke-width="${w+3}" stroke-linecap="round"/><line x1="2" y1="6" x2="32" y2="6" stroke="${c}" stroke-width="${w}" stroke-linecap="round" ${dash?`stroke-dasharray="${dash}"`:""}/>`);
   const box=(f,s,extra="")=>sw(`<rect x="3" y="1" width="28" height="10" fill="${f}" stroke="${s}" stroke-width="1.5" ${extra}/>`);
   const r=[];
-  if(G.hws.length)r.push([line("#ffb000",7),"Autoroute / pont"]);
-  if(G.exits.length)r.push([sw(`<circle cx="17" cy="6" r="5.5" fill="#ffb000" stroke="#000" stroke-width="1.5"/><text x="17" y="8.6" font-size="7" text-anchor="middle" font-weight="bold" font-family="monospace">1</text>`),"Sortie d'autoroute numérotée"]);
-  if(has("bd"))r.push([line("#00e08d",5),"Boulevard (limite de secteur)"]);
+  if(G.hws)r.push([line("#ffb000",7),"Autoroute / pont"]);
+  if(G.exits)r.push([sw(`<circle cx="17" cy="6" r="5.5" fill="#ffb000" stroke="#000" stroke-width="1.5"/><text x="17" y="8.6" font-size="7" text-anchor="middle" font-weight="bold" font-family="monospace">1</text>`),"Sortie d'autoroute (n° le long de l'autoroute)"]);
+  if(has("bd"))r.push([line("#00e08d",5),"Boulevard (limite de quartier ou de secteur)"]);
   if(has("av"))r.push([line("#00c27a",4.5),"Avenue / route côtière"]);
   if(has("loc"))r.push([line("#2b6b4f",2.5),"Rue"]);
-  if(has("wall"))r.push([line("#ff2a3d",4,"2 1.5"),"Mur d'enceinte"]);
-  if(G.gates.length)r.push([sw(`<rect x="11" y="0" width="12" height="12" fill="#ff2a3d" stroke="#000"/>`),"Porte / poste de contrôle"]);
-  if(G.parks.length||G.plazas.length)r.push([box("#0f3320","#1d6b3f"),"Parc, place"]);
-  if(G.water.length)r.push([box("#05141d","#1f6f8f"),"Eau"]);
-  if(G.restr.length)r.push([box("#3a0f14","#ff2a3d",'stroke-dasharray="3 2"'),"Zone interdite"]);
-  if(ville)r.push([sw(`<line x1="2" y1="6" x2="32" y2="6" stroke="#00ff9c" stroke-opacity=".6" stroke-width="2" stroke-dasharray="5 3"/>`),"Limite de quartier"]);
-  const cats=[...new Set(G.lms.map(l=>l.code.slice(0,2)))].sort();
-  const lm=cats.map(c=>`<div><b style="background:${CAT[c]||"#ccc"}">${c}</b>${CATN[c]||c}</div>`).join("");
-  const nc=Math.ceil(G.W/G.cell),nr=Math.ceil(G.H/G.cell);
+  if(has("wall"))r.push([line("#ff2a3d",4,"2 1.5"),"Mur d'enceinte (Executive Zone)"]);
+  if(G.gates)r.push([sw(`<rect x="11" y="0" width="12" height="12" fill="#ff2a3d" stroke="#000"/>`),"Porte / poste de contrôle"]);
+  if(G.parks)r.push([box("#0f3320","#1d6b3f"),"Parc, place"]);
+  r.push([box("#05141d","#1f6f8f"),"Eau"]);
+  if(G.restr)r.push([box("#3a0f14","#ff2a3d",'stroke-dasharray="3 2"'),"Zone interdite"]);
+  r.push([sw(`<line x1="2" y1="6" x2="32" y2="6" stroke="#00ff9c" stroke-opacity=".6" stroke-width="2" stroke-dasharray="5 3"/>`),"Limite de quartier"]);
+  if(!ville)r.push([box("#000","#333",'fill-opacity=".55"'),"Autres quartiers (assombris)"]);
+  const lm=G.cats.map(c=>`<div><b style="background:${CAT[c]||"#ccc"}">${c}</b>${CATN[c]||c}</div>`).join("");
   return `<div class="nc-leg-h">LÉGENDE <span class="nc-north" title="Nord">▲ N</span></div>
     ${r.map(([s,t])=>`<div class="nc-leg-r">${s}<span>${t}</span></div>`).join("")}
-    ${lm?`<div class="nc-leg-s">LIEUX (CODE DE LA CARTE OFFICIELLE)</div><div class="nc-leg-lm">${lm}</div>`:""}
-    <div class="nc-leg-s">REPÉRAGE</div><div class="nc-leg-t">Grille A–${String.fromCharCode(64+nc)} / 1–${nr} (ex. « F7 »)${ville?"":", une case ≈ 100 m"}.<br>Toucher un carrefour, une sortie ou un lieu pour son nom.</div>
+    ${lm?`<div class="nc-leg-s">LIEUX (CODES DE LA CARTE OFFICIELLE)</div><div class="nc-leg-lm">${lm}</div>`:""}
+    <div class="nc-leg-s">REPÉRAGE</div><div class="nc-leg-t">Grille A–T / 1–20, la même sur toutes les cartes (une case = 200 m).<br>Toucher un carrefour, une sortie ou un lieu pour son nom.</div>
     <div class="nc-scale"><i></i><span></span></div>`;
 }
 
 /* ---------------------------- page CARTE ---------------------------- */
 function render(view,id){
   css();document.body.classList.add("wide");
-  const ville=id==="ville",q=ville?{id:"ville",nom:"Night City — plan complet",desc:"Assemblage des 13 plans de quartier à leur place sur la carte de Night City : mêmes rues, mêmes noms, mêmes carrefours. Zoomer pour faire apparaître les noms des rues."}:QUARTIERS.find(x=>x.id===id);
+  const ville=id==="ville",q=ville?{id:"ville",nom:"Night City — plan complet",desc:"Toute la ville : chaque quartier avec son réseau de rues. Les plans de quartier sont des agrandissements de ce plan (mêmes rues, mêmes noms, mêmes autoroutes). Zoomer pour faire apparaître les noms des rues."}:QUARTIERS.find(x=>x.id===id);
   const tab=(h,t,on)=>`<a href="${h}"><button class="${on?"on":""}">${t}</button></a>`;
   view.innerHTML=`<a href="#">← INDEX</a><h2>▓ CARTE // ${q?esc(q.nom.toUpperCase()):"NIGHT CITY"}</h2>
-    <div class="nc-tabs">${tab("#carte","NIGHT CITY",!q)}${tab("#carte-ville","▦ PLAN COMPLET",ville)}${QUARTIERS.map(x=>tab("#carte-"+x.id,esc(x.nom.split(/ [—&]/)[0].toUpperCase()),q&&q.id===x.id)).join("")}</div>
+    <div class="nc-tabs">${tab("#carte","NIGHT CITY",!q)}${tab("#carte-ville","▦ PLAN COMPLET",ville)}${QUARTIERS.slice().sort((a,b)=>a.court.localeCompare(b.court)).map(x=>tab("#carte-"+x.id,esc(x.court),q&&q.id===x.id)).join("")}</div>
     ${q?`<p><small>${esc(q.desc)}</small></p>`:""}
     <div class="nc-box"><div class="nc-inner"></div>
-      <div class="nc-tools"><button data-z="in" title="Zoomer">+</button><button data-z="out" title="Dézoomer">−</button><button data-z="fit" title="Vue entière">⤢</button><button data-z="fs" title="Plein écran">⛶</button>${q?`<button data-z="leg" title="Légende">ⓘ</button>`:""}</div>
+      <div class="nc-tools"><button data-z="in" title="Zoomer">+</button><button data-z="out" title="Dézoomer">−</button><button data-z="fit" title="${ville?"Vue entière":"Recentrer sur le quartier"}">⤢</button><button data-z="fs" title="Plein écran">⛶</button>${q?`<button data-z="leg" title="Légende">ⓘ</button>`:""}</div>
       ${q?`<div class="nc-leg"></div>`:""}<div class="nc-tip"></div>
       <div class="nc-hint">MOLETTE / PINCER : ZOOM · GLISSER : DÉPLACER${q?" · TOUCHER UN CARREFOUR : NOMS DES RUES":""}</div></div>
     <div id="nc-info"></div>`;
   const box=$(".nc-box",view),inner=$(".nc-inner",view),tip=$(".nc-tip",view),leg=$(".nc-leg",view);
-  let w,h,data=null;
-  if(q){data=ville?buildCity():build(q);w=data.W;h=data.H;inner.innerHTML=data.svg}
+  let w,h,data=null,dist0=null,home=null;
+  if(q){data=buildCity();w=data.W;h=data.H;inner.innerHTML=data.svg;
+    if(!ville){dist0=data.dist[q.id];const [a,b,c,d]=dist0.bb,m=70;home=[a-m,b-m,c+m,d+m];
+      inner.querySelector(".nc-mask").setAttribute("d",`M0 0H${w}V${h}H0Z M${dist0.fp.map(p=>p.join(" ")).join("L")}Z`)}}
   else{w=IMG.w;h=IMG.h;inner.innerHTML=`<img src="${IMG.src}" alt="Carte de Night City" width="${w}" height="${h}" draggable="false">`}
   inner.style.width=w+"px";inner.style.height=h+"px";
-  const R=p=>ref(p,data);
-  const sel=q?inner.querySelector(".sel"):null;
+  const R=p=>ref(p,data),sel=q?inner.querySelector(".sel"):null;
   const showTip=(html,scr,p)=>{tip.innerHTML=html;tip.style.display="block";const r=box.getBoundingClientRect();
     tip.style.left=Math.min(Math.max(8,scr[0]+14),r.width-290)+"px";tip.style.top=Math.min(Math.max(8,scr[1]+14),r.height-90)+"px";
     if(sel&&p){sel.setAttribute("cx",p[0]);sel.setAttribute("cy",p[1])}};
@@ -613,40 +425,43 @@ function render(view,id){
   let lod=()=>{};
   const z=zoomable(box,inner,w,h,()=>lod(),(t,p,scr)=>{
     if(!data){hideTip();return}
-    const el=t&&t.closest&&t.closest("[data-i],[data-x],[data-g],[data-l]");
-    if(!el){hideTip();return}
+    const el=t&&t.closest&&t.closest("[data-i],[data-x],[data-g],[data-l]");if(!el){hideTip();return}
     if(el.dataset.i){const it=data.inter[+el.dataset.i];showTip(`<b>▓ CARREFOUR ${R(it.p)}</b>${esc(it.a)}<br>× ${esc(it.b)}${qd(it)}`,scr,it.p)}
     else if(el.dataset.x){const x=data.exits[+el.dataset.x];showTip(`<b>▓ ${esc(x.hw)} — SORTIE ${x.n}</b>${esc(x.rue)} · ${R(x.p)}${qd(x)}`,scr,x.p)}
     else if(el.dataset.g){const g=data.gates[+el.dataset.g];showTip(`<b>▓ PORTE — POSTE DE CONTRÔLE</b>${esc(g.rue)} · ${R(g.p)}`,scr,g.p)}
-    else if(el.dataset.l){const l=data.lms[+el.dataset.l];showTip(`<b>▓ ${esc(l.code)}</b>${esc(l.nom)} · ${R(l.p)}`,scr,l.p)}});
-  /* niveaux de détail + échelle selon le zoom */
-  const MPP=ville?1/1.25:1; /* mètres par unité de carte (indicatif sur le plan complet) */
-  lod=()=>{const fs=Math.min(box.clientWidth/w,box.clientHeight/h),k=z.scale()*fs;
-    box.classList.toggle("z0",k<0.5);box.classList.toggle("z1",k>=0.5&&k<0.85);
-    if(leg){const pxm=k/MPP,m=[10,20,50,100,200,500,1000,2000].find(v=>v*pxm>=60)||2000;
-      const sc=leg.querySelector(".nc-scale");if(sc){sc.querySelector("i").style.width=(m*pxm).toFixed(0)+"px";sc.querySelector("span").textContent=(m>=1000?m/1000+" km":m+" m")+(ville?" (approx.)":"")}}};
-  if(leg){leg.innerHTML=legendHTML(data,ville);if(box.clientWidth<700)leg.classList.add("off")}
+    else if(el.dataset.l){const l=data.lms[+el.dataset.l];showTip(`<b>▓ ${esc(l.code)}</b>${esc(l.nom)} · ${R(l.p)}${qd(l)}`,scr,l.p)}},home);
+  lod=()=>{const k=z.px();box.classList.toggle("z0",k<0.5);box.classList.toggle("z1",k>=0.5&&k<0.85);
+    if(leg){const m=[10,20,50,100,200,500,1000,2000].find(v=>v*k>=60)||2000,sc=leg.querySelector(".nc-scale");
+      if(sc){sc.querySelector("i").style.width=(m*k).toFixed(0)+"px";sc.querySelector("span").textContent=m>=1000?m/1000+" km":m+" m"}}};
+  /* sous-ensemble du quartier (légende, chiffres, recherche) */
+  const inD=o=>ville||o.d===dist0.i;
+  const bbHit=pts=>{if(ville)return true;const [a,b,c,d]=home,inB=p=>p[0]>=a&&p[0]<=c&&p[1]>=b&&p[1]<=d;
+    for(let i=0;i<pts.length;i++){if(inB(pts[i]))return true;if(i<pts.length-1)for(let t=0.05;t<1;t+=0.05)if(inB(lerp(pts[i],pts[i+1],t)))return true}return false};
+  if(data){
+    const sub={cls:ville?new Set(data.edges.map(e=>e.cls)):dist0.cls,hws:data.hws.some(x=>bbHit(x.p)),exits:data.exits.some(inD),gates:data.gates.some(inD),
+      parks:data.parks.some(k=>bbHit(k.p))||data.plazas.some(k=>bbHit([k.c])),restr:data.restr.some(k=>bbHit(k.p)),
+      cats:[...new Set(data.lms.filter(inD).map(l=>l.code.slice(0,2)))].sort()};
+    leg.innerHTML=legendHTML(sub,ville);if(box.clientWidth<700)leg.classList.add("off")}
   $(".nc-tools",view).onclick=e=>{const a=e.target.closest("button")?.dataset.z;if(!a)return;hideTip();
-    if(a==="in")z.zin();if(a==="out")z.zout();if(a==="fit")z.fit();
-    if(a==="leg")leg.classList.toggle("off");
+    if(a==="in")z.zin();if(a==="out")z.zout();if(a==="fit")z.fit();if(a==="leg")leg.classList.toggle("off");
     if(a==="fs"){if(document.fullscreenElement)document.exitFullscreen();else box.requestFullscreen?.().catch(()=>{})}};
   document.addEventListener("fullscreenchange",()=>{if(box.isConnected)setTimeout(z.fit,60)});
   box.addEventListener("pointerdown",e=>{if(!e.target.closest(".nc-tools,.nc-leg"))hideTip()});
   requestAnimationFrame(z.fit);
-  /* sous la carte : chiffres, recherche, liste des lieux */
   const info=$("#nc-info",view);
-  if(!q){info.innerHTML=`<p><small>CARTE GÉNÉRALE (SOURCE : CARTE NON OFFICIELLE CYBERPUNK RED). « PLAN COMPLET » : TOUTE LA VILLE AU STYLE DES PLANS DE QUARTIER. LES AUTRES ONGLETS : PLAN ROUTIER DÉTAILLÉ DE CHAQUE QUARTIER.</small></p>`;return}
-  info.innerHTML=`<div class="panel" style="margin-top:10px"><div>▓ ${data.nbStreets} RUES · ${data.inter.length} CARREFOURS${data.exits.length?" · "+data.exits.length+" SORTIES D'AUTOROUTE":""}${data.lms.length?" · "+data.lms.length+" LIEUX":""}</div>
-    <div class="nc-search"><input id="nc-q" placeholder="Chercher une rue ou un lieu…" autocomplete="off" spellcheck="false"></div><div class="nc-res" id="nc-r"></div>
-    ${data.lms.length?`<div class="nc-lms">${data.lms.map(l=>`<div><b style="background:${l.col}">${esc(l.code)}</b>${esc(l.nom)} · ${R(l.p)}</div>`).join("")}</div>`:""}</div>`;
+  if(!q){info.innerHTML=`<p><small>CARTE GÉNÉRALE (SOURCE : CARTE NON OFFICIELLE CYBERPUNK RED). « PLAN COMPLET » : TOUTE LA VILLE AU STYLE DES PLANS DE QUARTIER. LES AUTRES ONGLETS : CHAQUE QUARTIER EN DÉTAIL.</small></p>`;return}
+  const I=data.inter.filter(inD),X=data.exits.filter(inD),LM=data.lms.filter(inD);
+  info.innerHTML=`<div class="panel" style="margin-top:10px"><div>▓ ${ville?data.nbStreets:dist0.nb} RUES · ${I.length} CARREFOURS${X.length?" · "+X.length+" SORTIES D'AUTOROUTE":""}${LM.length?" · "+LM.length+" LIEUX":""}</div>
+    <div class="nc-search"><input id="nc-q" placeholder="Chercher une rue ou un lieu${ville?"":" du quartier"}…" autocomplete="off" spellcheck="false"></div><div class="nc-res" id="nc-r"></div>
+    ${LM.length?`<div class="nc-lms">${LM.map(l=>`<div><b style="background:${l.col}">${esc(l.code)}</b>${esc(l.nom)} · ${R(l.p)}</div>`).join("")}</div>`:""}</div>`;
   const qi=$("#nc-q",view),res=$("#nc-r",view);
   qi.oninput=()=>{const v=qi.value.trim().toLowerCase();if(v.length<2){res.innerHTML="";return}
-    const hits=[];data.lms.forEach(l=>{if((l.code+" "+l.nom).toLowerCase().includes(v))hits.push({t:`${l.code} — ${l.nom}`,p:l.p})});
-    const seenN=new Set();data.inter.forEach(it=>{[it.a,it.b].forEach(n=>{const key=n+(it.q||"");if(n.toLowerCase().includes(v)&&!seenN.has(key)){seenN.add(key);hits.push({t:n+(it.q?" ("+it.q.split(/ [—&]/)[0]+")":""),p:it.p})}})});
+    const hits=[];LM.forEach(l=>{if((l.code+" "+l.nom).toLowerCase().includes(v))hits.push({t:`${l.code} — ${l.nom}`,p:l.p})});
+    const seenN=new Set();I.forEach(it=>{[it.a,it.b].forEach(n=>{const key=n+it.q;if(n.toLowerCase().includes(v)&&!seenN.has(key)){seenN.add(key);hits.push({t:n+(ville?" ("+QUARTIERS[it.d].court+")":""),p:it.p})}})});
     res.innerHTML=hits.slice(0,30).map((h,i)=>`<button data-k="${i}">${esc(h.t)} · ${R(h.p)}</button>`).join("")||"<small>AUCUN RÉSULTAT</small>";
-    res.querySelectorAll("button").forEach(b=>b.onclick=()=>{const h=hits[+b.dataset.k];z.centerOn(h.p,ville?6:3);lod();box.scrollIntoView({behavior:"smooth",block:"center"});showTip(`<b>▓ ${esc(h.t)}</b>${R(h.p)}`,[box.clientWidth/2,box.clientHeight/2],h.p)})};
+    res.querySelectorAll("button").forEach(b=>b.onclick=()=>{const h=hits[+b.dataset.k];z.centerOn(h.p,1.3);lod();box.scrollIntoView({behavior:"smooth",block:"center"});showTip(`<b>▓ ${esc(h.t)}</b>${R(h.p)}`,[box.clientWidth/2,box.clientHeight/2],h.p)})};
 }
 const $=(s,e=document)=>e.querySelector(s);
 
-window.NC_CARTE={render,QUARTIERS,build,buildCity};
+window.NC_CARTE={render,QUARTIERS,buildCity};
 })();
