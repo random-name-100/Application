@@ -58,12 +58,12 @@ details{margin-bottom:8px}summary{font-weight:bold;padding:6px 8px;background:va
 .fd-zone:hover,.fd-zone.on{border-color:var(--c);background:var(--dim)}
 .fd-view{flex:1;min-width:0}.fd-title{margin-bottom:8px;font-weight:bold}
 .fd-screen{position:relative;aspect-ratio:4/3;background:#000;border:2px solid var(--dim);box-shadow:0 0 15px var(--dim);overflow:hidden}
-.fd-screen img{width:100%;height:100%;object-fit:contain;display:block}
+.fd-screen canvas{width:100%;height:100%;object-fit:contain;display:block;border:0;background:#000}
 .fd-lines{position:absolute;inset:0;pointer-events:none;background:linear-gradient(#0000 50%,#00000040 50%);background-size:100% 4px}
 .fd-rec{position:absolute;top:5%;right:5%;color:#f33;font-weight:bold;font-size:1.3em;animation:fdb 1.5s infinite;display:none}
 .fd-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.3em;text-shadow:0 0 10px var(--c);text-align:center;width:90%}
 @keyframes fdb{50%{opacity:0}}
-.fd-screen img.glitch{animation:fdg 4s infinite}
+.fd-screen .glitch{animation:fdg 4s infinite}
 @keyframes fdg{0%,92%,100%{filter:none;transform:none}93%{filter:invert(10%) sepia(50%) hue-rotate(90deg) contrast(150%);transform:skew(2deg) translate(2px,-1px)}95%{filter:none;transform:none}98%{filter:contrast(150%) grayscale(50%);transform:translate(-3px,2px)}}
 /* --- Vue partagée (deux applications côte à côte) --- */
 body.wide main{max-width:1500px}
@@ -233,11 +233,12 @@ const SESSIONS=[
     {id:"f2",type:"paydata",nom:"Virements offshore",f:2}]}]},
  {id:"s2sec",type:"feed",nom:"SÉCURITÉ // Accès caméras du bâtiment",code:"CAM-02",desc:"Système de vidéosurveillance : sous-sol, étages et toit.",files:[],
   zones:[
-   {groupe:"Sous-sol",cams:[{nom:"Cage",img:"Images/Session 2/CAM-02/ss-cage.png"},{nom:"Réserve",img:"Images/Session 2/CAM-02/ss-reserve.png"},{nom:"Salle de jeux",img:"Images/Session 2/CAM-02/ss-jeux.png"}]},
-   {groupe:"Rez-de-chaussée",cams:[{nom:"Garage",img:"Images/Session 2/CAM-02/rdc-garage.png"},{nom:"Stockage",img:"Images/Session 2/CAM-02/rdc-stockage.png"},{nom:"Escalier",img:"Images/Session 2/CAM-02/rdc-escalier.png"}]},
-   {groupe:"Étage 1",cams:[{nom:"Dortoir",img:"Images/Session 2/CAM-02/e1-dortoir.png"},{nom:"Atelier",img:"Images/Session 2/CAM-02/e1-atelier.png"},{nom:"Salle de pause",img:"Images/Session 2/CAM-02/e1-pause.png"}]},
-   {groupe:"Étage 2",cams:[{nom:"Bureau",img:"Images/Session 2/CAM-02/e2-bureau.png"},{nom:"Salle Net",img:"Images/Session 2/CAM-02/e2-net.png"},{nom:"Accès toit",img:"Images/Session 2/CAM-02/e2-accestoit.png"}]},
-   {groupe:"Toit",cams:[{nom:"Vue globale",img:"Images/Session 2/CAM-02/toit.png"}]}
+   /* zone:[début, largeur] = portion horizontale du plan affichée (0 à 1). Sans zone : image entière */
+   {groupe:"Sous-sol",cams:[{nom:"Cage",img:"Images/Session 2/CAM-02/Sous-sol.png",zone:[0,.37]},{nom:"Réserve",img:"Images/Session 2/CAM-02/Sous-sol.png",zone:[.36,.34]},{nom:"Salle de jeux",img:"Images/Session 2/CAM-02/Sous-sol.png",zone:[.68,.32]}]},
+   {groupe:"Rez-de-chaussée",cams:[{nom:"Garage",img:"Images/Session 2/CAM-02/Rez de chaussée.png",zone:[0,.37]},{nom:"Stockage",img:"Images/Session 2/CAM-02/Rez de chaussée.png",zone:[.36,.34]},{nom:"Escalier",img:"Images/Session 2/CAM-02/Rez de chaussée.png",zone:[.68,.32]}]},
+   {groupe:"Étage 1",cams:[{nom:"Dortoir",img:"Images/Session 2/CAM-02/1er étage.png",zone:[0,.37]},{nom:"Atelier",img:"Images/Session 2/CAM-02/1er étage.png",zone:[.36,.34]},{nom:"Salle de pause",img:"Images/Session 2/CAM-02/1er étage.png",zone:[.68,.32]}]},
+   {groupe:"Étage 2",cams:[{nom:"Bureau",img:"Images/Session 2/CAM-02/2ème étage.png",zone:[0,.37]},{nom:"Salle Net",img:"Images/Session 2/CAM-02/2ème étage.png",zone:[.36,.34]},{nom:"Accès toit",img:"Images/Session 2/CAM-02/2ème étage.png",zone:[.68,.32]}]},
+   {groupe:"Toit",cams:[{nom:"Vue globale",img:"Images/Session 2/CAM-02/Toit.png"}]}
   ]}]}
 ];
 /* ======================================================================= */
@@ -396,17 +397,21 @@ RUN.lock=(root,app)=>{
 /* ============ APP : FLUX CAMÉRAS (zones + images) ============ */
 /* Option : ajouter f:N à une caméra pour révéler le fichier N de l’app quand on la consulte */
 RUN.feed=(root,app)=>{
-  root.innerHTML=`<h2>${esc(app.nom)}</h2><div class="fd"><div class="fd-side">${app.zones.map((g,gi)=>`<details${gi?"":" open"}><summary>${esc(g.groupe)}</summary>${g.cams.map((c,ci)=>`<div class="fd-zone" data-g="${gi}" data-c="${ci}">${esc(c.nom)}</div>`).join("")}</details>`).join("")}</div><div class="fd-view"><div class="fd-title">&gt; EN ATTENTE DE CONNEXION…</div><div class="fd-screen"><img alt="" style="visibility:hidden"><div class="fd-lines"></div><div class="fd-rec">● REC</div><div class="fd-txt">AUCUN SIGNAL</div></div></div></div>`;
-  const img=$("img",root),ti=$(".fd-title",root),rec=$(".fd-rec",root),tx=$(".fd-txt",root);let to;
+  root.innerHTML=`<h2>${esc(app.nom)}</h2><div class="fd"><div class="fd-side">${app.zones.map((g,gi)=>`<details${gi?"":" open"}><summary>${esc(g.groupe)}</summary>${g.cams.map((c,ci)=>`<div class="fd-zone" data-g="${gi}" data-c="${ci}">${esc(c.nom)}</div>`).join("")}</details>`).join("")}</div><div class="fd-view"><div class="fd-title">&gt; EN ATTENTE DE CONNEXION…</div><div class="fd-screen"><canvas class="fd-img" style="visibility:hidden"></canvas><div class="fd-lines"></div><div class="fd-rec">● REC</div><div class="fd-txt">AUCUN SIGNAL</div></div></div></div>`;
+  const img=$("canvas.fd-img",root),cx=img.getContext("2d"),ti=$(".fd-title",root),rec=$(".fd-rec",root),tx=$(".fd-txt",root);let to,cur;
   root.onclick=e=>{const z=e.target.closest(".fd-zone");if(!z)return;
     const g=app.zones[+z.dataset.g],c=g.cams[+z.dataset.c],name=g.groupe+" - "+c.nom;
     clearTimeout(to);root.querySelectorAll(".fd-zone").forEach(k=>k.classList.toggle("on",k===z));
     ti.textContent="> ÉTABLISSEMENT DE LA LIAISON : "+name;
-    img.style.visibility="hidden";img.classList.remove("glitch");img.onload=img.onerror=null;rec.style.display="none";tx.style.display="block";tx.textContent="CONNEXION…";
+    cur=c;img.style.visibility="hidden";img.classList.remove("glitch");rec.style.display="none";tx.style.display="block";tx.textContent="CONNEXION…";
     to=setTimeout(()=>{
-      img.onload=()=>{img.style.visibility="visible";img.classList.add("glitch");tx.style.display="none";rec.style.display="block";ti.textContent="> CAMÉRA ACTIVE : "+name;if(c.f!==undefined&&app.files[c.f])reveal(app,[c.f])};
-      img.onerror=()=>{ti.textContent="> LIAISON PERDUE : "+name;tx.textContent="SIGNAL PERDU — FLUX INDISPONIBLE"};
-      img.src=c.img},1500)}};
+      const im=new Image();
+      im.onload=()=>{if(cur!==c)return;
+        const W=im.naturalWidth,H=im.naturalHeight,z=c.zone||[0,1],sx=Math.round(z[0]*W),sw=Math.min(W-sx,Math.round(z[1]*W));
+        img.width=sw;img.height=H;cx.drawImage(im,sx,0,sw,H,0,0,sw,H);
+        img.style.visibility="visible";img.classList.add("glitch");tx.style.display="none";rec.style.display="block";ti.textContent="> CAMÉRA ACTIVE : "+name;if(c.f!==undefined&&app.files[c.f])reveal(app,[c.f])};
+      im.onerror=()=>{if(cur!==c)return;ti.textContent="> LIAISON PERDUE : "+name;tx.textContent="SIGNAL PERDU — FLUX INDISPONIBLE"};
+      im.src=c.img},1500)}};
 
 /* ============ APP : ARCHITECTURE NET (strates + nœuds) ============ */
 RUN.net=(root,app,ctx)=>{
