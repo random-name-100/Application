@@ -128,15 +128,7 @@ Pendant ce temps, l'atmosphère est toute autre à l'intérieur de la Calavera o
 Les tractations tournent court lorsque l'imposant Rancor et trois de ses sbires font irruption dans l'établissement, déclenchant instantanément une violente rixe générale. D'abord acculés par la puissance de feu du gang, Choura, Shiro et Saul voient la situation basculer in extremis avec l'irruption fracassante d'Adam et Glitch qui exécutent froidement deux des hommes de main. Le chaos s'empare de la pièce, et dans la pluie de balles, Saul s'effondre, gravement touché à l'abdomen avec un poumon affaissé. Le combat atteint son paroxysme de brutalité contre le colosse Rancor, qui finit par s'effondrer, criblé de coups et achevé dans un tumulte assourdissant de cris, de poussière et de fumées âcres de grenades.
 
 Alors que le silence retombe pesamment sur le bar dévasté et que Shiro se précipite pour stabiliser les blessures critiques de Saul, une terrible réalité s'impose au reste du groupe. Profitant de la confusion totale de l'affrontement pyrotechnique, le prisonnier des Metal Head a réussi à faire glisser sa corde et s'est volatilisé dans les rues sombres de Night City, non sans avoir arraché et kidnappé Juan au passage.`,
- apps:[
- {id:"s1cam",type:"cam",nom:"CAM-ZERO // Optique de rue",code:"WATCH-01",desc:"Caméra de surveillance piratée. Chaque mode révèle autre chose.",tag:"CAM-ZERO",
-  files:[{mode:1,titre:"Livraison nocturne",texte:"Vision nocturne : un van sans plaque décharge trois caisses marquées d’un symbole biohazard devant l’entrée de service, 03h12."},
-         {mode:2,titre:"Visage identifié",texte:"Analyse : le chauffeur correspond à « Rico Vance », ex-fixer des Tyger Claws, recherché pour trafic de matériel médical."}]},
- {id:"s1breach",type:"breach",nom:"BREACH // Serveur du Dr Voss",code:"BREACH-77",time:35,desc:"Serveur de la clinique. Deux fichiers chiffrés à extraire.",
-  files:[{titre:"Courriel interne — Voss",texte:"« Ils ont triplé la dose. Si Militech apprend que les lots sont contaminés, nous sommes finis. Rendez-vous au sous-sol B, code d’accès 4721. »"},
-         {titre:"Plan des sous-sols",texte:"Niveau B : laboratoire (nord), coffre-fort (est), sortie de secours (sud). Une seule caméra couvre le couloir, angle mort à gauche du coffre."}]},
- {id:"s1lock",type:"lock",nom:"CRACK-LOCK // Coffre-fort",code:"VAULT-12",secret:"4721",tries:8,desc:"Serrure électronique à code numérique.",
-  files:[{titre:"Contrat Militech — confidentiel",texte:"Accord de livraison de 12 lots de stimulants de combat. Signataire : Dr Elias Voss. Paiement : 80 000 eb à la livraison."}]}]},
+ apps:[]},
 {id:2,titre:"Sang, Sueur et Ombres Corporatistes",resume:"La traque, la baston et la planque",
  histoire:`Tandis que Shiro parvient à stabiliser in extremis les blessures critiques de Saul dans les décombres de la Calavera, l'enquête reprend sans attendre pour retrouver Juan et son ravisseur. En interrogeant le central, Adam identifie le _Smasher_, un rade malfamé qui compte les Metal Heads comme habitués. Sur place, le groupe déniche un moyen d'obtenir des renseignements cruciaux : infiltrer une arnaque aux paris clandestins lors d'un tournoi de combat à mains nues. Envoyé dans l'arène, Choura traverse les deux premiers rounds truqués avec aisance, avant d'affronter une finale brutale et bien réelle. Le techie devient insaisissable, esquivant chaque tentative de projection de son adversaire pour finalement le briser grâce à des contres chirurgicaux. Le groupe rafle l'argent des paris et localise trois planques du gang : l'usine Alpha de Watson, la clinique Beta de Pacifica, et le hangar Gamma sur les docks.
 
@@ -144,11 +136,6 @@ Ciblant le point de transfert, l'équipe débarque devant un complexe délabré,
 
 L'accès au sous-sol enfin déverrouillé, l'escouade plonge dans l'abîme. Ils libèrent Juan en interrompant sa séance de torture et survivent par miracle à l'embuscade toxique d'un chimiste du gang grâce à des réflexes surhumains. L'horreur les attend plus loin : une immense cage remplie de cobayes humains malingres. La découverte glaçante du cadavre d'un enfant ébranle profondément l'humanité de deux membres du groupe. En fouillant les données numériques du repaire, l'ampleur de l'opération se dévoile : un trafic d'êtres humains massivement financé par l'obscure _BY Corp_. Le choc devient intime lorsque Choura découvre que sa propre sœur, Lisa Fiodorovitch Ouvarov, a été expédiée via ce réseau sur commande spéciale. L'intervention s'achève dans le vacarme des gyrophares lorsque le sauvetage d'un corpo captif déclenche sa puce d'alerte, attirant instantanément la Trauma Team et le NCPD qui sécurisent le périmètre et démantèlent ce qu'il reste des Metal Heads.`,
  apps:[
- {id:"s2breach",type:"breach",nom:"BREACH // Réseau des Valentinos",code:"HEY-2020",time:30,desc:"Le terminal d’un chef de bande.",
-  files:[{titre:"Liste des points de deal",texte:"Quatre points : Chromeland, Rue des Palmiers, Entrepôt 9, Bar « El Coyote ». Livraisons le jeudi."},
-         {titre:"Message crypté — « La Gata »",texte:"« Le carnet est chez Marisol. Ne le donne à personne, surtout pas aux flics de la NCPD. »"}]},
- {id:"s2lock",type:"lock",nom:"CRACK-LOCK // Casier de gare",code:"LOCK-88",secret:"90315",tries:8,desc:"Casier consigne de la gare de Heywood.",
-  files:[{titre:"Le carnet de Marisol",texte:"Noms, dates, sommes. La dernière ligne : « Le maire lui-même a reçu 20 000 eb »."}]},
  {id:"s2net",type:"net",nom:"NET // Architecture du réseau",code:"NET-02",desc:"Simulation d’architecture NET : strates, mots de passe, glace et paydata.",
   /* Fichiers récupérables (référencés par f:N dans les nœuds). html:true = texte non échappé (permet <mark class="hl">) */
   files:[
@@ -272,6 +259,24 @@ L'accès au sous-sol enfin déverrouillé, l'escouade plonge dans l'abîme. Ils 
 /* cache:true = titre, sous-titre et résumé masqués façon dossier confidentiel. Passer à false (et remplir titre/resume/histoire) pour révéler la session */
 {id:3,cache:true,titre:"",resume:"",histoire:"",apps:[]}
 ];
+/* ============ APPLICATIONS EN RÉSERVE (onglet MJ) ============
+   Non rattachées à une session : leur code n'est accepté nulle part.
+   Pour en utiliser une, déplacez son bloc dans les apps d'une session. */
+const RESERVE=[
+ {id:"s1cam",type:"cam",nom:"CAM-ZERO // Optique de rue",code:"WATCH-01",desc:"Caméra de surveillance piratée. Chaque mode révèle autre chose.",tag:"CAM-ZERO",
+  files:[{mode:1,titre:"Livraison nocturne",texte:"Vision nocturne : un van sans plaque décharge trois caisses marquées d’un symbole biohazard devant l’entrée de service, 03h12."},
+         {mode:2,titre:"Visage identifié",texte:"Analyse : le chauffeur correspond à « Rico Vance », ex-fixer des Tyger Claws, recherché pour trafic de matériel médical."}]},
+ {id:"s1breach",type:"breach",nom:"BREACH // Serveur du Dr Voss",code:"BREACH-77",time:35,desc:"Serveur de la clinique. Deux fichiers chiffrés à extraire.",
+  files:[{titre:"Courriel interne — Voss",texte:"« Ils ont triplé la dose. Si Militech apprend que les lots sont contaminés, nous sommes finis. Rendez-vous au sous-sol B, code d’accès 4721. »"},
+         {titre:"Plan des sous-sols",texte:"Niveau B : laboratoire (nord), coffre-fort (est), sortie de secours (sud). Une seule caméra couvre le couloir, angle mort à gauche du coffre."}]},
+ {id:"s1lock",type:"lock",nom:"CRACK-LOCK // Coffre-fort",code:"VAULT-12",secret:"4721",tries:8,desc:"Serrure électronique à code numérique.",
+  files:[{titre:"Contrat Militech — confidentiel",texte:"Accord de livraison de 12 lots de stimulants de combat. Signataire : Dr Elias Voss. Paiement : 80 000 eb à la livraison."}]},
+ {id:"s2breach",type:"breach",nom:"BREACH // Réseau des Valentinos",code:"HEY-2020",time:30,desc:"Le terminal d’un chef de bande.",
+  files:[{titre:"Liste des points de deal",texte:"Quatre points : Chromeland, Rue des Palmiers, Entrepôt 9, Bar « El Coyote ». Livraisons le jeudi."},
+         {titre:"Message crypté — « La Gata »",texte:"« Le carnet est chez Marisol. Ne le donne à personne, surtout pas aux flics de la NCPD. »"}]},
+ {id:"s2lock",type:"lock",nom:"CRACK-LOCK // Casier de gare",code:"LOCK-88",secret:"90315",tries:8,desc:"Casier consigne de la gare de Heywood.",
+  files:[{titre:"Le carnet de Marisol",texte:"Noms, dates, sommes. La dernière ligne : « Le maire lui-même a reçu 20 000 eb »."}]}
+];
 /* ======================================================================= */
 const $=(s,e=document)=>e.querySelector(s),R=n=>Math.floor(Math.random()*n);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -301,7 +306,7 @@ function reveal(app,idxs){
   fresh.forEach(i=>fs[fid(app,i)]=Date.now());ST.set("files",fs);openFiles(app,idxs,fresh)}
 
 /* ---------- Navigation ---------- */
-function route(){const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home();window.scrollTo(0,0)}
+function route(){if(location.hash==="#mj"){mj();window.scrollTo(0,0);return}const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home();window.scrollTo(0,0)}
 addEventListener("hashchange",route);
 
 function home(){
@@ -311,8 +316,26 @@ function home(){
     const nf=s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>f[fid(a,i)]).length,0),tf=s.apps.reduce((n,a)=>n+a.files.length,0);
     if(s.cache)return `<a class="card classified" href="#session-${s.id}"><span class="stamp">CLASSIFIÉ</span><small class="doc-head">DOSSIER NC-2045-${String(s.id).padStart(2,"0")} // DIFFUSION RESTREINTE</small><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${bars(14,6,9)}</span><small>${bars(4,11,7)}</small><small>ACCÈS : HABILITATION NIVEAU 5 REQUISE</small></a>`;
     return `<a class="card" href="#session-${s.id}"><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${esc(s.titre)}</span><small>${esc(s.resume)}</small><small>APPS ${s.apps.filter(a=>u[a.id]).length}/${s.apps.length} · FICHIERS ${nf}/${tf}</small></a>`}).join("")}</div>
-  <div class="row"><button id="rz">EFFACER LA PROGRESSION</button></div>`;
+  <div class="row"><button id="rz">EFFACER LA PROGRESSION</button><a href="#mj"><button>⚿ ACCÈS MJ</button></a></div>`;
   let armed=false;$("#rz").onclick=e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER L’EFFACEMENT ?";return}ST.set("unl",{});ST.set("files",{});home()}}
+
+/* ---------- Onglet MJ (code "MJ", non mémorisé : redemandé à chaque chargement) ---------- */
+const MJ_CODE="MJ";let mjOk=false;
+const TYPES={cam:"CAMÉRA",breach:"BREACH PROTOCOL",lock:"CRACK-LOCK",feed:"FLUX CAMÉRAS",net:"ARCHITECTURE NET"};
+function mj(){
+  document.body.classList.remove("wide");
+  if(!mjOk){
+    view.innerHTML=`<a href="#">← INDEX</a><h2>▓ ACCÈS MJ</h2><div class="panel"><div>CODE MAÎTRE DU JEU</div><div class="row"><input id="code" type="password" autocomplete="off" spellcheck="false"><button id="ok">VALIDER</button></div><div class="msg" id="m"></div></div>`;
+    const go=()=>{if($("#code").value.trim().toUpperCase()===MJ_CODE){mjOk=true;mj()}else $("#m").textContent="░ CODE INVALIDE — ACCÈS REFUSÉ"};
+    $("#ok").onclick=go;$("#code").onkeydown=e=>{if(e.key==="Enter")go()};$("#code").focus();return}
+  view.innerHTML=`<a href="#">← INDEX</a><h2>▓ MJ // APPLICATIONS NON UTILISÉES</h2><p><small>${RESERVE.length} APPLICATION(S) EN RÉSERVE — NON RATTACHÉES À UNE SESSION, LEUR CODE N’EST ACCEPTÉ NULLE PART.</small></p><div id="tab"></div>`;
+  const tab=$("#tab");
+  function list(){
+    tab.innerHTML=`<div class="sg">${RESERVE.map(a=>`<div class="card"><small>${TYPES[a.type]||a.type}</small><b>${esc(a.nom)}</b><span>CODE : <span class="hl">${esc(a.code)}</span>${a.secret?` · SECRET : <span class="hl">${esc(a.secret)}</span>`:""}</span><small>${esc(a.desc)}</small><small>FICHIERS : ${a.files.map(f=>esc(f.titre)).join(" · ")||"—"}</small><button data-l="${a.id}">▶ TESTER</button></div>`).join("")}</div>`;
+    tab.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{const a=RESERVE.find(x=>x.id===b.dataset.l);
+      tab.innerHTML=`<button id="bk">← LISTE MJ</button><div class="panel" id="app" style="margin-top:10px"></div>`;
+      $("#bk").onclick=list;RUN[a.type]($("#app"),a,{s:{apps:RESERVE},split(){}})})}
+  list()}
 
 function session(s){
   view.innerHTML=`<a href="#">← INDEX</a><h2>SESSION ${String(s.id).padStart(2,"0")} // ${s.cache?bars(10,4,12):esc(s.titre.toUpperCase())}</h2>${s.cache?"":`<p><small>${esc(s.resume)}</small></p>`}<div class="tabs"><button data-t="acces">ACCÈS APPLICATIONS</button><button data-t="save">SAUVEGARDE DES INFOS</button><button data-t="resume">RÉSUMÉ</button></div><div id="tab"></div>`;
