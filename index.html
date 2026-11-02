@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NET//ARCHIVES — Index des sessions</title>
+<style>
+:root{color-scheme:dark;--c:#00ff9c;--bg:#030a06;--dim:#00ff9c33;--hi:#00ff9c18;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font:14px/1.45 "Courier New",ui-monospace,Menlo,monospace;background:var(--bg);color:var(--c);padding:14px}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:70;background:repeating-linear-gradient(0deg,#0000 0 2px,#0005 3px)}
+main{max-width:860px;margin:0 auto}
+h1{font-size:clamp(20px,5vw,32px);letter-spacing:.2em;margin:4px 0;text-shadow:2px 0 #f0f8,-2px 0 #0ff8;animation:gl 4s infinite}
+h1 small{display:block;font-size:11px;letter-spacing:.35em;opacity:.7;text-shadow:none}
+@keyframes gl{0%,92%,100%{transform:none}94%{transform:translateX(3px)}96%{transform:translateX(-3px) skewX(6deg)}}
+h2{margin:14px 0 8px;font-size:15px;letter-spacing:.25em}
+h3{margin:12px 0 4px;font-size:14px;letter-spacing:.1em}
+a{color:var(--c);text-decoration:none}
+button,input{font:inherit;color:var(--c);background:var(--hi);border:1px solid var(--c);padding:8px 12px;letter-spacing:.08em}
+button{cursor:pointer;transition:.15s}
+button:hover:not(:disabled),button.on{background:var(--c);color:var(--bg);box-shadow:0 0 14px var(--c)}
+button:disabled{opacity:.3;cursor:default}
+input{background:#000;text-transform:uppercase;flex:1;min-width:140px;outline:none}
+input:focus{box-shadow:0 0 12px var(--dim)}
+.panel{border:1px solid var(--c);background:#000a;box-shadow:0 0 18px var(--dim),inset 0 0 28px var(--dim);padding:14px;clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px))}
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:10px}
+.card{display:flex;flex-direction:column;gap:5px;border:1px solid var(--c);background:var(--hi);padding:12px;transition:.15s}
+.card:hover{box-shadow:0 0 16px var(--c);background:var(--dim)}
+.card small,small{opacity:.7}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.msg{margin-top:10px;font-size:15px;letter-spacing:.12em;min-height:22px}
+canvas{width:100%;height:auto;display:block;border:1px solid var(--c);background:#000}
+.hh{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+@media(max-width:620px){.hh{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.grid button{padding:12px 0;font-size:16px}
+.grid button.ok{box-shadow:0 0 10px var(--c);background:var(--dim)}
+.grid button.used{opacity:.25}
+.grid button:not(.ok):not(.used){opacity:.55;border-color:var(--dim)}
+.slots{display:flex;gap:5px;margin:6px 0 12px}.slots span{flex:1;text-align:center;border:1px dashed var(--c);padding:6px 0;min-height:32px}
+.seq{border-left:3px solid var(--dim);padding:2px 8px;margin:6px 0}.seq.done{border-color:var(--c);text-shadow:0 0 8px var(--c)}
+.log{border:1px solid var(--dim);min-height:150px;padding:8px;margin-bottom:10px}.log div{display:flex;justify-content:space-between;padding:2px 0}
+.kp{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.disp{font-size:28px;letter-spacing:.5em;text-align:center;border:1px solid var(--c);padding:8px;margin-bottom:8px;min-height:52px}
+.file{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;margin-top:6px}
+#ov{display:none;position:fixed;inset:0;z-index:60;background:#000c;align-items:center;justify-content:center;padding:16px}
+#ov.show{display:flex}
+#ov .panel{max-width:620px;width:100%;max-height:85vh;overflow:auto;background:#020805}
+pre{white-space:pre-wrap;font:inherit;margin:0 0 6px}
+.new{background:var(--c);color:var(--bg);padding:0 6px;margin-left:6px}
+.fd{display:flex;gap:12px}
+.fd-side{width:210px;flex:none;max-height:430px;overflow-y:auto;border-right:1px solid var(--c);padding-right:10px}
+@media(max-width:620px){.fd{flex-direction:column}.fd-side{width:auto;max-height:200px;border-right:0;border-bottom:1px solid var(--c);padding:0 0 10px}}
+details{margin-bottom:8px}summary{font-weight:bold;padding:6px 8px;background:var(--hi);border:1px solid var(--c);cursor:pointer;outline:none}
+.fd-zone{margin:4px 0 4px 12px;padding:6px 8px;cursor:pointer;border-left:2px solid transparent}
+.fd-zone:hover,.fd-zone.on{border-color:var(--c);background:var(--dim)}
+.fd-view{flex:1;min-width:0}.fd-title{margin-bottom:8px;font-weight:bold}
+.fd-screen{position:relative;aspect-ratio:4/3;background:#000;border:2px solid var(--dim);box-shadow:0 0 15px var(--dim);overflow:hidden}
+.fd-screen img{width:100%;height:100%;object-fit:contain;display:block}
+.fd-lines{position:absolute;inset:0;pointer-events:none;background:linear-gradient(#0000 50%,#00000040 50%);background-size:100% 4px}
+.fd-rec{position:absolute;top:5%;right:5%;color:#f33;font-weight:bold;font-size:1.3em;animation:fdb 1.5s infinite;display:none}
+.fd-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.3em;text-shadow:0 0 10px var(--c);text-align:center;width:90%}
+@keyframes fdb{50%{opacity:0}}
+.fd-screen img.glitch{animation:fdg 4s infinite}
+@keyframes fdg{0%,92%,100%{filter:none;transform:none}93%{filter:invert(10%) sepia(50%) hue-rotate(90deg) contrast(150%);transform:skew(2deg) translate(2px,-1px)}95%{filter:none;transform:none}98%{filter:contrast(150%) grayscale(50%);transform:translate(-3px,2px)}}
+footer{margin:18px 0 4px;font-size:11px;opacity:.6;text-align:center;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<main>
+<a href="#"><h1>NET//ARCHIVES<small>CYBERPUNK RED · TERMINAL DE CAMPAGNE</small></h1></a>
+<div id="view"></div>
+<footer>PROGRESSION ENREGISTRÉE SUR CET APPAREIL</footer>
+</main>
+<div id="ov"></div>
+<script>
+/* ============ CONFIGURATION MJ : sessions, codes, fichiers ============ */
+const SESSIONS=[
+{id:1,titre:"Nuit blanche à Watson",resume:"Une livraison suspecte, un médecin disparu.",apps:[
+ {id:"s1cam",type:"cam",nom:"CAM-ZERO // Optique de rue",code:"WATCH-01",desc:"Caméra de surveillance piratée. Chaque mode révèle autre chose.",tag:"CAM-ZERO",
+  files:[{mode:1,titre:"Livraison nocturne",texte:"Vision nocturne : un van sans plaque décharge trois caisses marquées d’un symbole biohazard devant l’entrée de service, 03h12."},
+         {mode:2,titre:"Visage identifié",texte:"Analyse : le chauffeur correspond à « Rico Vance », ex-fixer des Tyger Claws, recherché pour trafic de matériel médical."}]},
+ {id:"s1breach",type:"breach",nom:"BREACH // Serveur du Dr Voss",code:"BREACH-77",time:35,desc:"Serveur de la clinique. Deux fichiers chiffrés à extraire.",
+  files:[{titre:"Courriel interne — Voss",texte:"« Ils ont triplé la dose. Si Militech apprend que les lots sont contaminés, nous sommes finis. Rendez-vous au sous-sol B, code d’accès 4721. »"},
+         {titre:"Plan des sous-sols",texte:"Niveau B : laboratoire (nord), coffre-fort (est), sortie de secours (sud). Une seule caméra couvre le couloir, angle mort à gauche du coffre."}]},
+ {id:"s1lock",type:"lock",nom:"CRACK-LOCK // Coffre-fort",code:"VAULT-12",secret:"4721",tries:8,desc:"Serrure électronique à code numérique.",
+  files:[{titre:"Contrat Militech — confidentiel",texte:"Accord de livraison de 12 lots de stimulants de combat. Signataire : Dr Elias Voss. Paiement : 80 000 eb à la livraison."}]},
+ {id:"s1sec",type:"feed",nom:"SÉCURITÉ // Accès caméras du bâtiment",code:"CAM-01",desc:"Système de vidéosurveillance : sous-sol, étages et toit.",files:[],
+  zones:[
+   {groupe:"Sous-sol",cams:[{nom:"Cage",img:"images/ss-cage.png"},{nom:"Réserve",img:"images/ss-reserve.png"},{nom:"Salle de jeux",img:"images/ss-jeux.png"}]},
+   {groupe:"Rez-de-chaussée",cams:[{nom:"Garage",img:"images/rdc-garage.png"},{nom:"Stockage",img:"images/rdc-stockage.png"},{nom:"Escalier",img:"images/rdc-escalier.png"}]},
+   {groupe:"Étage 1",cams:[{nom:"Dortoir",img:"images/e1-dortoir.png"},{nom:"Atelier",img:"images/e1-atelier.png"},{nom:"Salle de pause",img:"images/e1-pause.png"}]},
+   {groupe:"Étage 2",cams:[{nom:"Bureau",img:"images/e2-bureau.png"},{nom:"Salle Net",img:"images/e2-net.png"},{nom:"Accès toit",img:"images/e2-accestoit.png"}]},
+   {groupe:"Toit",cams:[{nom:"Vue globale",img:"images/toit.png"}]}
+  ]}]},
+{id:2,titre:"Les rues de Heywood",resume:"Une gang war qui cache un autre jeu.",apps:[
+ {id:"s2breach",type:"breach",nom:"BREACH // Réseau des Valentinos",code:"HEY-2020",time:30,desc:"Le terminal d’un chef de bande.",
+  files:[{titre:"Liste des points de deal",texte:"Quatre points : Chromeland, Rue des Palmiers, Entrepôt 9, Bar « El Coyote ». Livraisons le jeudi."},
+         {titre:"Message crypté — « La Gata »",texte:"« Le carnet est chez Marisol. Ne le donne à personne, surtout pas aux flics de la NCPD. »"}]},
+ {id:"s2lock",type:"lock",nom:"CRACK-LOCK // Casier de gare",code:"LOCK-88",secret:"90315",tries:8,desc:"Casier consigne de la gare de Heywood.",
+  files:[{titre:"Le carnet de Marisol",texte:"Noms, dates, sommes. La dernière ligne : « Le maire lui-même a reçu 20 000 eb »."}]}]}
+];
+/* ======================================================================= */
+const $=(s,e=document)=>e.querySelector(s),R=n=>Math.floor(Math.random()*n);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mem={};
+const ST={get(k){try{const v=JSON.parse(localStorage.getItem("nr:"+k));if(v)return v}catch(e){}return mem[k]||{}},
+ set(k,v){mem[k]=v;try{localStorage.setItem("nr:"+k,JSON.stringify(v))}catch(e){}}};
+const view=$("#view"),ov=$("#ov"),RUN={};
+const fid=(a,i)=>a.id+"-"+i;
+ov.onclick=e=>{if(e.target===ov)ov.classList.remove("show")};
+
+/* ---------- Fichiers ---------- */
+function openFiles(app,idxs,fresh){
+  ov.innerHTML=`<div class="panel"><small>${esc(app.nom)}</small>${idxs.map(i=>`<h3>▓ ${esc(app.files[i].titre)}${fresh.includes(i)?'<span class="new">NOUVEAU</span>':""}</h3><pre>${esc(app.files[i].texte)}</pre>`).join("")}<div class="row"><button id="x">FERMER</button></div></div>`;
+  ov.classList.add("show");$("#x").onclick=()=>ov.classList.remove("show")}
+function reveal(app,idxs){
+  const fs=ST.get("files"),fresh=idxs.filter(i=>!fs[fid(app,i)]);
+  fresh.forEach(i=>fs[fid(app,i)]=Date.now());ST.set("files",fs);openFiles(app,idxs,fresh)}
+
+/* ---------- Navigation ---------- */
+function route(){const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home();window.scrollTo(0,0)}
+addEventListener("hashchange",route);
+
+function home(){
+  const u=ST.get("unl"),f=ST.get("files");
+  view.innerHTML=`<h2>▓ SÉLECTION DE SESSION</h2><div class="sg">${SESSIONS.map(s=>{
+    const nf=s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>f[fid(a,i)]).length,0),tf=s.apps.reduce((n,a)=>n+a.files.length,0);
+    return `<a class="card" href="#session-${s.id}"><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${esc(s.titre)}</span><small>${esc(s.resume)}</small><small>APPS ${s.apps.filter(a=>u[a.id]).length}/${s.apps.length} · FICHIERS ${nf}/${tf}</small></a>`}).join("")}</div>
+  <div class="row"><button id="rz">EFFACER LA PROGRESSION</button></div>`;
+  let armed=false;$("#rz").onclick=e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER L’EFFACEMENT ?";return}ST.set("unl",{});ST.set("files",{});home()}}
+
+function session(s){
+  view.innerHTML=`<a href="#">← INDEX</a><h2>SESSION ${String(s.id).padStart(2,"0")} // ${esc(s.titre.toUpperCase())}</h2><div class="tabs"><button data-t="acces">ACCÈS APPLICATIONS</button><button data-t="save">SAUVEGARDE DES INFOS</button></div><div id="tab"></div>`;
+  const tab=$("#tab");
+  const nbf=()=>{const f=ST.get("files");return s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>f[fid(a,i)]).length,0)};
+  const setTab=n=>{view.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===n));n==="acces"?acces():save()};
+  $(".tabs",view).onclick=e=>{const t=e.target.dataset?.t;if(t)setTab(t)};
+
+  function acces(){
+    const u=ST.get("unl"),open=s.apps.filter(a=>u[a.id]),locked=s.apps.length-open.length;
+    tab.innerHTML=`<div class="panel"><div>CODE D’ACCÈS FOURNI PAR LE MJ</div><div class="row"><input id="code" placeholder="XXXXX-00" autocomplete="off" spellcheck="false"><button id="ok">VALIDER</button></div><div class="msg" id="m"></div></div>
+    <h2>▓ APPLICATIONS DÉVERROUILLÉES</h2><div class="sg">${open.map(a=>`<div class="card"><b>${esc(a.nom)}</b><small>${esc(a.desc)}</small><button data-l="${a.id}">▶ LANCER</button></div>`).join("")||"<small>AUCUNE POUR LE MOMENT</small>"}</div>
+    ${locked?`<p><small>▒▒ ${locked} APPLICATION(S) VERROUILLÉE(S)</small></p>`:""}`;
+    const go=()=>{const v=$("#code").value.trim().toUpperCase(),a=s.apps.find(x=>x.code===v),m=$("#m");
+      if(!v)return;if(!a){m.textContent="░ CODE INVALIDE — ACCÈS REFUSÉ";return}
+      const un=ST.get("unl");const was=un[a.id];un[a.id]=1;ST.set("unl",un);
+      if(was){m.textContent="APPLICATION DÉJÀ DÉVERROUILLÉE";return}acces();$("#m").textContent="▓ ACCÈS ACCORDÉ : "+a.nom};
+    $("#ok").onclick=go;$("#code").onkeydown=e=>{if(e.key==="Enter")go()};
+    tab.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>launch(s.apps.find(a=>a.id===b.dataset.l)))}
+
+  function launch(a){
+    tab.innerHTML=`<button id="bk">← APPLICATIONS</button><div class="panel" id="app" style="margin-top:10px"></div>`;
+    $("#bk").onclick=acces;RUN[a.type]($("#app"),a)}
+
+  function save(){
+    const f=ST.get("files"),u=ST.get("unl"),srcs=s.apps.filter(a=>a.files.some((_,i)=>f[fid(a,i)]));
+    tab.innerHTML=`<div class="panel"><div>▓ SAUVEGARDE DES INFOS — ${nbf()} FICHIER(S) ENREGISTRÉ(S)</div>${srcs.map(a=>`<h3>${esc(a.nom)} <small>${a.files.filter((_,i)=>f[fid(a,i)]).length}/${a.files.length}</small></h3>${a.files.map((x,i)=>f[fid(a,i)]?`<button class="file" data-a="${a.id}" data-i="${i}"><span>▓ ${esc(x.titre)}</span><small>${new Date(f[fid(a,i)]).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</small></button>`:"").join("")}`).join("")||"<p><small>AUCUN FICHIER. DÉCOUVREZ-EN EN JOUANT AUX APPLICATIONS.</small></p>"}</div>`;
+    tab.querySelectorAll(".file").forEach(b=>b.onclick=()=>{const a=s.apps.find(x=>x.id===b.dataset.a);openFiles(a,[+b.dataset.i],[])})}
+  setTab("acces")}
+
+/* ============ APP : CAMÉRA ============ */
+RUN.cam=(root,app)=>{
+  root.innerHTML=`<h2>${esc(app.nom)}</h2><canvas width="640" height="400"></canvas><div class="row"><button data-a="on">▶ ACTIVER</button><button data-a="mode">MODE : <b>NORMAL</b></button><button data-a="snap">◉ CAPTURE</button></div><div class="msg"></div>`;
+  const cv=$("canvas",root),x=cv.getContext("2d"),v=document.createElement("video"),M=$(".msg",root),C="#00ff9c";
+  v.muted=true;v.playsInline=true;
+  let live=false,mode=0,t=0,stream,msg="SIGNAL ABSENT — ACTIVER LA CAMÉRA";
+  const modes=["NORMAL","NOCTURNE","ANALYSE"],fl=["grayscale(1) contrast(1.3)","grayscale(1) brightness(2) contrast(1.4)","grayscale(1) contrast(2.2) invert(1)"],
+  tg=[...Array(3)].map(()=>({x:R(500),y:R(300),vx:Math.random()*2-1,vy:Math.random()*2-1,id:10+R(90),p:55+R(40)}));
+  root.onclick=e=>{const b=e.target.closest("button"),a=b?.dataset.a;if(!a)return;
+    if(a==="on")navigator.mediaDevices?.getUserMedia({video:{facingMode:"environment"}}).then(s=>{stream=s;v.srcObject=s;v.play();live=true}).catch(()=>{msg="ACCÈS CAMÉRA REFUSÉ — MODE SIMULATION"});
+    if(a==="mode"){mode=(mode+1)%3;$("b",b).textContent=modes[mode]}
+    if(a==="snap"){const h=app.files.findIndex(f=>f.mode===mode);
+      if(h<0)M.textContent="CAPTURE ENREGISTRÉE — AUCUNE DONNÉE EXPLOITABLE";else{M.textContent="▓ DONNÉE EXTRAITE";reveal(app,[h])}}};
+  function br(px,py,sx,sy,l){x.beginPath();x.moveTo(px,py+sy*l);x.lineTo(px,py);x.lineTo(px+sx*l,py);x.stroke()}
+  (function f(){
+    if(!root.isConnected){stream&&stream.getTracks().forEach(k=>k.stop());return}
+    t++;x.globalCompositeOperation="source-over";
+    if(live&&v.videoWidth){x.filter=fl[mode];x.drawImage(v,0,0,640,400);x.filter="none";x.globalCompositeOperation="multiply";x.fillStyle="#5dffb4";x.fillRect(0,0,640,400);x.globalCompositeOperation="source-over"}
+    else{x.fillStyle="#000";x.fillRect(0,0,640,400);x.fillStyle=C;for(let i=0;i<260;i++){x.globalAlpha=Math.random()*.45;x.fillRect(R(640),R(400),R(40)+2,2)}
+      x.globalAlpha=1;x.font="16px monospace";x.textAlign="center";x.fillText(msg,320,205);x.textAlign="left"}
+    x.strokeStyle=x.fillStyle=C;x.lineWidth=2;x.font="13px monospace";
+    br(14,14,1,1,34);br(626,14,-1,1,34);br(14,386,1,-1,34);br(626,386,-1,-1,34);
+    x.beginPath();x.arc(320,200,42,0,7);x.moveTo(320,140);x.lineTo(320,170);x.moveTo(320,230);x.lineTo(320,260);x.moveTo(260,200);x.lineTo(290,200);x.moveTo(350,200);x.lineTo(380,200);x.stroke();
+    if(mode===2)tg.forEach(g=>{g.x+=g.vx;g.y+=g.vy;if(g.x<30||g.x>520)g.vx*=-1;if(g.y<40||g.y>290)g.vy*=-1;x.strokeRect(g.x,g.y,70,90);x.fillText(`CIBLE ${g.id} · ${g.p}%`,g.x,g.y-5)});
+    if(live&&t%60<38)x.fillText("● REC",34,34);else if(!live)x.fillText("○ STBY",34,34);
+    x.textAlign="right";x.fillText(new Date().toLocaleTimeString("fr-FR"),606,34);x.textAlign="left";
+    x.fillText(`${app.tag} · ${modes[mode]}`,34,376);
+    x.globalAlpha=.14;x.fillRect(0,(t*3)%400,640,4);x.globalAlpha=1;requestAnimationFrame(f)})()};
+
+/* ============ APP : BREACH PROTOCOL ============ */
+RUN.breach=(root,app)=>{
+  root.innerHTML=`<h2>${esc(app.nom)}</h2><div class="hh"><div class="grid"></div><div><div>TAMPON</div><div class="slots"></div><div>FICHIERS CHIFFRÉS</div><div class="seqs"></div><div class="msg"></div><div class="row"><button class="rs">↻ RECOMMENCER</button></div></div></div>`;
+  const N=5,H=["1C","55","BD","E9","7A","FF"],G=$(".grid",root);
+  let g,seqs,buf,step,last,used,t,iv,over;
+  const has=s=>buf.some((_,i)=>s.every((h,j)=>buf[i+j]===h));
+  function end(){over=true;clearInterval(iv)}
+  function start(){
+    clearInterval(iv);g=Array.from({length:N},()=>Array.from({length:N},()=>H[R(6)]));
+    let r=0,c=R(N),p=[[r,c]];
+    for(let i=1;i<5;i++){let n;if(i%2){do n=R(N);while(p.some(q=>q[0]===n&&q[1]===c));r=n}else{do n=R(N);while(p.some(q=>q[0]===r&&q[1]===n));c=n}p.push([r,c])}
+    const cd=p.map(q=>g[q[0]][q[1]]);
+    seqs=[{s:cd.slice(0,3),ok:false},{s:cd.slice(1,5),ok:false}];
+    buf=[];step=0;last=[0,0];used=new Set();t=app.time||30;over=false;
+    iv=setInterval(()=>{if(!root.isConnected){clearInterval(iv);return}if(!over&&--t<=0)end();draw()},1000);draw()}
+  const can=(r,c)=>!over&&!used.has(r+","+c)&&(step%2?c===last[1]:r===last[0]);
+  G.onclick=e=>{const b=e.target.closest("button");if(!b)return;const r=+b.dataset.r,c=+b.dataset.c;if(!can(r,c))return;
+    buf.push(g[r][c]);used.add(r+","+c);last=[r,c];step++;
+    const done=[];seqs.forEach((q,i)=>{if(!q.ok&&has(q.s)){q.ok=true;done.push(i)}});
+    if(buf.length>=6||seqs.every(q=>q.ok))end();draw();if(done.length)reveal(app,done.filter(i=>app.files[i]))};
+  function draw(){
+    G.innerHTML=g.map((row,r)=>row.map((h,c)=>`<button data-r="${r}" data-c="${c}" class="${used.has(r+","+c)?"used":can(r,c)?"ok":""}">${h}</button>`).join("")).join("");
+    $(".slots",root).innerHTML=Array.from({length:6},(_,i)=>`<span>${buf[i]||"··"}</span>`).join("");
+    $(".seqs",root).innerHTML=seqs.map((q,i)=>`<div class="seq ${q.ok?"done":""}">${q.s.join(" ")}<br><small>${q.ok&&app.files[i]?esc(app.files[i].titre):"▒▒▒ FICHIER CHIFFRÉ "+(i+1)}</small></div>`).join("");
+    const k=seqs.filter(q=>q.ok).length;
+    $(".msg",root).textContent=over?(k===2?"▓ BRÈCHE RÉUSSIE":k?"▒ BRÈCHE PARTIELLE":"░ ÉCHEC — ICE ACTIVÉE"):`⏱ ${t}s`}
+  $(".rs",root).onclick=start;start()};
+
+/* ============ APP : CRACK-LOCK ============ */
+RUN.lock=(root,app)=>{
+  const L=app.secret.length,T=app.tries||8;
+  root.innerHTML=`<h2>${esc(app.nom)}</h2><div class="hh"><div class="log"></div><div><div class="disp"></div><div class="kp"></div><div class="msg"></div></div></div><small>■ = bon chiffre bien placé · □ = bon chiffre mal placé · ${T} essais</small>`;
+  let cur="",tries=[],over=false;const kp=$(".kp",root);
+  kp.innerHTML=[..."0123456789"].map(d=>`<button>${d}</button>`).join("")+`<button>⌫</button><button>OK</button>`;
+  const fb=gs=>{let b=0,w=0;const a=[],c=[];gs.split("").forEach((d,i)=>d===app.secret[i]?b++:(a.push(d),c.push(app.secret[i])));a.forEach(d=>{const i=c.indexOf(d);if(i>-1){w++;c.splice(i,1)}});return[b,w]};
+  function press(k){if(over)return;
+    if(k==="⌫")cur=cur.slice(0,-1);
+    else if(k==="OK"){if(cur.length<L)return;const[b,w]=fb(cur);tries.push([cur,b,w]);if(b===L||tries.length>=T)over=true;cur="";
+      if(b===L){draw();reveal(app,app.files.map((_,i)=>i));return}}
+    else if(cur.length<L)cur+=k;
+    draw()}
+  kp.onclick=e=>{const b=e.target.closest("button");if(b)press(b.textContent)};
+  const kd=e=>{if(!root.isConnected){removeEventListener("keydown",kd);return}if(/^\d$/.test(e.key)||e.key==="Enter"||e.key==="Backspace")press(e.key==="Enter"?"OK":e.key==="Backspace"?"⌫":e.key)};
+  addEventListener("keydown",kd);
+  function draw(){
+    $(".log",root).innerHTML=tries.map(([g,b,w])=>`<div><span>${g.split("").join(" ")}</span><span>${"■".repeat(b)}${"□".repeat(w)}</span></div>`).join("")||"<div>— EN ATTENTE DE SAISIE —</div>";
+    $(".disp",root).textContent=(cur+"·".repeat(L)).slice(0,L);
+    const win=tries.length&&tries[tries.length-1][1]===L;
+    $(".msg",root).textContent=over?(win?"▓ SERRURE OUVERTE":"░ VERROUILLAGE"):`ESSAIS RESTANTS : ${T-tries.length}`}
+  draw()};
+
+/* ============ APP : FLUX CAMÉRAS (zones + images) ============ */
+/* Option : ajouter f:N à une caméra pour révéler le fichier N de l’app quand on la consulte */
+RUN.feed=(root,app)=>{
+  root.innerHTML=`<h2>${esc(app.nom)}</h2><div class="fd"><div class="fd-side">${app.zones.map((g,gi)=>`<details${gi?"":" open"}><summary>${esc(g.groupe)}</summary>${g.cams.map((c,ci)=>`<div class="fd-zone" data-g="${gi}" data-c="${ci}">${esc(c.nom)}</div>`).join("")}</details>`).join("")}</div><div class="fd-view"><div class="fd-title">&gt; EN ATTENTE DE CONNEXION…</div><div class="fd-screen"><img alt="" style="visibility:hidden"><div class="fd-lines"></div><div class="fd-rec">● REC</div><div class="fd-txt">AUCUN SIGNAL</div></div></div></div>`;
+  const img=$("img",root),ti=$(".fd-title",root),rec=$(".fd-rec",root),tx=$(".fd-txt",root);let to;
+  root.onclick=e=>{const z=e.target.closest(".fd-zone");if(!z)return;
+    const g=app.zones[+z.dataset.g],c=g.cams[+z.dataset.c],name=g.groupe+" - "+c.nom;
+    clearTimeout(to);root.querySelectorAll(".fd-zone").forEach(k=>k.classList.toggle("on",k===z));
+    ti.textContent="> ÉTABLISSEMENT DE LA LIAISON : "+name;
+    img.style.visibility="hidden";img.classList.remove("glitch");img.onload=img.onerror=null;rec.style.display="none";tx.style.display="block";tx.textContent="CONNEXION…";
+    to=setTimeout(()=>{
+      img.onload=()=>{img.style.visibility="visible";img.classList.add("glitch");tx.style.display="none";rec.style.display="block";ti.textContent="> CAMÉRA ACTIVE : "+name;if(c.f!==undefined&&app.files[c.f])reveal(app,[c.f])};
+      img.onerror=()=>{ti.textContent="> LIAISON PERDUE : "+name;tx.textContent="SIGNAL PERDU — FLUX INDISPONIBLE"};
+      img.src=c.img},1500)}};
+
+route();
+</script>
+</body>
+</html>
