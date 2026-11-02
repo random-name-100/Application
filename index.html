@@ -91,6 +91,21 @@ table{border-collapse:collapse;width:100%;font-size:.85em}
 th,td{border:1px solid var(--dim);padding:5px 7px;text-align:left;vertical-align:top}th{background:var(--hi)}
 td:nth-child(1),td:nth-child(4){white-space:nowrap}td:nth-child(4){text-align:right}
 tr.out td:nth-child(4){color:#ff3344}
+/* --- Résumé de session --- */
+.resume p{line-height:1.7;margin:12px 0;text-align:justify}
+.resume em{font-style:italic;text-shadow:0 0 8px var(--c)}
+/* --- Dossier confidentiel (session cachée) --- */
+.classified,.dossier{position:relative;overflow:hidden;background:#e9e4d4;color:#151515;border-color:#e9e4d4}
+.classified:hover{background:#f4efe0;box-shadow:0 0 16px var(--c)}
+.classified small{opacity:.85}
+.dossier{padding:22px 18px;border:1px solid #e9e4d4;box-shadow:0 0 18px var(--dim)}
+.dossier p{line-height:2;margin:12px 0}
+.redact{background:#111;color:#111;padding:0 1px;user-select:none;letter-spacing:-.05em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.doc-head{font-size:11px;letter-spacing:.1em;border-bottom:1px solid #151515;padding-bottom:4px;margin-bottom:6px}
+.doc-foot{font-size:11px;letter-spacing:.1em;border-top:1px solid #151515;padding-top:6px;opacity:.8}
+.stamp{position:absolute;top:18px;right:-4px;transform:rotate(12deg);border:3px double #b3131b;color:#b3131b;font-weight:bold;font-size:15px;letter-spacing:.2em;padding:2px 10px;opacity:.85;pointer-events:none;mix-blend-mode:multiply}
+.classified .stamp{top:58px;right:8px;font-size:13px}
+h2 .redact{background:var(--c);color:var(--c)}
 footer{margin:18px 0 4px;font-size:11px;opacity:.6;text-align:center;letter-spacing:.1em}
 </style>
 </head>
@@ -104,7 +119,16 @@ footer{margin:18px 0 4px;font-size:11px;opacity:.6;text-align:center;letter-spac
 <script>
 /* ============ CONFIGURATION MJ : sessions, codes, fichiers ============ */
 const SESSIONS=[
-{id:1,titre:"Nuit blanche à Watson",resume:"Une livraison suspecte, un médecin disparu.",apps:[
+{id:1,titre:"Carnage à la Calavera",resume:"La brute, des flingues et Juan",
+ /* histoire = texte de l'onglet RÉSUMÉ (paragraphes séparés par une ligne vide, _texte_ = italique) */
+ histoire:`Dans l'ombre suffocante d'un bâtiment désaffecté du sud-est du centre-ville, la justice de Night City prend une tournure brutale sous les mains d'Adam, le justicier, et de Glitch, le netrunner. Les deux flics n'hésitent pas à torturer un membre du gang des Metal Head, attaché nu sur une chaise poisseuse, pour lui extorquer la position de son boss, le redoutable Rancor. Crachant le morceau dans la douleur, le gangster avoue que sa cible se dirige vers le bar de la Calavera, situé dans le quartier malfamé de l'Oruga. Loin d'en avoir fini avec leur prisonnier, les deux agents le ligotent solidement avec une corde et le traînent sans ménagement dans leur sillage vers le bar.
+
+Pendant ce temps, l'atmosphère est toute autre à l'intérieur de la Calavera où Choura, le techie, et Shiro, le medtech, s'imprègnent de l'ambiance du quartier de l'Oruga. Leur objectif est d'entrer en contact avec le fixer Saul pour décrocher un contrat crucial : récupérer du matériel de survie destiné aux quartiers de banlieue surpeuplés du sud-est. Après quelques mots échangés avec Juan, le barman et compagnon intime de Saul, les affaires sérieuses commencent enfin avec le fixer pour négocier un partenariat lucratif.
+
+Les tractations tournent court lorsque l'imposant Rancor et trois de ses sbires font irruption dans l'établissement, déclenchant instantanément une violente rixe générale. D'abord acculés par la puissance de feu du gang, Choura, Shiro et Saul voient la situation basculer in extremis avec l'irruption fracassante d'Adam et Glitch qui exécutent froidement deux des hommes de main. Le chaos s'empare de la pièce, et dans la pluie de balles, Saul s'effondre, gravement touché à l'abdomen avec un poumon affaissé. Le combat atteint son paroxysme de brutalité contre le colosse Rancor, qui finit par s'effondrer, criblé de coups et achevé dans un tumulte assourdissant de cris, de poussière et de fumées âcres de grenades.
+
+Alors que le silence retombe pesamment sur le bar dévasté et que Shiro se précipite pour stabiliser les blessures critiques de Saul, une terrible réalité s'impose au reste du groupe. Profitant de la confusion totale de l'affrontement pyrotechnique, le prisonnier des Metal Head a réussi à faire glisser sa corde et s'est volatilisé dans les rues sombres de Night City, non sans avoir arraché et kidnappé Juan au passage.`,
+ apps:[
  {id:"s1cam",type:"cam",nom:"CAM-ZERO // Optique de rue",code:"WATCH-01",desc:"Caméra de surveillance piratée. Chaque mode révèle autre chose.",tag:"CAM-ZERO",
   files:[{mode:1,titre:"Livraison nocturne",texte:"Vision nocturne : un van sans plaque décharge trois caisses marquées d’un symbole biohazard devant l’entrée de service, 03h12."},
          {mode:2,titre:"Visage identifié",texte:"Analyse : le chauffeur correspond à « Rico Vance », ex-fixer des Tyger Claws, recherché pour trafic de matériel médical."}]},
@@ -113,7 +137,13 @@ const SESSIONS=[
          {titre:"Plan des sous-sols",texte:"Niveau B : laboratoire (nord), coffre-fort (est), sortie de secours (sud). Une seule caméra couvre le couloir, angle mort à gauche du coffre."}]},
  {id:"s1lock",type:"lock",nom:"CRACK-LOCK // Coffre-fort",code:"VAULT-12",secret:"4721",tries:8,desc:"Serrure électronique à code numérique.",
   files:[{titre:"Contrat Militech — confidentiel",texte:"Accord de livraison de 12 lots de stimulants de combat. Signataire : Dr Elias Voss. Paiement : 80 000 eb à la livraison."}]}]},
-{id:2,titre:"Les rues de Heywood",resume:"Une gang war qui cache un autre jeu.",apps:[
+{id:2,titre:"Sang, Sueur et Ombres Corporatistes",resume:"La traque, la baston et la planque",
+ histoire:`Tandis que Shiro parvient à stabiliser in extremis les blessures critiques de Saul dans les décombres de la Calavera, l'enquête reprend sans attendre pour retrouver Juan et son ravisseur. En interrogeant le central, Adam identifie le _Smasher_, un rade malfamé qui compte les Metal Heads comme habitués. Sur place, le groupe déniche un moyen d'obtenir des renseignements cruciaux : infiltrer une arnaque aux paris clandestins lors d'un tournoi de combat à mains nues. Envoyé dans l'arène, Choura traverse les deux premiers rounds truqués avec aisance, avant d'affronter une finale brutale et bien réelle. Le techie devient insaisissable, esquivant chaque tentative de projection de son adversaire pour finalement le briser grâce à des contres chirurgicaux. Le groupe rafle l'argent des paris et localise trois planques du gang : l'usine Alpha de Watson, la clinique Beta de Pacifica, et le hangar Gamma sur les docks.
+
+Ciblant le point de transfert, l'équipe débarque devant un complexe délabré, vestige d'un centre de traitement des eaux ceinturé de grillages défoncés et crachant un fluide verdâtre dans la marina. Délaissant le toit lourdement défendu par des tourelles, ils s'infiltrent silencieusement par une porte de garage éventrée. À l'intérieur, Glitch se connecte au réseau local, aveugle les caméras et désamorce les défenses pour guider ses partenaires. Progressant sans éveiller les soupçons, ils atteignent l'étage supérieur, neutralisent le netrunner ennemi distrait par sa réalité virtuelle, et mettent à sac l'armurerie de feu Rancor. C'est là qu'ils retrouvent et assomment sauvagement le ravisseur de Juan, savourant leur vengeance.
+
+L'accès au sous-sol enfin déverrouillé, l'escouade plonge dans l'abîme. Ils libèrent Juan en interrompant sa séance de torture et survivent par miracle à l'embuscade toxique d'un chimiste du gang grâce à des réflexes surhumains. L'horreur les attend plus loin : une immense cage remplie de cobayes humains malingres. La découverte glaçante du cadavre d'un enfant ébranle profondément l'humanité de deux membres du groupe. En fouillant les données numériques du repaire, l'ampleur de l'opération se dévoile : un trafic d'êtres humains massivement financé par l'obscure _BY Corp_. Le choc devient intime lorsque Choura découvre que sa propre sœur, Lisa Fiodorovitch Ouvarov, a été expédiée via ce réseau sur commande spéciale. L'intervention s'achève dans le vacarme des gyrophares lorsque le sauvetage d'un corpo captif déclenche sa puce d'alerte, attirant instantanément la Trauma Team et le NCPD qui sécurisent le périmètre et démantèlent ce qu'il reste des Metal Heads.`,
+ apps:[
  {id:"s2breach",type:"breach",nom:"BREACH // Réseau des Valentinos",code:"HEY-2020",time:30,desc:"Le terminal d’un chef de bande.",
   files:[{titre:"Liste des points de deal",texte:"Quatre points : Chromeland, Rue des Palmiers, Entrepôt 9, Bar « El Coyote ». Livraisons le jeudi."},
          {titre:"Message crypté — « La Gata »",texte:"« Le carnet est chez Marisol. Ne le donne à personne, surtout pas aux flics de la NCPD. »"}]},
@@ -238,7 +268,9 @@ const SESSIONS=[
    {groupe:"Étage 1",cams:[{nom:"Dortoir",img:"Images/Session 2/CAM-02/e1-dortoir.png"},{nom:"Atelier",img:"Images/Session 2/CAM-02/e1-atelier.png"},{nom:"Salle de pause",img:"Images/Session 2/CAM-02/e1-pause.png"}]},
    {groupe:"Étage 2",cams:[{nom:"Bureau",img:"Images/Session 2/CAM-02/e2-bureau.png"},{nom:"Salle Net",img:"Images/Session 2/CAM-02/e2-net.png"},{nom:"Accès toit",img:"Images/Session 2/CAM-02/e2-accestoit.png"}]},
    {groupe:"Toit",cams:[{nom:"Vue globale",img:"Images/Session 2/CAM-02/toit.png"}]}
-  ]}]}
+  ]}]},
+/* cache:true = titre, sous-titre et résumé masqués façon dossier confidentiel. Passer à false (et remplir titre/resume/histoire) pour révéler la session */
+{id:3,cache:true,titre:"",resume:"",histoire:"",apps:[]}
 ];
 /* ======================================================================= */
 const $=(s,e=document)=>e.querySelector(s),R=n=>Math.floor(Math.random()*n);
@@ -248,6 +280,10 @@ const ST={get(k){try{const v=JSON.parse(localStorage.getItem("nr:"+k));if(v)retu
  set(k,v){mem[k]=v;try{localStorage.setItem("nr:"+k,JSON.stringify(v))}catch(e){}}};
 const view=$("#view"),ov=$("#ov"),RUN={};
 const fid=(a,i)=>a.id+"-"+i;
+/* bandes noires de censure (longueurs en caractères) */
+const bars=(...n)=>n.map(k=>`<span class="redact">${"█".repeat(k)}</span>`).join(" ");
+/* texte de résumé : paragraphes séparés par une ligne vide, _italique_ */
+const prose=t=>esc(t).split(/\n\s*\n/).map(p=>`<p>${p.replace(/_([^_]+)_/g,"<em>$1</em>")}</p>`).join("");
 let ovLock=false; /* true = la fenêtre ne peut pas être fermée (combat contre la glace) */
 ov.onclick=e=>{if(e.target===ov&&!ovLock)ov.classList.remove("show")};
 addEventListener("keydown",e=>{if(e.key==="Escape"&&!ovLock)ov.classList.remove("show")});
@@ -273,15 +309,16 @@ function home(){
   const u=ST.get("unl"),f=ST.get("files");
   view.innerHTML=`<h2>▓ SÉLECTION DE SESSION</h2><div class="sg">${SESSIONS.map(s=>{
     const nf=s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>f[fid(a,i)]).length,0),tf=s.apps.reduce((n,a)=>n+a.files.length,0);
+    if(s.cache)return `<a class="card classified" href="#session-${s.id}"><span class="stamp">CLASSIFIÉ</span><small class="doc-head">DOSSIER NC-2045-${String(s.id).padStart(2,"0")} // DIFFUSION RESTREINTE</small><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${bars(14,6,9)}</span><small>${bars(4,11,7)}</small><small>ACCÈS : HABILITATION NIVEAU 5 REQUISE</small></a>`;
     return `<a class="card" href="#session-${s.id}"><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${esc(s.titre)}</span><small>${esc(s.resume)}</small><small>APPS ${s.apps.filter(a=>u[a.id]).length}/${s.apps.length} · FICHIERS ${nf}/${tf}</small></a>`}).join("")}</div>
   <div class="row"><button id="rz">EFFACER LA PROGRESSION</button></div>`;
   let armed=false;$("#rz").onclick=e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER L’EFFACEMENT ?";return}ST.set("unl",{});ST.set("files",{});home()}}
 
 function session(s){
-  view.innerHTML=`<a href="#">← INDEX</a><h2>SESSION ${String(s.id).padStart(2,"0")} // ${esc(s.titre.toUpperCase())}</h2><div class="tabs"><button data-t="acces">ACCÈS APPLICATIONS</button><button data-t="save">SAUVEGARDE DES INFOS</button></div><div id="tab"></div>`;
+  view.innerHTML=`<a href="#">← INDEX</a><h2>SESSION ${String(s.id).padStart(2,"0")} // ${s.cache?bars(10,4,12):esc(s.titre.toUpperCase())}</h2>${s.cache?"":`<p><small>${esc(s.resume)}</small></p>`}<div class="tabs"><button data-t="acces">ACCÈS APPLICATIONS</button><button data-t="save">SAUVEGARDE DES INFOS</button><button data-t="resume">RÉSUMÉ</button></div><div id="tab"></div>`;
   const tab=$("#tab");
   const nbf=()=>{const f=ST.get("files");return s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>f[fid(a,i)]).length,0)};
-  const setTab=n=>{view.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===n));n==="acces"?acces():save()};
+  const setTab=n=>{view.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===n));n==="acces"?acces():n==="resume"?resume():save()};
   $(".tabs",view).onclick=e=>{const t=e.target.dataset?.t;if(t)setTab(t)};
 
   function acces(){
@@ -305,6 +342,14 @@ function session(s){
     RUN[a.type]($("#app"),a,{s,split:c=>{if(!b)launch(a,c)}});
     if(b)RUN[b.type]($("#app2"),b,{s,split(){}});
     window.scrollTo(0,0)}
+
+  function resume(){
+    document.body.classList.remove("wide");
+    if(s.cache){tab.innerHTML=`<div class="dossier"><span class="stamp">CLASSIFIÉ</span><div class="doc-head">NIGHT CITY // DOSSIER NC-2045-${String(s.id).padStart(2,"0")} // TOP SECRET — DIFFUSION RESTREINTE</div>
+      <p><b>OBJET :</b> ${bars(9,5,13)}</p><p><b>RÉF. OPÉRATION :</b> ${bars(6,8)}</p>
+      <p>${bars(12,7,4,10,6,9,5,11,8,3,7,12,6)}</p><p>${bars(8,5,11,6,9,4,12,7,5,10)}</p><p>${bars(10,6,8,3,9,12,5,7)}</p>
+      <p class="doc-foot">DOCUMENT EXPURGÉ — DÉCLASSIFICATION À LA DISCRÉTION DU MJ</p></div>`;return}
+    tab.innerHTML=`<div class="panel resume"><div>▓ RÉSUMÉ — SESSION ${String(s.id).padStart(2,"0")}</div>${s.histoire?prose(s.histoire):"<p><small>AUCUN RÉSUMÉ DISPONIBLE.</small></p>"}</div>`}
 
   function save(){
     document.body.classList.remove("wide");
