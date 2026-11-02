@@ -106,6 +106,8 @@ tr.out td:nth-child(4){color:#ff3344}
 .stamp{position:absolute;top:18px;right:-4px;transform:rotate(12deg);border:3px double #b3131b;color:#b3131b;font-weight:bold;font-size:15px;letter-spacing:.2em;padding:2px 10px;opacity:.85;pointer-events:none;mix-blend-mode:multiply}
 .classified .stamp{top:58px;right:8px;font-size:13px}
 h2 .redact{background:var(--c);color:var(--c)}
+.mj-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--dim)}
+.card .fin{opacity:1;text-shadow:0 0 8px var(--c)}
 footer{margin:18px 0 4px;font-size:11px;opacity:.6;text-align:center;letter-spacing:.1em}
 </style>
 </head>
@@ -305,17 +307,42 @@ function reveal(app,idxs){
   const fs=ST.get("files"),fresh=idxs.filter(i=>!fs[fid(app,i)]);
   fresh.forEach(i=>fs[fid(app,i)]=Date.now());ST.set("files",fs);openFiles(app,idxs,fresh)}
 
+/* ---------- Sessions terminées (état partagé) ----------
+   Une session est TERMINÉE si :
+   - terminee:true est écrit dans SESSIONS (fonctionne partout, y compris GitHub Pages), ou
+   - le MJ l'a clôturée depuis l'onglet MJ sur la page claude.ai : l'état est alors partagé
+     en direct avec tous ceux qui consultent la page (seul le propriétaire de la page peut l'écrire).
+   Une session terminée affiche toutes ses applications et tous ses fichiers pour tout le monde. */
+const DONE={};let DB=null,OWNER=false;
+const done=s=>!!(s.terminee||DONE[s.id]);
+const got=(s,a,i,f)=>done(s)||!!f[fid(a,i)];
+const nfound=(s,f)=>s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>got(s,a,i,f)).length,0);
+function refresh(){ /* ne coupe ni une application lancée ni une saisie en cours */
+  if($("#app")||document.activeElement?.tagName==="INPUT")return;route(true)}
+(async()=>{try{
+  if(!window.claude?.use)return;
+  const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
+  OWNER=user?(await user.isOwner()):false;
+  if(!db){refresh();return}
+  DB=db;
+  db.collection("sessions").onSnapshot(snap=>{
+    for(const k in DONE)delete DONE[k];
+    snap.docs.forEach(d=>{const v=d.data(),m=d.id.match(/^s(\d+)$/);if(m&&v&&v.terminee)DONE[+m[1]]=true});
+    refresh()},()=>{});
+  refresh()}catch(e){}})();
+async function setDone(s,v){await DB.collection("sessions").doc("s"+s.id).set({terminee:v,maj:Date.now()})}
+
 /* ---------- Navigation ---------- */
-function route(){if(location.hash==="#mj"){mj();window.scrollTo(0,0);return}const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home();window.scrollTo(0,0)}
-addEventListener("hashchange",route);
+function route(keep){const y=scrollY;if(location.hash==="#mj")mj();else{const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home()}window.scrollTo(0,keep?y:0)}
+addEventListener("hashchange",()=>route());
 
 function home(){
   document.body.classList.remove("wide");
   const u=ST.get("unl"),f=ST.get("files");
   view.innerHTML=`<h2>▓ SÉLECTION DE SESSION</h2><div class="sg">${SESSIONS.map(s=>{
-    const nf=s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>f[fid(a,i)]).length,0),tf=s.apps.reduce((n,a)=>n+a.files.length,0);
+    const nf=nfound(s,f),tf=s.apps.reduce((n,a)=>n+a.files.length,0);
     if(s.cache)return `<a class="card classified" href="#session-${s.id}"><span class="stamp">CLASSIFIÉ</span><small class="doc-head">DOSSIER NC-2045-${String(s.id).padStart(2,"0")} // DIFFUSION RESTREINTE</small><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${bars(14,6,9)}</span><small>${bars(4,11,7)}</small><small>ACCÈS : HABILITATION NIVEAU 5 REQUISE</small></a>`;
-    return `<a class="card" href="#session-${s.id}"><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${esc(s.titre)}</span><small>${esc(s.resume)}</small><small>APPS ${s.apps.filter(a=>u[a.id]).length}/${s.apps.length} · FICHIERS ${nf}/${tf}</small></a>`}).join("")}</div>
+    return `<a class="card" href="#session-${s.id}"><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${esc(s.titre)}</span><small>${esc(s.resume)}</small><small>APPS ${s.apps.filter(a=>done(s)||u[a.id]).length}/${s.apps.length} · FICHIERS ${nf}/${tf}</small>${done(s)?'<small class="fin">▓ SESSION TERMINÉE</small>':""}</a>`}).join("")}</div>
   <div class="row"><button id="rz">EFFACER LA PROGRESSION</button><a href="#mj"><button>⚿ ACCÈS MJ</button></a></div>`;
   let armed=false;$("#rz").onclick=e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER L’EFFACEMENT ?";return}ST.set("unl",{});ST.set("files",{});home()}}
 
@@ -328,7 +355,19 @@ function mj(){
     view.innerHTML=`<a href="#">← INDEX</a><h2>▓ ACCÈS MJ</h2><div class="panel"><div>CODE MAÎTRE DU JEU</div><div class="row"><input id="code" type="password" autocomplete="off" spellcheck="false"><button id="ok">VALIDER</button></div><div class="msg" id="m"></div></div>`;
     const go=()=>{if($("#code").value.trim().toUpperCase()===MJ_CODE){mjOk=true;mj()}else $("#m").textContent="░ CODE INVALIDE — ACCÈS REFUSÉ"};
     $("#ok").onclick=go;$("#code").onkeydown=e=>{if(e.key==="Enter")go()};$("#code").focus();return}
-  view.innerHTML=`<a href="#">← INDEX</a><h2>▓ MJ // APPLICATIONS NON UTILISÉES</h2><p><small>${RESERVE.length} APPLICATION(S) EN RÉSERVE — NON RATTACHÉES À UNE SESSION, LEUR CODE N’EST ACCEPTÉ NULLE PART.</small></p><div id="tab"></div>`;
+  view.innerHTML=`<a href="#">← INDEX</a><h2>▓ MJ // CLÔTURE DES SESSIONS</h2><div class="panel" id="clo"></div><h2>▓ MJ // APPLICATIONS NON UTILISÉES</h2><p><small>${RESERVE.length} APPLICATION(S) EN RÉSERVE — NON RATTACHÉES À UNE SESSION, LEUR CODE N’EST ACCEPTÉ NULLE PART.</small></p><div id="tab"></div>`;
+  const clo=$("#clo");
+  function cloture(){
+    const note=!DB?"<p class=\"warn\"><small>CLÔTURE PARTAGÉE INDISPONIBLE ICI : ELLE NE FONCTIONNE QUE SUR LA PAGE CLAUDE.AI, OUVERTE PAR SON PROPRIÉTAIRE. AILLEURS (GITHUB), AJOUTER terminee:true À LA SESSION DANS LE CODE.</small></p>"
+      :!OWNER?"<p class=\"warn\"><small>SEUL LE PROPRIÉTAIRE DE LA PAGE PEUT CLÔTURER UNE SESSION.</small></p>"
+      :"<p><small>CLÔTURER UNE SESSION DÉVERROUILLE TOUTES SES APPLICATIONS ET TOUS SES FICHIERS POUR TOUS CEUX QUI CONSULTENT LA PAGE.</small></p>";
+    clo.innerHTML=note+SESSIONS.map(s=>`<div class="mj-row"><span>SESSION ${String(s.id).padStart(2,"0")} — ${s.cache?"[CLASSIFIÉE]":esc(s.titre)}<br><small>${done(s)?"▓ TERMINÉE"+(s.terminee?" (FIXÉE DANS LE CODE)":""):"EN COURS"}</small></span>${DB&&OWNER&&!s.terminee?`<button data-s="${s.id}">${done(s)?"↺ ROUVRIR":"▓ TERMINER LA SESSION"}</button>`:""}</div>`).join("")+'<div class="msg" id="cm"></div>';
+    clo.querySelectorAll("[data-s]").forEach(b=>{let armed=false;b.onclick=async()=>{
+      const s=SESSIONS.find(x=>x.id===+b.dataset.s),v=!done(s);
+      if(!armed){armed=true;b.textContent=v?"CONFIRMER : TOUT DÉVERROUILLER ?":"CONFIRMER LA RÉOUVERTURE ?";return}
+      b.disabled=true;try{await setDone(s,v);DONE[s.id]=v||undefined;if(!v)delete DONE[s.id];cloture();$("#cm").textContent=v?"▓ SESSION TERMINÉE — VISIBLE PAR TOUS":"SESSION ROUVERTE"}
+      catch(e){b.disabled=false;$("#cm").textContent="░ ÉCHEC : "+(e&&e.code||"ERREUR")}}})}
+  cloture();
   const tab=$("#tab");
   function list(){
     tab.innerHTML=`<div class="sg">${RESERVE.map(a=>`<div class="card"><small>${TYPES[a.type]||a.type}</small><b>${esc(a.nom)}</b><span>CODE : <span class="hl">${esc(a.code)}</span>${a.secret?` · SECRET : <span class="hl">${esc(a.secret)}</span>`:""}</span><small>${esc(a.desc)}</small><small>FICHIERS : ${a.files.map(f=>esc(f.titre)).join(" · ")||"—"}</small><button data-l="${a.id}">▶ TESTER</button></div>`).join("")}</div>`;
@@ -337,24 +376,25 @@ function mj(){
       $("#bk").onclick=list;RUN[a.type]($("#app"),a,{s:{apps:RESERVE},split(){}})})}
   list()}
 
+const TAB={};
 function session(s){
   view.innerHTML=`<a href="#">← INDEX</a><h2>SESSION ${String(s.id).padStart(2,"0")} // ${s.cache?bars(10,4,12):esc(s.titre.toUpperCase())}</h2>${s.cache?"":`<p><small>${esc(s.resume)}</small></p>`}<div class="tabs"><button data-t="acces">ACCÈS APPLICATIONS</button><button data-t="save">SAUVEGARDE DES INFOS</button><button data-t="resume">RÉSUMÉ</button></div><div id="tab"></div>`;
   const tab=$("#tab");
-  const nbf=()=>{const f=ST.get("files");return s.apps.reduce((n,a)=>n+a.files.filter((_,i)=>f[fid(a,i)]).length,0)};
-  const setTab=n=>{view.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===n));n==="acces"?acces():n==="resume"?resume():save()};
+  const nbf=()=>nfound(s,ST.get("files"));
+  const setTab=n=>{TAB[s.id]=n;view.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===n));n==="acces"?acces():n==="resume"?resume():save()};
   $(".tabs",view).onclick=e=>{const t=e.target.dataset?.t;if(t)setTab(t)};
 
   function acces(){
     document.body.classList.remove("wide");
-    const u=ST.get("unl"),open=s.apps.filter(a=>u[a.id]),locked=s.apps.length-open.length;
-    tab.innerHTML=`<div class="panel"><div>CODE D’ACCÈS FOURNI PAR LE MJ</div><div class="row"><input id="code" placeholder="XXXXX-00" autocomplete="off" spellcheck="false"><button id="ok">VALIDER</button></div><div class="msg" id="m"></div></div>
+    const u=ST.get("unl"),open=s.apps.filter(a=>done(s)||u[a.id]),locked=s.apps.length-open.length;
+    tab.innerHTML=(done(s)?`<div class="panel"><div>▓ SESSION TERMINÉE — ARCHIVES DÉCLASSIFIÉES PAR LE MJ</div><small>TOUTES LES APPLICATIONS ET TOUS LES FICHIERS SONT ACCESSIBLES.</small></div>`:`<div class="panel"><div>CODE D’ACCÈS FOURNI PAR LE MJ</div><div class="row"><input id="code" placeholder="XXXXX-00" autocomplete="off" spellcheck="false"><button id="ok">VALIDER</button></div><div class="msg" id="m"></div></div>`)+`
     <h2>▓ APPLICATIONS DÉVERROUILLÉES</h2><div class="sg">${open.map(a=>`<div class="card"><b>${esc(a.nom)}</b><small>${esc(a.desc)}</small><button data-l="${a.id}">▶ LANCER</button></div>`).join("")||"<small>AUCUNE POUR LE MOMENT</small>"}</div>
     ${locked?`<p><small>▒▒ ${locked} APPLICATION(S) VERROUILLÉE(S)</small></p>`:""}`;
     const go=()=>{const v=$("#code").value.trim().toUpperCase(),a=s.apps.find(x=>x.code===v),m=$("#m");
       if(!v)return;if(!a){m.textContent="░ CODE INVALIDE — ACCÈS REFUSÉ";return}
       const un=ST.get("unl");const was=un[a.id];un[a.id]=1;ST.set("unl",un);
       if(was){m.textContent="APPLICATION DÉJÀ DÉVERROUILLÉE";return}acces();$("#m").textContent="▓ ACCÈS ACCORDÉ : "+a.nom};
-    $("#ok").onclick=go;$("#code").onkeydown=e=>{if(e.key==="Enter")go()};
+    if(!done(s)){$("#ok").onclick=go;$("#code").onkeydown=e=>{if(e.key==="Enter")go()}}
     tab.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>launch(s.apps.find(a=>a.id===b.dataset.l)))}
 
   /* launch(a) : une application. launch(a,b) : a à gauche, b à droite sur la même page */
@@ -372,14 +412,18 @@ function session(s){
       <p><b>OBJET :</b> ${bars(9,5,13)}</p><p><b>RÉF. OPÉRATION :</b> ${bars(6,8)}</p>
       <p>${bars(12,7,4,10,6,9,5,11,8,3,7,12,6)}</p><p>${bars(8,5,11,6,9,4,12,7,5,10)}</p><p>${bars(10,6,8,3,9,12,5,7)}</p>
       <p class="doc-foot">DOCUMENT EXPURGÉ — DÉCLASSIFICATION À LA DISCRÉTION DU MJ</p></div>`;return}
-    tab.innerHTML=`<div class="panel resume"><div>▓ RÉSUMÉ — SESSION ${String(s.id).padStart(2,"0")}</div>${s.histoire?prose(s.histoire):"<p><small>AUCUN RÉSUMÉ DISPONIBLE.</small></p>"}</div>`}
+    const f=ST.get("files"),fl=s.apps.flatMap(a=>a.files.map((x,i)=>[a,x,i]).filter(([,,i])=>got(s,a,i,f)));
+    tab.innerHTML=`<div class="panel resume"><div>▓ RÉSUMÉ — SESSION ${String(s.id).padStart(2,"0")}</div>${s.histoire?prose(s.histoire):"<p><small>AUCUN RÉSUMÉ DISPONIBLE.</small></p>"}
+      <h3>▓ FICHIERS DE LA SESSION <small>${fl.length}/${s.apps.reduce((n,a)=>n+a.files.length,0)}${done(s)?" — SESSION TERMINÉE":""}</small></h3>
+      ${fl.map(([a,x,i])=>`<button class="file" data-a="${a.id}" data-i="${i}"><span>▓ ${esc(x.titre)}</span><small>${esc(a.nom)}</small></button>`).join("")||"<p><small>AUCUN FICHIER TROUVÉ POUR LE MOMENT.</small></p>"}</div>`;
+    tab.querySelectorAll(".file").forEach(b=>b.onclick=()=>openFiles(s.apps.find(x=>x.id===b.dataset.a),[+b.dataset.i],[]))}
 
   function save(){
     document.body.classList.remove("wide");
-    const f=ST.get("files"),u=ST.get("unl"),srcs=s.apps.filter(a=>a.files.some((_,i)=>f[fid(a,i)]));
-    tab.innerHTML=`<div class="panel"><div>▓ SAUVEGARDE DES INFOS — ${nbf()} FICHIER(S) ENREGISTRÉ(S)</div>${srcs.map(a=>`<h3>${esc(a.nom)} <small>${a.files.filter((_,i)=>f[fid(a,i)]).length}/${a.files.length}</small></h3>${a.files.map((x,i)=>f[fid(a,i)]?`<button class="file" data-a="${a.id}" data-i="${i}"><span>▓ ${esc(x.titre)}</span><small>${new Date(f[fid(a,i)]).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</small></button>`:"").join("")}`).join("")||"<p><small>AUCUN FICHIER. DÉCOUVREZ-EN EN JOUANT AUX APPLICATIONS.</small></p>"}</div>`;
+    const f=ST.get("files"),srcs=s.apps.filter(a=>a.files.some((_,i)=>got(s,a,i,f)));
+    tab.innerHTML=`<div class="panel"><div>▓ SAUVEGARDE DES INFOS — ${nbf()} FICHIER(S) ENREGISTRÉ(S)</div>${srcs.map(a=>`<h3>${esc(a.nom)} <small>${a.files.filter((_,i)=>got(s,a,i,f)).length}/${a.files.length}</small></h3>${a.files.map((x,i)=>got(s,a,i,f)?`<button class="file" data-a="${a.id}" data-i="${i}"><span>▓ ${esc(x.titre)}</span><small>${f[fid(a,i)]?new Date(f[fid(a,i)]).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}):"ARCHIVE MJ"}</small></button>`:"").join("")}`).join("")||"<p><small>AUCUN FICHIER. DÉCOUVREZ-EN EN JOUANT AUX APPLICATIONS.</small></p>"}</div>`;
     tab.querySelectorAll(".file").forEach(b=>b.onclick=()=>{const a=s.apps.find(x=>x.id===b.dataset.a);openFiles(a,[+b.dataset.i],[])})}
-  setTab("acces")}
+  setTab(TAB[s.id]||"acces")}
 
 /* ============ APP : CAMÉRA ============ */
 RUN.cam=(root,app)=>{
