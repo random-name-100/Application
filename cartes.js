@@ -211,7 +211,7 @@ function buildCity(){
         const nx=-(b[1]-a[1])/Lg,ny=(b[0]-a[0])/Lg;
         for(let k=0;k<n;k++){const p1=lerp(a,b,k/n),p2=lerp(a,b,(k+1)/n),m=lerp(p1,p2,.5);cb(p1,p2,m,[m[0]+nx*7,m[1]+ny*7],[m[0]-nx*7,m[1]-ny*7],i*1000+k)}}};
     zones.forEach(z=>{if(!z.k)return;const key=`${q.id}:bd:${z.k}`;addLine(key,"bd",{name:z.border,d:di,dir:"b"});
-      pieces(z.p,(p1,p2,m,A,B,o)=>{if(mine(m)&&!blocked(m)&&!zones.slice(z.k+1).some(x=>inPoly(m,x.p)))edges.push({a:p1,b:p2,line:key,ord:o,d:di})})});
+      pieces(z.p,(p1,p2,m,A,B,o)=>{if(mine(m)&&!blocked(m)&&!zones.slice(z.k+1).some(x=>inPoly(m,x.p))&&polyDist(m,fp)>=30)edges.push({a:p1,b:p2,line:key,ord:o,d:di})})});
     pieces(fp,(p1,p2,m,A,B,o)=>{const oa=own(A),ob=own(B);if(oa!==di&&ob!==di)return;const other=oa===di?ob:oa;if(other===di)return;
       if(other<0){if(q.coast&&!blocked(m))edges.push({a:p1,b:p2,line:q.id+":coast",ord:o,d:di})}
       else if(di<other&&!blocked(m))edges.push({a:p1,b:p2,line:bKey(di,other),ord:o,d:di})});
@@ -236,6 +236,17 @@ function buildCity(){
    edges.forEach(e=>{const ka=key(e.a),kb=key(e.b);if(par[ka]===undefined)par[ka]=ka;if(par[kb]===undefined)par[kb]=kb;u(ka,kb)});
    const len={};edges.forEach(e=>{const r=f(key(e.a));len[r]=(len[r]||0)+dist(e.a,e.b)});
    for(let i=edges.length-1;i>=0;i--){const e=edges[i];if(e.line.startsWith("park:")||e.line.startsWith("B:")||e.line.endsWith(":coast"))continue;if(len[f(key(e.a))]<300)edges.splice(i,1)}}
+  /* rues qui s'arrêtent à moins de 45 m d'une autre route, dans leur axe : prolongées jusqu'à elle */
+  {const key=p=>Math.round(p[0])+":"+Math.round(p[1]),deg={};edges.forEach(e=>{deg[key(e.a)]=(deg[key(e.a)]||0)+1;deg[key(e.b)]=(deg[key(e.b)]||0)+1});
+   const GS=60,grid=new Map();edges.forEach((e,i)=>{const x0=Math.floor(Math.min(e.a[0],e.b[0])/GS),x1=Math.floor(Math.max(e.a[0],e.b[0])/GS),y0=Math.floor(Math.min(e.a[1],e.b[1])/GS),y1=Math.floor(Math.max(e.a[1],e.b[1])/GS);
+     for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const c=x+":"+y;(grid.get(c)||grid.set(c,[]).get(c)).push(i)}});
+   const ext=[];edges.forEach((e,i)=>{if(e.line.startsWith("park:")||e.line.startsWith("B:")||e.line.endsWith(":coast"))return;
+     [[e.b,e.a],[e.a,e.b]].forEach(([p,o])=>{if(deg[key(p)]!==1)return;const L=dist(p,o);if(L<1)return;const q=[p[0]+(p[0]-o[0])/L*45,p[1]+(p[1]-o[1])/L*45];
+       let best=null;const cs=new Set();[p,lerp(p,q,.5),q].forEach(z=>{for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)(grid.get((Math.floor(z[0]/GS)+x)+":"+(Math.floor(z[1]/GS)+y))||[]).forEach(j=>cs.add(j))});
+       let touch=false;cs.forEach(j=>{if(j===i)return;const f=edges[j];if(key(f.a)===key(p)||key(f.b)===key(p)){touch=true;return}if(segDist(p,f.a,f.b)<5){touch=true;return}
+         const h=segInt(p,q,f.a,f.b);if(h&&h.t>0.01&&(!best||h.t<best.t))best=h});if(touch)return;
+       if(best&&!blocked(lerp(p,best.p,.5)))ext.push({a:p,b:best.p,line:e.line,ord:e.ord+(p===e.b?0.5:-0.5),d:e.d})})});
+   edges.push(...ext)}
   /* ---- noms des rues, quartier par quartier ---- */
   const present={};edges.forEach(e=>present[e.line]=(present[e.line]||0)+dist(e.a,e.b));
   const fixed=new Set(Object.values(lines).filter(l=>l.name).map(l=>l.name.replace(/ \S+$/,"")));
@@ -331,9 +342,13 @@ function buildGraph(){
     while(N[cur].adj.size===2&&g++<50){const nx=[...N[cur].adj.keys()].find(k=>k!==prev);chain.push(cur);L+=N[cur].adj.get(nx).len;prev=cur;cur=nx}
     if(N[cur].adj.size>=3&&L<30){chain.forEach(k=>{[...N[k].adj.keys()].forEach(j=>N[j]&&N[j].adj.delete(k));delete N[k]})}});
   Object.values(N).forEach(n=>{if(!n.adj.size)delete N[n.k]});
-  /* carrefours dédoublés (moins de 15 m l'un de l'autre) : fusionnés en un seul */
+  /* carrefours dédoublés (moins de 28 m l'un de l'autre) : fusionnés en un seul */
   for(let pass=0;pass<4;pass++){let ch=0;Object.values(N).forEach(n=>{if(!N[n.k]||n.adj.size<3)return;
-    for(const [j,o] of [...n.adj]){const m=N[j];if(!m||j===n.k||o.len>=15||m.adj.size<3)continue;
+    /* raccourcir les chaînes courtes (points intermédiaires) entre deux carrefours */
+    for(const [j0,o0] of [...n.adj]){if(!N[j0]||N[j0].adj.size!==2)continue;let prev=n.k,cur=j0,L=o0.len,ch2=[],g=0;
+      while(N[cur]&&N[cur].adj.size===2&&g++<20){ch2.push(cur);const nx=[...N[cur].adj.keys()].find(k=>k!==prev);L+=N[cur].adj.get(nx).len;prev=cur;cur=nx}
+      if(N[cur]&&N[cur].adj.size>=3&&cur!==n.k&&L<28&&!n.adj.has(cur)&&n.adj.size+N[cur].adj.size<=8){ch2.forEach(k=>{delete N[k]});n.adj.delete(j0);N[cur].adj.delete(prev);const o={...o0,len:L};n.adj.set(cur,o);N[cur].adj.set(n.k,o)}}
+    for(const [j,o] of [...n.adj]){const m=N[j];if(!m||j===n.k||o.len>=28||m.adj.size<3||n.adj.size+m.adj.size>8)continue;
       n.p=[Math.round((n.p[0]+m.p[0])/2),Math.round((n.p[1]+m.p[1])/2)];n.adj.delete(j);
       for(const [x,ox] of m.adj){if(x===n.k)continue;const X=N[x];if(!X)continue;X.adj.delete(j);if(!X.adj.has(n.k))X.adj.set(n.k,ox);if(!n.adj.has(x))n.adj.set(x,ox)}
       delete N[j];ch++}});if(!ch)break}
@@ -365,11 +380,11 @@ function step(n,f,c){
   return{n:cur,f:prev,path,ok,rue};
 }
 /* déplacement d'un tour : liste de choix → positions successives */
-function course(n,f,ordres){const pos=[n],path=[n],rues=[],notes=[];let bloque=false;
+function course(n,f,ordres){const pos=[n],fs=[f],path=[n],rues=[],notes=[];let bloque=false;
   for(const c of ordres){const r=step(n,f,c);if(r.bloque){bloque=true;notes.push("bloqué");break}
     if(!r.ok)notes.push("choix impossible → "+(c==="U"?"arrêt":"tout droit"));
-    n=r.n;f=r.f;pos.push(n);path.push(...r.path.slice(1));if(r.rue)rues.push(r.rue)}
-  return{n,f,pos,path,rues,notes,bloque}}
+    n=r.n;f=r.f;pos.push(n);fs.push(f);path.push(...r.path.slice(1));if(r.rue)rues.push(r.rue)}
+  return{n,f,pos,fs,path,rues,notes,bloque}}
 /* distance en carrefours (BFS) */
 function hops(a,b){if(a===b)return 0;const g=buildGraph(),seen=new Set([a]);let fr=[a],d=0;
   while(fr.length&&d<60){d++;const nx=[];for(const k of fr){for(const j of g.N[k].adj.keys()){let prev=k,cur=j,gd=0;while(g.N[cur].adj.size===2&&gd++<800){const z=[...g.N[cur].adj.keys()].find(x=>x!==prev);prev=cur;cur=z}
