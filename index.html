@@ -799,16 +799,19 @@ RUN.medic=(root,app)=>{
             {p:[197,373],path:[[197,373],[180,384],[148,398],[110,428],[78,466],[58,494]]}];
   const TEAR=[[187,350],[197,358],[206,347],[216,359],[226,348],[237,357]];
   const ST=[[150,292],[250,292],[144,321],[256,321],[152,350],[248,350]];
-  const STEPS=["HÉMOSTASE","EXTRACTION DES ÉCLATS","SUTURE DU FOIE","FERMETURE"],
+  /* balle logée dans le foie : visible et extractible seulement en vue LOUPE ; passage étroit pour la sortir */
+  const BUL=[223,366],BPATH=[[223,366],[227,359],[234,352],[243,345],[250,340]],LIVER=p=>((p[0]-213)/42)**2+((p[1]-352)/28)**2<=1,
+    VB0=[0,0,400,560],VB1=[166,308,90,126];
+  const STEPS=["HÉMOSTASE","EXTRACTION DES ÉCLATS","BALLE + SUTURE DU FOIE","FERMETURE"],
     TOOL=["clamp","pince","fil","fil"],
-    TOOLS={aspi:["🩸","ASPIRER"],clamp:["🗜","CLAMP"],pince:["✂","PINCE"],fil:["🧵","FIL"]},
+    TOOLS={aspi:["🩸","ASPIRER"],loupe:["🔍","LOUPE"],clamp:["🗜","CLAMP"],pince:["✂","PINCE"],fil:["🧵","FIL"]},
     HELP=["Outil CLAMP : maintenez le pointeur dans l'anneau qui tremble sur chaque vaisseau jusqu'à ce que le clamp se ferme.",
       "Outil PINCE : faites glisser chaque éclat de chrome jusqu'au bac en restant dans le passage, sans toucher les bords.",
-      "Outil FIL : partez du point vert et suivez la déchirure du foie jusqu'au bout sans sortir du tracé.",
+      "Outil LOUPE sur le foie : un projectile y est logé. Retirez la balle avec la PINCE par le passage étroit, puis outil FIL : suivez la déchirure du point vert jusqu'au bout.",
       "Outil FIL : refermez la plaie en touchant les points de suture dans l'ordre (1 → 6)."];
   /* fuites de sang : apparaissent au hasard dans la plaie, masquent la zone et se retirent avec l'outil ASPIRER */
   const WC=[200,330],inWound=p=>((p[0]-WC[0])/54)**2+((p[1]-WC[1])/44)**2<=1;
-  let S;const reset=()=>{S={phase:0,vit:100,clamp:[0,0,0],hold:null,out:[0,0,0],drag:null,trace:null,traced:0,stitch:0,over:null,tool:"clamp",
+  let S;const reset=()=>{S={phase:0,vit:100,clamp:[0,0,0],hold:null,out:[0,0,0],drag:null,trace:null,traced:0,stitch:0,over:null,tool:"clamp",zoom:false,bulOut:false,bdrag:null,
     stains:[],nextStain:performance.now()+2500,aspi:false,t0:performance.now(),last:performance.now()}};reset();
   const masked=p=>S.stains.some(st=>GX.d(p,st.p)<st.r);
   const maskMsg=()=>{GX.buzz(160,.12,"square");flash("🩸 Le sang masque la zone : utilisez l'outil ASPIRER")};
@@ -826,9 +829,13 @@ RUN.medic=(root,app)=>{
       <g class="md-stains"></g><g class="md-dyn"></g>
     </svg><div class="md-tools">${Object.entries(TOOLS).map(([k,[i,t]])=>`<button data-tool="${k}">${i}<br><small>${t}</small></button>`).join("")}</div></div>
     <div class="md-msg"></div><div class="row"><button class="md-rs">↻ RECOMMENCER L'OPÉRATION</button></div></div>`;
-  root.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{S.tool=b.dataset.tool;upd()});
+  root.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{if(b.dataset.tool==="loupe"&&S.zoom){zoom(false);return}S.tool=b.dataset.tool;upd()});
+  /* vue LOUPE : agrandissement animé sur le foie */
+  function zoom(on){if(S.zoom===on)return;S.zoom=on;const from=svg.getAttribute("viewBox").split(" ").map(Number),to=on?VB1:VB0,t0=performance.now();
+    const st=now=>{const k=Math.min(1,(now-t0)/350),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;svg.setAttribute("viewBox",from.map((v,i)=>(v+(to[i]-v)*e).toFixed(2)).join(" "));if(k<1)requestAnimationFrame(st)};
+    requestAnimationFrame(st);if(on)flash("🔍 Vue agrandie du foie — reLOUPE pour revenir");upd()}
   const svg=$(".md-svg",root),dyn=$(".md-dyn",root),stl=$(".md-stains",root),bar=$(".md-bar i",root),bpm=$(".md-bpm",root),msgEl=$(".md-msg",root);
-  $(".md-rs",root).onclick=()=>{reset();msgEl.textContent="";upd()};
+  $(".md-rs",root).onclick=()=>{reset();svg.setAttribute("viewBox",VB0.join(" "));msgEl.textContent="";upd()};
   function woundPath(){const c=[200,320],pts=[];for(let k=0;k<26;k++){const a=k/26*2*Math.PI,r=1+(k%2?.1:-.06)+(k%5===0?.08:0);pts.push([c[0]+62*r*Math.cos(a),c[1]+50*r*Math.sin(a)])}return "M"+GX.poly(pts).replace(/ /g,"L")+"Z"}
   function body(){
     const skin="#e3b08a",sk2="#c98d68";
@@ -866,6 +873,12 @@ RUN.medic=(root,app)=>{
   const onTarget=p=>S.phase===0?VES.some((v,k)=>!S.clamp[k]&&GX.d(p,v.tip)<20):S.phase===1?SH.some((s,k)=>!S.out[k]&&GX.d(p,s.p)<14):S.phase===2?GX.d(p,TEAR[0])<12:S.phase===3?GX.d(p,ST[S.stitch])<13:false;
   svg.addEventListener("pointerdown",e=>{if(S.over)return;const p=GX.pt(svg,e);svg.setPointerCapture(e.pointerId);S.p=p;
     if(S.tool==="aspi"){S.aspi=true;upd();return}
+    if(S.tool==="loupe"){if(S.zoom)zoom(false);else if(LIVER(p))zoom(true);else flash("Touchez l'organe (le foie) avec la LOUPE");return}
+    /* balle : uniquement en vue LOUPE, avec la PINCE */
+    if(!S.bulOut&&GX.d(p,BUL)<(S.zoom?5:7)){if(!S.zoom){flash("Quelque chose brille dans le foie… utilisez la LOUPE");return}
+      if(S.tool!=="pince"){GX.buzz(140,.15);flash("Outil inadapté : utilisez PINCE");return}
+      if(masked(p)){maskMsg();return}S.bdrag={p};upd();return}
+    if(S.phase===2&&!S.bulOut&&S.tool==="fil"&&GX.d(p,TEAR[0])<12){GX.buzz(140,.2);flash("⚠ Un corps étranger empêche la suture");return}
     if(S.tool!==TOOL[S.phase]){if(onTarget(p))wrong();return}
     if(masked(p)){maskMsg();return}
     if(S.phase===0){const i=VES.findIndex((v,k)=>!S.clamp[k]&&GX.d(p,v.tip)<20);if(i>=0)S.hold={i,t:0}}
@@ -874,18 +887,20 @@ RUN.medic=(root,app)=>{
     else if(S.phase===3){const q=ST[S.stitch];if(GX.d(p,q)<13){S.stitch++;GX.ok();if(S.stitch>=ST.length)next()}else if(GX.d(p,[200,320])<80)fault(3,"Point de suture mal placé")}
     upd()});
   svg.addEventListener("pointermove",e=>{if(S.over)return;const p=GX.pt(svg,e);S.p=p;
-    if((S.drag||S.trace)&&masked(p)){S.drag=null;if(S.trace){S.trace=null;S.traced=0}maskMsg();upd();return}
+    if((S.drag||S.trace||S.bdrag)&&masked(p)){S.drag=null;S.bdrag=null;if(S.trace){S.trace=null;S.traced=0}maskMsg();upd();return}
+    if(S.bdrag){const r=GX.proj(p,BPATH);if(r.d>2.4){S.bdrag=null;fault(5,"La balle accroche la paroi du foie")}
+      else{S.bdrag.p=p;if(GX.d(p,BPATH[BPATH.length-1])<3){S.bdrag=null;S.bulOut=true;GX.ok();flash("▓ Balle extraite — la suture du foie est possible")}}upd();return}
     if(S.drag){const s=SH[S.drag.i],r=GX.proj(p,s.path);
       if(r.d>9){S.drag=null;fault(6,"Contact avec les tissus !")}
       else{S.drag.p=p;if(GX.d(p,s.path[s.path.length-1])<14){S.out[S.drag.i]=1;S.drag=null;GX.ok();if(S.out.every(Boolean))next()}}}
     if(S.trace){const r=GX.proj(p,TEAR);if(r.d>6){S.trace=null;S.traced=0;fault(4,"Vous sortez de la déchirure")}
       else{S.trace.max=Math.max(S.trace.max,Math.min(r.at,S.trace.max+14));S.traced=S.trace.max;if(S.trace.max>=r.len-3){S.trace=null;GX.ok();next()}}}
     upd()});
-  const end=()=>{S.aspi=false;if(S.hold){S.hold=null}if(S.drag){S.drag=null}if(S.trace){S.trace=null;S.traced=0}upd()};
+  const end=()=>{S.aspi=false;S.bdrag=null;if(S.hold){S.hold=null}if(S.drag){S.drag=null}if(S.trace){S.trace=null;S.traced=0}upd()};
   svg.addEventListener("pointerup",end);svg.addEventListener("pointercancel",end);
   function fault(n,t){S.vit=Math.max(0,S.vit-n);GX.buzz();GX.shake(svg);flash(`⚡ BZZZ — ${t} (−${n})`)}
   function flash(t){msgEl.textContent=t;msgEl.className="md-msg warn";clearTimeout(flash.t);flash.t=setTimeout(()=>{if(!S.over)msgEl.textContent=""},1800)}
-  function next(){S.phase++;if(S.phase>=STEPS.length){S.over="win";msgEl.className="md-msg";const sec=Math.round((performance.now()-S.t0)/1000);
+  function next(){S.phase++;if(S.phase>=STEPS.length){S.over="win";zoom(false);msgEl.className="md-msg";const sec=Math.round((performance.now()-S.t0)/1000);
       msgEl.className="md-msg big";msgEl.innerHTML=`▓ L'enfant a été sauvé. <small>(${sec} s)</small>`;if(app.files.length)reveal(app,app.files.map((_,i)=>i))}
     else flash("▓ ÉTAPE TERMINÉE : "+STEPS[S.phase-1])}
   /* ---------- boucle : saignement, tremblement de la pince ---------- */
@@ -929,6 +944,10 @@ RUN.medic=(root,app)=>{
       if(S.phase===2&&!S.over)h+=`<circle cx="${TEAR[0][0]}" cy="${TEAR[0][1]}" r="6" fill="#5fa"/><circle cx="${TEAR[TEAR.length-1][0]}" cy="${TEAR[TEAR.length-1][1]}" r="5" fill="none" stroke="#5fa" stroke-width="2"/>`}
     for(let i=1;i<S.stitch;i++)h+=`<line x1="${ST[i-1][0]}" y1="${ST[i-1][1]}" x2="${ST[i][0]}" y2="${ST[i][1]}" stroke="#1b1b1b" stroke-width="3"/><line x1="${ST[i-1][0]}" y1="${ST[i-1][1]}" x2="${ST[i][0]}" y2="${ST[i][1]}" stroke="#9fe" stroke-width="1.4"/>`;
     if(S.phase===3&&!S.over)ST.forEach((q,i)=>{const done=i<S.stitch;h+=`<circle cx="${q[0]}" cy="${q[1]}" r="8" fill="${done?"#5fa":"#000"}" stroke="#5fa" stroke-width="1.5"/><text x="${q[0]}" y="${q[1]+3.5}" font-size="9" text-anchor="middle" fill="${done?"#000":"#5fa"}" font-family="monospace" font-weight="bold">${i+1}</text>`});
+    if(!S.bulOut){const b=S.bdrag?S.bdrag.p:BUL;
+      h+=`<circle cx="${BUL[0]}" cy="${BUL[1]}" r="3.4" fill="#1a0202" stroke="#5a0a0a" stroke-width=".8"/>`;
+      if(S.zoom&&!S.over)h+=`<polyline points="${GX.poly(BPATH)}" fill="none" stroke="#5fa" stroke-opacity=".22" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${BPATH[BPATH.length-1][0]}" cy="${BPATH[BPATH.length-1][1]}" r="2.6" fill="none" stroke="#5fa" stroke-width=".8"/>`;
+      h+=`<g transform="translate(${b[0]} ${b[1]}) rotate(-35)"><ellipse rx="2.6" ry="1.6" fill="#c87533" stroke="#5a2e10" stroke-width=".5"/><ellipse cx="-.8" cy="-.5" rx="1" ry=".45" fill="#ffd2a0" opacity=".8"/></g>`}
     if(S.over==="win")h+=`<path d="${woundPath()}" fill="#e3b08a" opacity=".55"/><text x="200" y="326" font-size="16" text-anchor="middle" fill="#5fa" font-family="monospace" font-weight="bold">STABILISÉ</text>`;
     dyn.innerHTML=h}
   requestAnimationFrame(tick)};
