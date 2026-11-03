@@ -455,15 +455,15 @@ L'enfant a été sauvé.
 Dernier badge autorisé avant l'incident : RA-SEC-0042 (badge externe, prestataire « sécurité »).
 ================================================================`}]},
  {id:"s3battle",type:"battle",nom:"BATTLE // Entrepôt du bâtiment gris",code:"BATTLE-03",desc:"Battle map tactique (cases de 2 m) : déplacez votre jeton jusqu'à 2 × MOUV mètres par tour.",files:[],
-  /* jetons : déposer les images dans Images/Session 3/BATTLE-03/ (sinon pastille de couleur avec l'initiale) */
-  roles:[{id:"fixer",nom:"Fixer",col:"#ffb000",img:"Images/Session 3/BATTLE-03/fixer.png"},{id:"medtech",nom:"Medtech",col:"#39ff6a",img:"Images/Session 3/BATTLE-03/medtech.png"},
-    {id:"techie",nom:"Techie",col:"#00e5ff",img:"Images/Session 3/BATTLE-03/techie.png"},{id:"media",nom:"Media",col:"#ff4dd2",img:"Images/Session 3/BATTLE-03/media.png"},
-    {id:"justicier",nom:"Justicier",col:"#3d8bff",img:"Images/Session 3/BATTLE-03/justicier.png"},{id:"netrunner",nom:"Netrunner",col:"#d27bff",img:"Images/Session 3/BATTLE-03/netrunner.png"}],
+  /* jetons : images dans Images/Jetons/ (sinon pastille de couleur avec l'initiale) */
+  roles:[{id:"fixer",nom:"Fixer",col:"#ffb000",img:"Images/Jetons/Jeton Fixer.png"},{id:"medtech",nom:"Medtech",col:"#39ff6a",img:"Images/Jetons/Jeton Medtech.png"},
+    {id:"techie",nom:"Techie",col:"#00e5ff",img:"Images/Jetons/Jeton Techie.png"},{id:"media",nom:"Media",col:"#ff4dd2",img:"Images/Jetons/Jeton Media.png"},
+    {id:"justicier",nom:"Justicier",col:"#3d8bff",img:"Images/Jetons/Jeton Justicier.png"},{id:"netrunner",nom:"Netrunner",col:"#d27bff",img:"Images/Jetons/Jeton Netrunner.png"}],
   /* jetons du MJ (position de départ en case colonne/rangée, regard en degrés : 0 = vers la droite, 180 = vers la gauche ; c:"milieu" = à mi-chemin joueurs / policiers) */
-  ennemis:[{kind:"police",nom:"Policier 1",c:18,r:7,dir:0,img:"Images/Session 3/BATTLE-03/policier.png"},
-    {kind:"police",nom:"Policier 2",c:18,r:9,dir:0,img:"Images/Session 3/BATTLE-03/policier.png"},
-    {kind:"capitaine",nom:"Capitaine du trafic",c:20,r:8,dir:180,img:"Images/Session 3/BATTLE-03/capitaine.png"},
-    {kind:"chien",nom:"Chien de garde",c:24,r:2,dir:90,mouv:8,img:"Images/Session 3/BATTLE-03/chien.png"},
+  ennemis:[{kind:"police",nom:"Policier 1",c:18,r:7,dir:0,img:"Images/Jetons/Policier 1.png"},
+    {kind:"police",nom:"Policier 2",c:18,r:9,dir:0,img:"Images/Jetons/Policier 2.png"},
+    {kind:"capitaine",nom:"Capitaine du trafic",c:20,r:8,dir:180,img:"Images/Jetons/Capitaine du traffic.png"},
+    {kind:"chien",nom:"Chien de garde",c:24,r:2,dir:90,mouv:8,img:"Images/Jetons/Chien.png"},
     {kind:"enfant",nom:"Enfant",c:"milieu",dir:0,mouv:3,img:"Images/Session 3/BATTLE-03/enfant.png"}],
   /* battle map personnalisée (facultatif) : décommenter et indiquer l'image et sa taille en cases de 2 m
      (ex. image de 3200 × 1700 px = 32 × 17 cases de 100 px). Les obstacles se marquent ensuite par le MJ (✎ OBSTACLES). */
@@ -1314,7 +1314,7 @@ RUN.battle=(root,app)=>{
       h+=`<polygon points="${pts.map(q=>q.map(v=>v.toFixed(1)).join(",")).join(" ")}" fill="${col}" fill-opacity=".1" stroke="${col}" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 4"/>`;
       ROLES.forEach(ro=>{const q=posOf(ro.id);if(q&&inCone(pts,[(q[0]+.5)*C,(q[1]+.5)*C]))spotted.add(ro.id)})});
     if(FOND&&edit)blocked.forEach(k=>{const [c,r]=k.split(",").map(Number);h+=`<rect x="${c*C}" y="${r*C}" width="${C}" height="${C}" fill="url(#btz)" opacity=".55"/>`});
-    allIds().forEach(id=>{const p=posOf(id);if(!p)return;const x=p[0]*C+C/2,y=p[1]*C+C/2,ro=roleOf(id),en=!ro,E=en?(main||defMain()).enn.find(e=>e.id===id)||{}:null,KD=en?KIND[E.kind]||KIND.ennemi:null;
+    allIds().forEach(id=>{const p=posOf(id);if(!p)return;const x=p[0]*C+C/2,y=p[1]*C+C/2,ro=roleOf(id),en=!ro,E=en?(main||defMain()).enn.find(e=>e.id===id)||{}:null,KD=en?KIND[E.kind]||KIND.ennemi:null;if(en){const cf=(app.ennemis||[])[+id.slice(1)-1];if(cf&&cf.img)E.img=cf.img}
       const col=en?KD.col:ro.col,lab=en?(E.kind==="police"?"P"+((E.nom.match(/\d+/)||[""])[0]):KD.lab):ro.nom[0],nm=en?E.nom:ro.nom,im=en?(E.img&&imgOk["E:"+E.img]?E.img:""):(imgOk[ro.id]?ro.img:"");
       if(en&&E.img&&imgOk["E:"+E.img]===undefined){imgOk["E:"+E.img]=false;const q=new Image();q.onload=()=>{imgOk["E:"+E.img]=true;draw()};q.src=E.img}
       const dr=(E&&E.dir||0)*Math.PI/180,ax=x+Math.cos(dr)*C*.82,ay=y+Math.sin(dr)*C*.82,bx=x+Math.cos(dr+.62)*C*.4,by=y+Math.sin(dr+.62)*C*.4,cx2=x+Math.cos(dr-.62)*C*.4,cy2=y+Math.sin(dr-.62)*C*.4;
