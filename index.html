@@ -142,6 +142,7 @@ h2 .redact{background:var(--c);color:var(--c)}
 .tk-log{font-size:12px;border-top:1px solid var(--dim);margin-top:8px;padding-top:6px;max-height:260px;overflow:auto}.tk-log div{padding:2px 0}
 .bt-map{height:min(80vh,880px);min-height:360px}
 .bt-edit{border-color:#ffb000;color:#ffb000;font-weight:bold;box-shadow:0 0 10px #ffb00066}.bt-edit.on,.bt-edit:hover{background:#ffb000;color:#000}
+.bt-pv{flex-wrap:wrap}.bt-pv button{padding:2px 6px;font-size:11px}.bt-pvbar{position:relative;flex:1;min-width:90px;height:16px;border:1px solid var(--dim)}.bt-pvbar i{display:block;height:100%}.bt-pvbar em{position:absolute;inset:0;text-align:center;font-style:normal;font-size:11px;line-height:14px;color:#fff;text-shadow:0 0 3px #000}
 .bt-pick button{display:flex;align-items:center;gap:10px;text-align:left}
 .bt-av{position:relative;flex:none;width:38px;height:38px;border-radius:50%;border:2px solid #000;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#000;font-size:18px}
 .bt-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -460,10 +461,10 @@ Dernier badge autorisé avant l'incident : RA-SEC-0042 (badge externe, prestatai
     {id:"techie",nom:"Techie",col:"#00e5ff",img:"Images/Jetons/Jeton Techie.png"},{id:"media",nom:"Media",col:"#ff4dd2",img:"Images/Jetons/Jeton Media.png"},
     {id:"justicier",nom:"Justicier",col:"#3d8bff",img:"Images/Jetons/Jeton Justicier.png"},{id:"netrunner",nom:"Netrunner",col:"#d27bff",img:"Images/Jetons/Jeton Netrunner.png"}],
   /* jetons du MJ (position de départ en case colonne/rangée, regard en degrés : 0 = vers la droite, 180 = vers la gauche ; c:"milieu" = à mi-chemin joueurs / policiers) */
-  ennemis:[{kind:"police",nom:"Policier 1",c:18,r:7,dir:0,img:"Images/Jetons/Policier 1.png"},
-    {kind:"police",nom:"Policier 2",c:18,r:9,dir:0,img:"Images/Jetons/Policier 2.png"},
-    {kind:"capitaine",nom:"Capitaine du trafic",c:20,r:8,dir:180,img:"Images/Jetons/Capitaine du traffic.png"},
-    {kind:"chien",nom:"Chien de garde",c:24,r:2,dir:90,mouv:8,img:"Images/Jetons/Chien.png"},
+  ennemis:[{kind:"police",nom:"Policier 1",c:18,r:7,dir:0,pv:35,img:"Images/Jetons/Policier 1.png"},
+    {kind:"police",nom:"Policier 2",c:18,r:9,dir:0,pv:45,img:"Images/Jetons/Policier 2.png"},
+    {kind:"capitaine",nom:"Capitaine du trafic",c:20,r:8,dir:180,pv:25,img:"Images/Jetons/Capitaine du traffic.png"},
+    {kind:"chien",nom:"Chien de garde",c:24,r:2,dir:90,mouv:8,pv:35,img:"Images/Jetons/Chien.png"},
     {kind:"enfant",nom:"Enfant",c:"milieu",dir:0,mouv:3,img:"Images/Session 3/BATTLE-03/enfant.png"}],
   /* battle map personnalisée (facultatif) : décommenter et indiquer l'image et sa taille en cases de 2 m
      (ex. image de 3200 × 1700 px = 32 × 17 cases de 100 px). Les obstacles se marquent ensuite par le MJ (✎ OBSTACLES). */
@@ -1218,6 +1219,7 @@ RUN.battle=(root,app)=>{
   let main=null,toks={},sel=null,msg="",busy=false,unsubs=[];
   /* mode image : obstacles = cases marquées par le MJ */
   const syncObst=()=>{if(!FOND)return;blocked.clear();((main?main.obst:FOND.obst)||[]).forEach(k=>blocked.add(k))};let edit=false;syncObst();
+  const cfgOf=id=>(app.ennemis||[])[+String(id).slice(1)-1]||{},pvMax=e=>e.pvmax??cfgOf(e.id).pv??null,pvOf=e=>e.pv??pvMax(e);
   const tour=()=>main?main.tour:1,usedOf=t=>t&&t.t===tour()?t.used||0:0;
   const posOf=id=>{if(id.startsWith("e")){const e=(main||defMain()).enn.find(x=>x.id===id);return e?[e.c,e.r]:null}const t=toks[id],i=ROLES.findIndex(x=>x.id===id);return t&&t.c!==undefined&&t.v===LV?[t.c,t.r]:DEF_P[i]};
   const allIds=()=>[...ROLES.map(r=>r.id),...((main||defMain()).enn.map(e=>e.id))];
@@ -1310,7 +1312,7 @@ RUN.battle=(root,app)=>{
       h+=`<polygon points="${pts.map(q=>q.map(v=>v.toFixed(1)).join(",")).join(" ")}" fill="${ro.col}" fill-opacity="${mine?.2:.07}" stroke="${ro.col}" stroke-opacity="${mine?.85:.3}" stroke-width="${mine?2:1}" stroke-dasharray="${mine?"6 4":"3 4"}"/>`;
       if(mine)((main||defMain()).enn||[]).forEach(e=>{if(inCone(pts,[(e.c+.5)*C,(e.r+.5)*C]))seen.add(e.id)})});
     const spotted=new Set();
-    ((main||defMain()).enn||[]).forEach(e=>{if(e.kind==="enfant")return;const col=(KIND[e.kind]||KIND.ennemi).col,pts=losPoly(e.id,e.dir||0);
+    ((main||defMain()).enn||[]).forEach(e=>{if(e.kind==="enfant"||(pvMax(e)!=null&&pvOf(e)<=0))return;const col=(KIND[e.kind]||KIND.ennemi).col,pts=losPoly(e.id,e.dir||0);
       h+=`<polygon points="${pts.map(q=>q.map(v=>v.toFixed(1)).join(",")).join(" ")}" fill="${col}" fill-opacity=".1" stroke="${col}" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 4"/>`;
       ROLES.forEach(ro=>{const q=posOf(ro.id);if(q&&inCone(pts,[(q[0]+.5)*C,(q[1]+.5)*C]))spotted.add(ro.id)})});
     if(FOND&&edit)blocked.forEach(k=>{const [c,r]=k.split(",").map(Number);h+=`<rect x="${c*C}" y="${r*C}" width="${C}" height="${C}" fill="url(#btz)" opacity=".55"/>`});
@@ -1318,11 +1320,14 @@ RUN.battle=(root,app)=>{
       const col=en?KD.col:ro.col,lab=en?(E.kind==="police"?"P"+((E.nom.match(/\d+/)||[""])[0]):KD.lab):ro.nom[0],nm=en?E.nom:ro.nom,im=en?(E.img&&imgOk["E:"+E.img]?E.img:""):(imgOk[ro.id]?ro.img:"");
       if(en&&E.img&&imgOk["E:"+E.img]===undefined){imgOk["E:"+E.img]=false;const q=new Image();q.onload=()=>{imgOk["E:"+E.img]=true;draw()};q.src=E.img}
       const dr=(E&&E.dir||0)*Math.PI/180,ax=x+Math.cos(dr)*C*.82,ay=y+Math.sin(dr)*C*.82,bx=x+Math.cos(dr+.62)*C*.4,by=y+Math.sin(dr+.62)*C*.4,cx2=x+Math.cos(dr-.62)*C*.4,cy2=y+Math.sin(dr-.62)*C*.4;
-      h+=`<g>${spotted.has(id)?`<circle cx="${x}" cy="${y}" r="${C*.7}" fill="none" stroke="#ff2a3d" stroke-width="3" stroke-dasharray="5 3"/><text x="${x-C*.95}" y="${y-C*.45}" font-size="14">🚨</text>`:""}${seen.has(id)?`<circle cx="${x}" cy="${y}" r="${C*.7}" fill="none" stroke="#fff" stroke-width="3"/><text x="${x+C*.55}" y="${y-C*.45}" font-size="14">👁</text>`:""}${en?`<polygon points="${ax},${ay} ${bx},${by} ${cx2},${cy2}" fill="${col}" stroke="#000" stroke-width="2"/>`:""}${sel===id?`<circle cx="${x}" cy="${y}" r="${C*.62}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 4"/>`:""}
+      const ko=en&&pvMax(E)!=null&&pvOf(E)<=0,mjv=en&&role==="mj"&&isMJ()&&pvMax(E)!=null;
+      h+=`<g${ko?' opacity=".45"':""}>${spotted.has(id)?`<circle cx="${x}" cy="${y}" r="${C*.7}" fill="none" stroke="#ff2a3d" stroke-width="3" stroke-dasharray="5 3"/><text x="${x-C*.95}" y="${y-C*.45}" font-size="14">🚨</text>`:""}${seen.has(id)?`<circle cx="${x}" cy="${y}" r="${C*.7}" fill="none" stroke="#fff" stroke-width="3"/><text x="${x+C*.55}" y="${y-C*.45}" font-size="14">👁</text>`:""}${en?`<polygon points="${ax},${ay} ${bx},${by} ${cx2},${cy2}" fill="${col}" stroke="#000" stroke-width="2"/>`:""}${sel===id?`<circle cx="${x}" cy="${y}" r="${C*.62}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 4"/>`:""}
         <circle cx="${x}" cy="${y}" r="${C*.44}" fill="${col}" stroke="#000" stroke-width="3"/><text x="${x}" y="${y+6}" font-size="17" text-anchor="middle" font-weight="bold" fill="#000" font-family="monospace">${esc(lab)}</text>
         ${im?`<clipPath id="btk-${id}"><circle cx="${x}" cy="${y}" r="${C*.42}"/></clipPath><image href="${esc(im)}" x="${x-C*.42}" y="${y-C*.42}" width="${C*.84}" height="${C*.84}" clip-path="url(#btk-${id})" preserveAspectRatio="xMidYMid slice"/>`:""}
         <circle cx="${x}" cy="${y}" r="${C*.44}" fill="none" stroke="${col}" stroke-width="3"/>
-        <text x="${x}" y="${y+C*.44+12}" font-size="10" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke" font-family="monospace" font-weight="bold">${esc(nm)}</text></g>`});
+        <text x="${x}" y="${y+C*.44+12}" font-size="10" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke" font-family="monospace" font-weight="bold">${esc(nm)}</text>
+        ${ko?`<path d="M${x-C*.4} ${y-C*.4}L${x+C*.4} ${y+C*.4}M${x+C*.4} ${y-C*.4}L${x-C*.4} ${y+C*.4}" stroke="#000" stroke-width="5"/><path d="M${x-C*.4} ${y-C*.4}L${x+C*.4} ${y+C*.4}M${x+C*.4} ${y-C*.4}L${x-C*.4} ${y+C*.4}" stroke="#ff3344" stroke-width="3"/>`:""}
+        ${mjv?`<rect x="${x-C*.45}" y="${y-C*.62}" width="${C*.9}" height="5" fill="#000"/><rect x="${x-C*.45}" y="${y-C*.62}" width="${C*.9*Math.max(0,pvOf(E)/pvMax(E))}" height="5" fill="${pvOf(E)/pvMax(E)>.5?"#39ff6a":pvOf(E)/pvMax(E)>.25?"#ffb000":"#ff3344"}"/>`:""}</g>`});
     h=h.replace(/font-size="10" text-anchor="middle" fill="#fff"/g,'font-size="9" text-anchor="middle" fill="#fff"');
     lay.innerHTML=h}
   function onTap(t,p){const c=Math.floor(p[0]/C),r=Math.floor(p[1]/C);
@@ -1352,7 +1357,10 @@ RUN.battle=(root,app)=>{
     if(mj){if(!isMJ())h+=`<p class="warn"><small>${SYNC.kind==="firebase"?"CONNECTEZ-VOUS AVEC LE COMPTE MJ DANS ⚿ ACCÈS MJ.":"SEUL LE PROPRIÉTAIRE DE LA PAGE PEUT ÊTRE MJ."}</small></p>`;
       const m=main||defMain();
       h+=`<div class="tk-box"><b>▓ CONTRÔLE MJ</b>${m.enn.map(e=>`<div class="tk-car"><span style="color:${(KIND[e.kind]||KIND.ennemi).col}">■ ${esc(e.nom)}</span><span class="tk-ctl"><button data-rot="${e.id}" title="Tourner le regard">↻</button><small>MOUV</small><button data-mv="${e.id}" data-d="-1">−</button><b>${e.mouv}</b><button data-mv="${e.id}" data-d="1">+</button>
-          <small>${Math.max(0,2*e.mouv-usedOf(e))} m</small><button data-del="${e.id}" title="Retirer">✕</button></span></div>`).join("")}
+          <small>${Math.max(0,2*e.mouv-usedOf(e))} m</small><button data-del="${e.id}" title="Retirer">✕</button></span>
+          ${pvMax(e)!=null?`<span class="tk-ctl bt-pv"><small>PV</small><button data-pv="${e.id}" data-d="-5">−5</button><button data-pv="${e.id}" data-d="-1">−1</button>
+            <span class="bt-pvbar"><i style="width:${Math.max(0,pvOf(e)/pvMax(e)*100)}%;background:${pvOf(e)/pvMax(e)>.5?"#39ff6a":pvOf(e)/pvMax(e)>.25?"#ffb000":"#ff3344"}"></i><em>${pvOf(e)} / ${pvMax(e)}${pvOf(e)<=0?" ☠":""}</em></span>
+            <button data-pv="${e.id}" data-d="1">+1</button><button data-pv="${e.id}" data-d="5">+5</button></span>`:""}</div>`).join("")}
         <div class="row"><button data-a="add">＋ ENNEMI</button>${FOND?`<button data-a="edit" class="bt-edit ${edit?"on":""}">✎ OBSTACLES — CASES INFRANCHISSABLES ${edit?"(ACTIF)":""}</button>`:`<button data-a="shut">${m.rideau?"FERMER":"OUVRIR"} LE RIDEAU</button>`}</div>
         ${FOND?`<small class="${edit?"warn":""}">${edit?"MODE OBSTACLES ACTIF : touchez une case pour la rendre infranchissable (hachurée) ou la libérer. Les cases hachurées bloquent les déplacements et les lignes de vue.":"Les obstacles de la carte (béton, mobilier, murs) sont pré-marqués ; ✎ OBSTACLES pour les afficher et les corriger."}</small>`:""}
         <div class="row"><button data-a="turn" class="tk-go">▶ NOUVEAU TOUR (${m.tour+1})</button></div>
@@ -1380,6 +1388,7 @@ RUN.battle=(root,app)=>{
         x.enn.push({id:"e"+n,kind:"ennemi",nom:"Ennemi "+n,dir:180,c:spot[0],r:spot[1],mouv:6,used:0,t:x.tour});putMain(x)};
       A("shut")&&(A("shut").onclick=()=>{const x=m();x.rideau=!x.rideau;putMain(x)});
       A("edit")&&(A("edit").onclick=()=>{edit=!edit;sel=null;draw();render()});
+      side.querySelectorAll("[data-pv]").forEach(b=>b.onclick=()=>{const x=m(),e=x.enn.find(q=>q.id===b.dataset.pv);const mx=pvMax(e);e.pvmax=mx;e.pv=Math.max(0,Math.min(mx,pvOf(e)+ +b.dataset.d));putMain(x)});
       side.querySelectorAll("[data-rot]").forEach(b=>b.onclick=()=>{const x=m(),e=x.enn.find(q=>q.id===b.dataset.rot);e.dir=((e.dir||0)+45)%360;putMain(x)});
       A("turn").onclick=()=>{const x=m();x.tour++;putMain(x);msg="▓ TOUR "+x.tour+" — mouvements remis à zéro"};
       let armed=false;A("reset").onclick=async e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER LA RÉINITIALISATION ?";return}
