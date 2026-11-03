@@ -93,6 +93,10 @@ const LIEUX=[["CA01","Night City University",717,672],["CA02","NCU Fine Arts Cam
  ["CH06","A dilapidated Cube Hotel",937,466],["CH07","Watson Central Cubelife",957,128],["CH08","Seafoam",977,718],["CH09","McCartney Cubes",1101,433],["CH10","Unnamed Cube Hotel",1203,790],
  ["CC01","University Cargo Bay",695,762],["CC02","Dock Cargo Community",738,944],["CC03","South Cargo Village",982,950],["CC04","Eagle Rock Stadium",1043,1168],["CC05","The Precipe",1098,664],
  ["CC06","North Cargo Village",1203,123],["CC07","NC Ionic Semiconductor",1172,823],["CC08","Old Ironworks",1276,1032],["CC09","Bridgetown",1317,630],["CC10","East Cargo Village",1553,1272]];
+/* repères personnels de la campagne : visibles par tous, sur le plan et sur la carte d'origine (repère 2000 × 1332) */
+const PERSO=[
+ {nom:"La Calavera",info:"Bar de Juan et du fixer Saul — S 8th St",p:[886.9,943]},
+ {nom:"Repaire des MetalHead",info:"Dockside Rd × Barbwire Lane",p:[699,935]}];
 const EAUX=[["SAN MORRO BAY",790,350],["PACIFIC OCEAN",520,860],["DEL CORONADO BAY",1030,1022],["BAIE DE NIGHT CITY",1150,905]];
 const ILES=[{nom:"MORRO ROCK",c:[508,385],rx:62,ry:58}];
 
@@ -286,6 +290,7 @@ function buildCity(){
   /* ---- portes de l'enceinte ---- */
   const gates=[];nodeEnds.forEach(n=>{if(n.gate&&!gates.some(g=>dist(g.p,n.p)<30))gates.push({p:n.p,rue:lines[n.line].name,d:n.d,q:Q[n.d].nom})});
   /* ---- lieux ---- */
+  const perso=PERSO.map(r=>({...r,p:C(r.p),d:own(C(r.p)),q:own(C(r.p))>=0?Q[own(C(r.p))].nom:""}));
   const lms=LIEUX.map(([code,nom,x,y])=>{const p=C([x,y]),o=own(p);return{code,nom,p,col:CAT[code.slice(0,2)]||"#ccc",d:o,q:o>=0?Q[o].nom:""}});
 
   /* ---- assemblage pour le rendu ---- */
@@ -296,7 +301,7 @@ function buildCity(){
   const V={id:"ville",W:CW,H:CH,cell:CELL,edges:edges.filter(e=>e.name||e.cls==="wall"),
     water:EAUX.map(([t,x,y])=>({p:[[0,0]],nom:t,lp:C([x,y]),fs:40})),
     parks:parks.map(k=>({p:k.p,nom:k.nom})),plazas:[],restr:restr.map(k=>({p:k.p,nom:k.nom})),area:null,
-    hws,exits,gates,inter,lms,voisins:[],titles,outlineD:(()=>{let d="";fps.forEach((f,i)=>{for(let e=0;e<f.length;e++){const a=f[e],b=f[(e+1)%f.length],Lg=dist(a,b),n=Math.max(1,Math.ceil(Lg/24)),nx=-(b[1]-a[1])/Lg,ny=(b[0]-a[0])/Lg;
+    hws,exits,gates,inter,lms,perso,voisins:[],titles,outlineD:(()=>{let d="";fps.forEach((f,i)=>{for(let e=0;e<f.length;e++){const a=f[e],b=f[(e+1)%f.length],Lg=dist(a,b),n=Math.max(1,Math.ceil(Lg/24)),nx=-(b[1]-a[1])/Lg,ny=(b[0]-a[0])/Lg;
       for(let k=0;k<n;k++){const p1=lerp(a,b,k/n),p2=lerp(a,b,(k+1)/n),m=lerp(p1,p2,.5),oa=own([m[0]+nx*6,m[1]+ny*6]),ob=own([m[0]-nx*6,m[1]-ny*6]);
         if(oa===ob||(oa!==i&&ob!==i))continue;const other=oa===i?ob:oa;if(other>=0&&other<i)continue;d+=`M${p1[0].toFixed(1)} ${p1[1].toFixed(1)}L${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`}}});return d})(),base:`<rect width="${CW}" height="${CH}" fill="url(#waves-ville)"/>${land}`,mask:true};
   Q.forEach(q=>q._zones.forEach(z=>{if(z.style==="radial")V.plazas.push({c:z.c,r:z.plazaR,nom:z.plaza})}));
@@ -411,6 +416,10 @@ function mountMap(box,opt={}){
   return{data,svg,layer,z,box,showTip,lod:()=>lod(),setHome:r=>{z.home=r}};
 }
 
+/* marqueur de repère personnel (k = échelle) */
+function persoSVG(p,nom,k){const r=15*k,x=p[0],y=p[1],st=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r*.95;st.push((x+rr*Math.cos(a)).toFixed(1)+","+(y+rr*Math.sin(a)).toFixed(1))}
+  return `<g class="perso"><circle cx="${x}" cy="${y}" r="${r*1.35}" fill="#ff00c8" stroke="#000" stroke-width="${3*k}"/><polygon points="${st.join(" ")}" fill="#fff"/>`+
+    `<text x="${x}" y="${y+r*1.35+15*k}" font-size="${15*k}" text-anchor="middle" font-weight="bold" fill="#ff7ae4" stroke="#000" stroke-width="${4*k}" paint-order="stroke" font-family="'Courier New',monospace" letter-spacing="1">${esc(nom.toUpperCase())}</text></g>`}
 /* ------------------------------ rendu SVG ------------------------------ */
 function renderSVG(G){
   const {W,H,cell:CELL}=G,area=G.area,id=G.id;
@@ -462,6 +471,7 @@ function renderSVG(G){
   G.exits.forEach(x=>s+=`<g class="exit"><circle cx="${x.p[0]}" cy="${x.p[1]}" r="11" fill="#ffb000" stroke="#000" stroke-width="2.5"/><text x="${x.p[0]}" y="${x.p[1]}" dy="4" font-size="11" font-weight="bold" text-anchor="middle" fill="#000" font-family="monospace">${x.n}</text></g>`);
   G.gates.forEach(gt=>s+=`<rect x="${gt.p[0]-9}" y="${gt.p[1]-9}" width="18" height="18" fill="#ff2a3d" stroke="#000" stroke-width="2"/><text x="${gt.p[0]}" y="${gt.p[1]}" dy="4" font-size="11" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="bold">⛨</text>`);
   G.lms.forEach(l=>s+=`<g class="lm"><rect x="${l.p[0]-22}" y="${l.p[1]-11}" width="44" height="22" rx="3" fill="${l.col}" stroke="#000" stroke-width="2"/><text x="${l.p[0]}" y="${l.p[1]}" dy="4.5" font-size="12" font-weight="bold" text-anchor="middle" fill="#000" font-family="monospace">${l.code}</text><text class="t-lm" x="${l.p[0]}" y="${l.p[1]+25}" font-size="12" text-anchor="middle" fill="${l.col}" font-family="'Courier New',monospace">${esc(l.nom)}</text></g>`);
+  (G.perso||[]).forEach(r=>s+=persoSVG(r.p,r.nom,1));
   const big=(t,x,y,fill,fs,cls="")=>`<text class="${cls}" x="${x}" y="${y}" font-size="${fs}" fill="${fill}" text-anchor="middle" font-family="'Courier New',monospace" font-weight="bold" letter-spacing="3">${esc(t)}</text>`;
   const cen=p=>p.reduce((a,q)=>[a[0]+q[0]/p.length,a[1]+q[1]/p.length],[0,0]);
   G.water.forEach(w=>{if(w.nom&&w.lp)s+=big(w.nom,w.lp[0],w.lp[1],"#2a85ad",w.fs||18,"t-big")});
@@ -480,6 +490,7 @@ function renderSVG(G){
   G.inter.forEach((it,i)=>hit+=`<circle data-i="${i}" cx="${it.p[0].toFixed(1)}" cy="${it.p[1].toFixed(1)}" r="11"/>`);
   G.exits.forEach((x,i)=>hit+=`<circle data-x="${i}" cx="${x.p[0].toFixed(1)}" cy="${x.p[1].toFixed(1)}" r="14"/>`);
   G.gates.forEach((x,i)=>hit+=`<circle data-g="${i}" cx="${x.p[0].toFixed(1)}" cy="${x.p[1].toFixed(1)}" r="14"/>`);
+  (G.perso||[]).forEach((r,i)=>hit+=`<circle data-p="${i}" cx="${r.p[0].toFixed(1)}" cy="${r.p[1].toFixed(1)}" r="22"/>`);
   G.lms.forEach((l,i)=>hit+=`<rect data-l="${i}" x="${l.p[0]-24}" y="${l.p[1]-13}" width="48" height="26"/>`);
   s+=`<g class="hit" fill="#fff" fill-opacity="0">${hit}</g><circle class="sel" r="14" cx="-50" cy="-50" fill="none" stroke="#fff" stroke-width="3"/></svg>`;
   G.svg=s;return G;
@@ -566,6 +577,7 @@ function legendHTML(G,ville){
   r.push([box("#05141d","#1f6f8f"),"Eau"]);
   if(G.restr)r.push([box("#3a0f14","#ff2a3d",'stroke-dasharray="3 2"'),"Zone interdite"]);
   r.push([sw(`<line x1="2" y1="6" x2="32" y2="6" stroke="#00ff9c" stroke-opacity=".6" stroke-width="2" stroke-dasharray="5 3"/>`),"Limite de quartier"]);
+  if(G.perso)r.push([sw(`<circle cx="17" cy="6" r="5.5" fill="#ff00c8" stroke="#000"/><text x="17" y="8.5" font-size="7" text-anchor="middle" fill="#fff">★</text>`),"Repère de la campagne"]);
   if(!ville)r.push([box("#000","#333",'fill-opacity=".55"'),"Autres quartiers (assombris)"]);
   const lm=G.cats.map(c=>`<div><b style="background:${CAT[c]||"#ccc"}">${c}</b>${CATN[c]||c}</div>`).join("");
   return `<div class="nc-leg-h">LÉGENDE <span class="nc-north" title="Nord">▲ N</span></div>
@@ -596,7 +608,8 @@ function render(view,id,opt={}){
   if(q){data=buildCity();w=data.W;h=data.H;inner.innerHTML=data.svg;
     if(!ville){dist0=data.dist[q.id];const [a,b,c,d]=dist0.bb,m=70;home=[a-m,b-m,c+m,d+m];
       inner.querySelector(".nc-mask").setAttribute("d",`M0 0H${w}V${h}H0Z M${dist0.fp.map(p=>p.join(" ")).join("L")}Z`)}}
-  else{w=IMG.w;h=IMG.h;inner.innerHTML=`<img src="${IMG.src}" alt="Carte de Night City" width="${w}" height="${h}" draggable="false">`}
+  else{w=IMG.w;h=IMG.h;const k=IMG.w/2000;
+    inner.innerHTML=`<img src="${IMG.src}" alt="Carte de Night City" width="${w}" height="${h}" draggable="false"><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="position:absolute;left:0;top:0;pointer-events:none">${PERSO.map(r=>persoSVG([r.p[0]*k,r.p[1]*k],r.nom,1.1)).join("")}</svg>`}
   inner.style.width=w+"px";inner.style.height=h+"px";
   const R=p=>ref(p,data),sel=q?inner.querySelector(".sel"):null;
   const showTip=(html,scr,p)=>{tip.innerHTML=html;tip.style.display="block";const r=box.getBoundingClientRect();
@@ -607,7 +620,8 @@ function render(view,id,opt={}){
   let lod=()=>{};
   const z=zoomable(box,inner,w,h,()=>lod(),(t,p,scr)=>{
     if(!data){hideTip();return}
-    const el=t&&t.closest&&t.closest("[data-i],[data-x],[data-g],[data-l]");if(!el){hideTip();return}
+    const el=t&&t.closest&&t.closest("[data-i],[data-x],[data-g],[data-l],[data-p]");if(!el){hideTip();return}
+    if(el.dataset.p){const r=data.perso[+el.dataset.p];showTip(`<b>★ ${esc(r.nom)}</b>${esc(r.info)} · ${R(r.p)}`,scr,r.p);return}
     if(el.dataset.i){const it=data.inter[+el.dataset.i];showTip(`<b>▓ CARREFOUR ${R(it.p)}</b>${esc(it.a)}<br>× ${esc(it.b)}${qd(it)}`,scr,it.p)}
     else if(el.dataset.x){const x=data.exits[+el.dataset.x];showTip(`<b>▓ ${esc(x.hw)} — SORTIE ${x.n}</b>${esc(x.rue)} · ${R(x.p)}${qd(x)}`,scr,x.p)}
     else if(el.dataset.g){const g=data.gates[+el.dataset.g];showTip(`<b>▓ PORTE — POSTE DE CONTRÔLE</b>${esc(g.rue)} · ${R(g.p)}`,scr,g.p)}
@@ -620,7 +634,7 @@ function render(view,id,opt={}){
   const bbHit=pts=>{if(ville)return true;const [a,b,c,d]=home,inB=p=>p[0]>=a&&p[0]<=c&&p[1]>=b&&p[1]<=d;
     for(let i=0;i<pts.length;i++){if(inB(pts[i]))return true;if(i<pts.length-1)for(let t=0.05;t<1;t+=0.05)if(inB(lerp(pts[i],pts[i+1],t)))return true}return false};
   if(data){
-    const sub={cls:ville?new Set(data.edges.map(e=>e.cls)):dist0.cls,hws:data.hws.some(x=>bbHit(x.p)),exits:data.exits.some(inD),gates:data.gates.some(inD),
+    const sub={perso:(data.perso||[]).some(r=>bbHit([r.p])),cls:ville?new Set(data.edges.map(e=>e.cls)):dist0.cls,hws:data.hws.some(x=>bbHit(x.p)),exits:data.exits.some(inD),gates:data.gates.some(inD),
       parks:data.parks.some(k=>bbHit(k.p))||data.plazas.some(k=>bbHit([k.c])),restr:data.restr.some(k=>bbHit(k.p)),
       cats:[...new Set(data.lms.filter(inD).map(l=>l.code.slice(0,2)))].sort()};
     leg.innerHTML=legendHTML(sub,ville);if(box.clientWidth<700)leg.classList.add("off")}
@@ -638,12 +652,12 @@ function render(view,id,opt={}){
     ${LM.length?`<div class="nc-lms">${LM.map(l=>`<div><b style="background:${l.col}">${esc(l.code)}</b>${esc(l.nom)} · ${R(l.p)}</div>`).join("")}</div>`:""}</div>`;
   const qi=$("#nc-q",view),res=$("#nc-r",view);
   qi.oninput=()=>{const v=qi.value.trim().toLowerCase();if(v.length<2){res.innerHTML="";return}
-    const hits=[];LM.forEach(l=>{if((l.code+" "+l.nom).toLowerCase().includes(v))hits.push({t:`${l.code} — ${l.nom}`,p:l.p})});
+    const hits=[];(data.perso||[]).forEach(r=>{if((r.nom+" "+r.info).toLowerCase().includes(v))hits.push({t:"★ "+r.nom,p:r.p})});LM.forEach(l=>{if((l.code+" "+l.nom).toLowerCase().includes(v))hits.push({t:`${l.code} — ${l.nom}`,p:l.p})});
     const seenN=new Set();I.forEach(it=>{[it.a,it.b].forEach(n=>{const key=n+it.q;if(n.toLowerCase().includes(v)&&!seenN.has(key)){seenN.add(key);hits.push({t:n+(ville?" ("+QUARTIERS[it.d].court+")":""),p:it.p})}})});
     res.innerHTML=hits.slice(0,30).map((h,i)=>`<button data-k="${i}">${esc(h.t)} · ${R(h.p)}</button>`).join("")||"<small>AUCUN RÉSULTAT</small>";
     res.querySelectorAll("button").forEach(b=>b.onclick=()=>{const h=hits[+b.dataset.k];z.centerOn(h.p,1.3);lod();box.scrollIntoView({behavior:"smooth",block:"center"});showTip(`<b>▓ ${esc(h.t)}</b>${R(h.p)}`,[box.clientWidth/2,box.clientHeight/2],h.p)})};
 }
 const $=(s,e=document)=>e.querySelector(s);
 
-window.NC_CARTE={render,QUARTIERS,buildCity,buildGraph,nearestInter,fixCar,interName,step,course,hops,mountMap,C};
+window.NC_CARTE={PERSO,render,QUARTIERS,buildCity,buildGraph,nearestInter,fixCar,interName,step,course,hops,mountMap,C};
 })();
