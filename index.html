@@ -463,7 +463,7 @@ Dernier badge autorisé avant l'incident : RA-SEC-0042 (badge externe, prestatai
   ennemis:[{kind:"police",nom:"Policier 1",c:18,r:7,dir:0,img:"Images/Session 3/BATTLE-03/policier.png"},
     {kind:"police",nom:"Policier 2",c:18,r:9,dir:0,img:"Images/Session 3/BATTLE-03/policier.png"},
     {kind:"capitaine",nom:"Capitaine du trafic",c:20,r:8,dir:180,img:"Images/Session 3/BATTLE-03/capitaine.png"},
-    {kind:"trafiquant",nom:"Trafiquant",c:24,r:2,dir:90,img:"Images/Session 3/BATTLE-03/trafiquant.png"},
+    {kind:"chien",nom:"Chien de garde",c:24,r:2,dir:90,mouv:8,img:"Images/Session 3/BATTLE-03/chien.png"},
     {kind:"enfant",nom:"Enfant",c:"milieu",dir:0,mouv:3,img:"Images/Session 3/BATTLE-03/enfant.png"}],
   /* battle map personnalisée (facultatif) : décommenter et indiquer l'image et sa taille en cases de 2 m
      (ex. image de 3200 × 1700 px = 32 × 17 cases de 100 px). Les obstacles se marquent ensuite par le MJ (✎ OBSTACLES). */
@@ -1182,7 +1182,7 @@ RUN.tech=(root,app)=>{
 RUN.battle=(root,app)=>{
   const M=window.NC_CARTE;if(!M||!M.zoomable){root.innerHTML="<p>CARTE INDISPONIBLE.</p>";return}
   document.body.classList.add("wide");M.css();
-  const FOND=app.fond||null,LV=4; /* LV : version de la disposition (une ancienne disposition enregistrée est ignorée) */
+  const FOND=app.fond||null,LV=5; /* LV : version de la disposition (une ancienne disposition enregistrée est ignorée) */
   const ID=app.id,C=40,COLS=FOND?FOND.cols:32,ROWS=FOND?FOND.rows:17,W=COLS*C,H=ROWS*C,X0=FOND?COLS:30,ROLES=app.roles,NS="http://www.w3.org/2000/svg";
   const K=(c,r)=>c+","+r,blocked=new Set(),walls=new Set(),shutterE=new Set();
   /* ---------- plan de l'entrepôt ---------- */
@@ -1207,7 +1207,7 @@ RUN.battle=(root,app)=>{
   const isMJ=()=>!!mjOk&&(SYNC.kind==="firebase"?!!SYNC.user:SYNC.kind==="claude"?!!SYNC.canWrite:true);
   const mid=Math.floor(ROWS/2),DEF_P=FOND&&FOND.depart?FOND.depart:FOND?[[COLS-2,mid-1],[COLS-1,mid-1],[COLS-2,mid+1],[COLS-1,mid+1],[COLS-2,mid+2],[COLS-1,mid+2]]:[[30,12],[31,12],[30,14],[31,14],[30,15],[31,15]],
     DEF_E=[[3,3],[5,6],[15,8],[17,8],[11,9],[23,7]];
-  const KIND={police:{col:"#ff2a3d",lab:"P"},capitaine:{col:"#ff8a00",lab:"C"},trafiquant:{col:"#b3001a",lab:"T"},enfant:{col:"#f2f2f2",lab:"E"},ennemi:{col:"#ff2a3d",lab:"X"}};
+  const KIND={police:{col:"#ff2a3d",lab:"P"},capitaine:{col:"#ff8a00",lab:"CP"},trafiquant:{col:"#b3001a",lab:"T"},chien:{col:"#b5651d",lab:"C"},enfant:{col:"#f2f2f2",lab:"E"},ennemi:{col:"#ff2a3d",lab:"X"}};
   /* case libre la plus proche d'un point (pour le jeton placé « au milieu ») */
   const nearFree=(x,y,taken)=>{let best=null,bd=1e9;for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){if(blocked.has(K(c,r))||taken.has(K(c,r)))continue;const d=Math.hypot(c-x,r-y);if(d<bd){bd=d;best=[c,r]}}return best};
   const defMain=()=>{const L=app.ennemis||DEF_E.slice(0,4).map((p,i)=>({kind:"police",nom:"Policier "+(i+1),c:p[0],r:p[1]})),fixed=L.filter(e=>e.c!=="milieu"),taken=new Set([...fixed.map(e=>K(e.c,e.r)),...DEF_P.map(p=>K(...p))]);
@@ -1309,12 +1309,16 @@ RUN.battle=(root,app)=>{
     ROLES.forEach(ro=>{const t=toks[ro.id];if(!posOf(ro.id))return;const mine=ro.id===role,pts=losPoly(ro.id,(t&&t.dir)||0);
       h+=`<polygon points="${pts.map(q=>q.map(v=>v.toFixed(1)).join(",")).join(" ")}" fill="${ro.col}" fill-opacity="${mine?.2:.07}" stroke="${ro.col}" stroke-opacity="${mine?.85:.3}" stroke-width="${mine?2:1}" stroke-dasharray="${mine?"6 4":"3 4"}"/>`;
       if(mine)((main||defMain()).enn||[]).forEach(e=>{if(inCone(pts,[(e.c+.5)*C,(e.r+.5)*C]))seen.add(e.id)})});
+    const spotted=new Set();
+    ((main||defMain()).enn||[]).forEach(e=>{if(e.kind==="enfant")return;const col=(KIND[e.kind]||KIND.ennemi).col,pts=losPoly(e.id,e.dir||0);
+      h+=`<polygon points="${pts.map(q=>q.map(v=>v.toFixed(1)).join(",")).join(" ")}" fill="${col}" fill-opacity=".1" stroke="${col}" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+      ROLES.forEach(ro=>{const q=posOf(ro.id);if(q&&inCone(pts,[(q[0]+.5)*C,(q[1]+.5)*C]))spotted.add(ro.id)})});
     if(FOND&&edit)blocked.forEach(k=>{const [c,r]=k.split(",").map(Number);h+=`<rect x="${c*C}" y="${r*C}" width="${C}" height="${C}" fill="url(#btz)" opacity=".55"/>`});
     allIds().forEach(id=>{const p=posOf(id);if(!p)return;const x=p[0]*C+C/2,y=p[1]*C+C/2,ro=roleOf(id),en=!ro,E=en?(main||defMain()).enn.find(e=>e.id===id)||{}:null,KD=en?KIND[E.kind]||KIND.ennemi:null;
       const col=en?KD.col:ro.col,lab=en?(E.kind==="police"?"P"+((E.nom.match(/\d+/)||[""])[0]):KD.lab):ro.nom[0],nm=en?E.nom:ro.nom,im=en?(E.img&&imgOk["E:"+E.img]?E.img:""):(imgOk[ro.id]?ro.img:"");
       if(en&&E.img&&imgOk["E:"+E.img]===undefined){imgOk["E:"+E.img]=false;const q=new Image();q.onload=()=>{imgOk["E:"+E.img]=true;draw()};q.src=E.img}
       const dr=(E&&E.dir||0)*Math.PI/180,ax=x+Math.cos(dr)*C*.82,ay=y+Math.sin(dr)*C*.82,bx=x+Math.cos(dr+.62)*C*.4,by=y+Math.sin(dr+.62)*C*.4,cx2=x+Math.cos(dr-.62)*C*.4,cy2=y+Math.sin(dr-.62)*C*.4;
-      h+=`<g>${seen.has(id)?`<circle cx="${x}" cy="${y}" r="${C*.7}" fill="none" stroke="#fff" stroke-width="3"/><text x="${x+C*.55}" y="${y-C*.45}" font-size="14">👁</text>`:""}${en?`<polygon points="${ax},${ay} ${bx},${by} ${cx2},${cy2}" fill="${col}" stroke="#000" stroke-width="2"/>`:""}${sel===id?`<circle cx="${x}" cy="${y}" r="${C*.62}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 4"/>`:""}
+      h+=`<g>${spotted.has(id)?`<circle cx="${x}" cy="${y}" r="${C*.7}" fill="none" stroke="#ff2a3d" stroke-width="3" stroke-dasharray="5 3"/><text x="${x-C*.95}" y="${y-C*.45}" font-size="14">🚨</text>`:""}${seen.has(id)?`<circle cx="${x}" cy="${y}" r="${C*.7}" fill="none" stroke="#fff" stroke-width="3"/><text x="${x+C*.55}" y="${y-C*.45}" font-size="14">👁</text>`:""}${en?`<polygon points="${ax},${ay} ${bx},${by} ${cx2},${cy2}" fill="${col}" stroke="#000" stroke-width="2"/>`:""}${sel===id?`<circle cx="${x}" cy="${y}" r="${C*.62}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 4"/>`:""}
         <circle cx="${x}" cy="${y}" r="${C*.44}" fill="${col}" stroke="#000" stroke-width="3"/><text x="${x}" y="${y+6}" font-size="17" text-anchor="middle" font-weight="bold" fill="#000" font-family="monospace">${esc(lab)}</text>
         ${im?`<clipPath id="btk-${id}"><circle cx="${x}" cy="${y}" r="${C*.42}"/></clipPath><image href="${esc(im)}" x="${x-C*.42}" y="${y-C*.42}" width="${C*.84}" height="${C*.84}" clip-path="url(#btk-${id})" preserveAspectRatio="xMidYMid slice"/>`:""}
         <circle cx="${x}" cy="${y}" r="${C*.44}" fill="none" stroke="${col}" stroke-width="3"/>
@@ -1358,8 +1362,9 @@ RUN.battle=(root,app)=>{
       <div><svg width="26" height="18"><rect x="5" y="3" width="16" height="12" fill="#7b5a32" stroke="#3a2a14"/></svg><span>Caisses, palettes, piliers, mobilier (infranchissables)</span></div>
       <div><svg width="26" height="18"><rect x="3" y="3" width="20" height="12" fill="#00ff9c" fill-opacity=".25" stroke="#00ff9c"/></svg><span>Cases atteignables ce tour (distance en m)</span></div>
       <div><svg width="26" height="18"><rect x="9" y="1" width="8" height="16" fill="url(#btz)"/></svg><span>Rideau métallique (fermé : infranchissable)</span></div>
-      ${[["police","Policier"],["capitaine","Capitaine du trafic"],["trafiquant","Trafiquant"],["enfant","Enfant"]].map(([k,t])=>`<div><svg width="26" height="18"><circle cx="11" cy="9" r="7" fill="${KIND[k].col}" stroke="#000"/><polygon points="24,9 17,5 17,13" fill="${KIND[k].col}" stroke="#000"/></svg><span>${t} (MJ) — la pointe indique le regard</span></div>`).join("")}
+      ${[["police","Policier"],["capitaine","Capitaine du trafic (CP)"],["chien","Chien de garde (C)"],["enfant","Enfant"]].map(([k,t])=>`<div><svg width="26" height="18"><circle cx="11" cy="9" r="7" fill="${KIND[k].col}" stroke="#000"/><polygon points="24,9 17,5 17,13" fill="${KIND[k].col}" stroke="#000"/></svg><span>${t} (MJ) — la pointe indique le regard</span></div>`).join("")}
       <div><svg width="26" height="18"><path d="M3 9L24 3L24 15Z" fill="#00e5ff" fill-opacity=".25" stroke="#00e5ff" stroke-dasharray="3 2"/></svg><span>Ligne de vue (cône de 30°) ; 👁 = ennemi dans votre champ de vision</span></div>
+      <div><svg width="26" height="18"><path d="M3 9L24 3L24 15Z" fill="#ff2a3d" fill-opacity=".2" stroke="#ff2a3d" stroke-dasharray="3 2"/></svg><span>Vue des ennemis (30°, sauf l'enfant) ; 🚨 = héros dans le champ de vision d'un ennemi</span></div>
       <small>Une case = 2 m · longueur de l'entrepôt : 60 m.</small></div>`;
     if(!mjOk)h+=`<p><a href="#" data-a="chg"><small>↺ changer de personnage</small></a></p>`;
     side.innerHTML=h;bindRole();
