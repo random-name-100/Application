@@ -1218,10 +1218,13 @@ RUN.track=(root,app)=>{
   function draw(){
     if(!map.layer.isConnected)return;const k=map.z.px?map.z.px():0.3,u=1/Math.max(k,0.05),L=[];
     const show=c=>c!=="police"||isMJ()||(pub&&!pub.cacher&&pub.cars.police);
-    if(pub&&pub.last&&pub.last.paths&&!anim)CARS.forEach(c=>{const pts=show(c)&&pub.last.paths[c]?poly(pub.last.paths[c]):[];
-      if(pts.length>1){const pl=pts.map(p=>p.join(",")).join(" ");
-        L.push(`<polyline points="${pl}" fill="none" stroke="#000" stroke-opacity=".7" stroke-width="${10*u}" stroke-linejoin="round" stroke-linecap="round"/>`,
-          `<polyline points="${pl}" fill="none" stroke="${V[c].col}" stroke-opacity=".9" stroke-width="${6*u}" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="${14*u} ${6*u}"/>`)}});
+    /* traînées des 3 derniers tours (la plus récente la plus visible) ; pendant l'animation, seules les plus anciennes */
+    if(pub){const H=(pub.hist&&pub.hist.length?pub.hist:pub.last&&pub.last.paths?[{tour:pub.last.tour,paths:pub.last.paths}]:[]).slice(-3),n=H.length;
+      H.forEach((h,j)=>{const age=n-1-j;if(anim&&age===0)return;const op=[.9,.55,.3][age]||.3,w=[6,5,4][age]||4;
+        CARS.forEach(c=>{const pts=(c!=="police"||isMJ()||show(c)||age>0)&&h.paths&&h.paths[c]?poly(h.paths[c]):[];if(pts.length<2)return;const pl=pts.map(p=>p.join(",")).join(" ");
+          L.push(`<polyline points="${pl}" fill="none" stroke="#000" stroke-opacity="${(op*.75).toFixed(2)}" stroke-width="${(w+4)*u}" stroke-linejoin="round" stroke-linecap="round"/>`,
+            `<polyline points="${pl}" fill="none" stroke="${V[c].col}" stroke-opacity="${op}" stroke-width="${w*u}" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="${14*u} ${6*u}"/>`);
+          const e=pts[pts.length-1];if(age>0)L.push(`<text x="${e[0]}" y="${e[1]-9*u}" font-size="${9*u}" text-anchor="middle" fill="${V[c].col}" fill-opacity="${op}" stroke="#000" stroke-width="${2.5*u}" paint-order="stroke" font-family="monospace" font-weight="bold">TOUR ${h.tour-1}</text>`)})})}
     const mc=myCar(),me=mc&&carOf(mc);
     if(me&&draft.length){const r=M.course(me.n,me.f,draft),pts=poly(r.path);
       if(pts.length>1)L.push(`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="#fff" stroke-width="${4*u}" stroke-dasharray="${10*u} ${7*u}" stroke-linejoin="round"/>`);
@@ -1295,7 +1298,7 @@ RUN.track=(root,app)=>{
     const paths={t1:R.t1.path,t2:R.t2.path};if(!hide&&vue)paths.police=ppath;
     try{await putPriv({...priv,police:pol,ordres:[],tour:T});
       await putPub({...pub,tour:T+1,cars,policeOk:0,reperage:rep,chasse,fin,vue,contact,alerte:alerts.length?{id:Date.now(),txt:alerts.join(" | "),niv}:(pub.alerte||null),
-        last:{tour:T+1,paths},log:[...log.reverse(),...(pub.log||[])].slice(0,120)});msg="▓ TOUR "+T+" RÉSOLU"}catch(e){fail(e)}
+        last:{tour:T+1,paths},hist:[...(pub.hist||[]),{tour:T+1,paths}].slice(-3),log:[...log.reverse(),...(pub.log||[])].slice(0,120)});msg="▓ TOUR "+T+" RÉSOLU"}catch(e){fail(e)}
     busy=false;render()}
   /* ---- panneau ---- */
   function render(){
@@ -1342,7 +1345,7 @@ RUN.track=(root,app)=>{
       <div>${tok(V.police.col,"P")}<span>${esc(V.police.nom)} (MJ) — la pointe indique le sens de marche</span></div>
       <div>${sw('<path d="M13 9L24 4A12 12 0 0 1 24 14Z M13 9L2 14A12 12 0 0 1 2 4Z" fill="#ff2a3d" fill-opacity=".2" stroke="#ff2a3d" stroke-width="1.2" stroke-dasharray="2 1.5"/>')}<span><b style="color:#ff2a3d">Cônes de vision (${R.r1} m, ±${R.ang}°)</b> : à l'avant et à l'arrière de la police ; un traqueur qui y entre est repéré (compteur 0/3)</span></div>
       <div>${sw('<circle cx="13" cy="9" r="8" fill="none" stroke="#ffb000" stroke-width="1.5" stroke-dasharray="4 2"/>')}<span><b style="color:#ffb000">Distance de traque (${R.r2} m)</b> : rester à l'intérieur pour ne pas perdre la police</span></div>
-      <div>${sw(`<line x1="2" y1="9" x2="24" y2="9" stroke="#000" stroke-width="6"/><line x1="2" y1="9" x2="24" y2="9" stroke="${V.t1.col}" stroke-width="3.5" stroke-dasharray="7 3"/>`)}<span>Trajet du dernier tour (couleur du véhicule)</span></div>
+      <div>${sw(`<line x1="2" y1="9" x2="24" y2="9" stroke="#000" stroke-width="6"/><line x1="2" y1="9" x2="24" y2="9" stroke="${V.t1.col}" stroke-width="3.5" stroke-dasharray="7 3"/>`)}<span>Trajets des 3 derniers tours (couleur du véhicule ; plus pâle = plus ancien, numéro du tour)</span></div>
       <div>${sw('<line x1="2" y1="9" x2="24" y2="9" stroke="#fff" stroke-width="2" stroke-dasharray="4 3"/><circle cx="20" cy="9" r="4" fill="#000" stroke="#fff"/>')}<span>Trajet prévu par vos ordres (étapes numérotées)</span></div>
       <div>${sw('<circle cx="13" cy="9" r="7" fill="#ff00c8" stroke="#000"/><text x="13" y="12" font-size="9" text-anchor="middle" fill="#fff">★</text>')}<span>Repère de la campagne (${(M.PERSO||[]).map(r=>esc(r.nom)).join(", ")})</span></div>`:""}</div>`;
     const byT={};(pub.log||[]).forEach(l=>(byT[l.t]||(byT[l.t]=[])).push(l));
