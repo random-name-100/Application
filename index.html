@@ -149,6 +149,7 @@ h2 .redact{background:var(--c);color:var(--c)}
 .md-vit.crit{color:#ff3344;animation:fdb .8s infinite}.md-vit.crit .md-bar{border-color:#ff3344;box-shadow:0 0 12px #ff3344}
 .md-play{display:grid;grid-template-columns:minmax(0,1fr) 74px;gap:8px;align-items:start}
 .md-tools{display:flex;flex-direction:column;gap:6px}.md-tools button{padding:8px 2px;font-size:20px;line-height:1.1}.md-tools small{font-size:9px;letter-spacing:.05em}
+.md-intro p{line-height:1.6}.md-intro .row{justify-content:center}.md-intro button{font-size:15px;padding:12px 16px}
 .md-msg.big{font-size:20px;letter-spacing:.12em;text-align:center}
 .md-help,.tx-help{font-size:13px;margin:8px 0;min-height:36px}
 .md-svg{width:100%;height:auto;display:block;border:1px solid var(--c);touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair}
@@ -791,7 +792,7 @@ const GX={
               2. extraction des éclats (les sortir sans toucher les bords du passage)
               3. suture du foie (suivre la déchirure)  4. fermeture (points de suture dans l'ordre)
    Les constantes baissent tant que des vaisseaux saignent et à chaque contact (« bzzz »). À 0 : patient perdu. */
-RUN.medic=(root,app)=>{
+function medicOp(root,app){
   document.body.classList.remove("wide");
   const VES=[{tip:[176,318],from:[143,300]},{tip:[229,312],from:[258,292]},{tip:[201,293],from:[203,262]}];
   const SH=[{p:[180,341],path:[[180,341],[160,333],[134,338],[104,384],[74,444],[58,494]]},
@@ -828,13 +829,14 @@ RUN.medic=(root,app)=>{
       ${body()}
       <g class="md-stains"></g><g class="md-dyn"></g>
     </svg><div class="md-tools">${Object.entries(TOOLS).map(([k,[i,t]])=>`<button data-tool="${k}">${i}<br><small>${t}</small></button>`).join("")}</div></div>
-    <div class="md-msg"></div><div class="row"><button class="md-rs">↻ RECOMMENCER L'OPÉRATION</button></div></div>`;
+    <div class="md-msg"></div><div class="row"><button class="md-rs">↻ RECOMMENCER L'OPÉRATION</button><button class="md-tr">🎓 ENTRAÎNEMENT</button></div></div>`;
   root.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{if(b.dataset.tool==="loupe"&&S.zoom){zoom(false);return}S.tool=b.dataset.tool;upd()});
   /* vue LOUPE : agrandissement animé sur le foie */
   function zoom(on){if(S.zoom===on)return;S.zoom=on;const from=svg.getAttribute("viewBox").split(" ").map(Number),to=on?VB1:VB0,t0=performance.now();
     const st=now=>{const k=Math.min(1,(now-t0)/350),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;svg.setAttribute("viewBox",from.map((v,i)=>(v+(to[i]-v)*e).toFixed(2)).join(" "));if(k<1)requestAnimationFrame(st)};
     requestAnimationFrame(st);if(on)flash("🔍 Vue agrandie du foie — reLOUPE pour revenir");upd()}
   const svg=$(".md-svg",root),dyn=$(".md-dyn",root),stl=$(".md-stains",root),bar=$(".md-bar i",root),bpm=$(".md-bpm",root),msgEl=$(".md-msg",root);
+  $(".md-tr",root).onclick=()=>RUN.medic(root,app,{train:true});
   $(".md-rs",root).onclick=()=>{reset();svg.setAttribute("viewBox",VB0.join(" "));msgEl.textContent="";upd()};
   function woundPath(){const c=[200,320],pts=[];for(let k=0;k<26;k++){const a=k/26*2*Math.PI,r=1+(k%2?.1:-.06)+(k%5===0?.08:0);pts.push([c[0]+62*r*Math.cos(a),c[1]+50*r*Math.sin(a)])}return "M"+GX.poly(pts).replace(/ /g,"L")+"Z"}
   function body(){
@@ -904,7 +906,7 @@ RUN.medic=(root,app)=>{
       msgEl.className="md-msg big";msgEl.innerHTML=`▓ L'enfant a été sauvé. <small>(${sec} s)</small>`;if(app.files.length)reveal(app,app.files.map((_,i)=>i))}
     else flash("▓ ÉTAPE TERMINÉE : "+STEPS[S.phase-1])}
   /* ---------- boucle : saignement, tremblement de la pince ---------- */
-  function tick(now){if(!root.isConnected)return;const dt=Math.min(.1,(now-S.last)/1000);S.last=now;
+  function tick(now){if(!svg.isConnected)return;const dt=Math.min(.1,(now-S.last)/1000);S.last=now;
     if(!S.over){const bleed=S.clamp.filter(c=>!c).length;S.vit-=dt*(.3+bleed*.45+S.stains.length*.1);
       if(now>=S.nextStain&&S.stains.length<6){let p;do{p=[WC[0]+(Math.random()*2-1)*50,WC[1]+(Math.random()*2-1)*40]}while(!inWound(p));
         S.stains.push({p,r:3,max:15+Math.random()*9,seed:Math.random()*6});S.nextStain=now+(bleed?1800:3200)+Math.random()*3500}
@@ -950,7 +952,89 @@ RUN.medic=(root,app)=>{
       h+=`<g transform="translate(${b[0]} ${b[1]}) rotate(-35)"><ellipse rx="2.6" ry="1.6" fill="#c87533" stroke="#5a2e10" stroke-width=".5"/><ellipse cx="-.8" cy="-.5" rx="1" ry=".45" fill="#ffd2a0" opacity=".8"/></g>`}
     if(S.over==="win")h+=`<path d="${woundPath()}" fill="#e3b08a" opacity=".55"/><text x="200" y="326" font-size="16" text-anchor="middle" fill="#5fa" font-family="monospace" font-weight="bold">STABILISÉ</text>`;
     dyn.innerHTML=h}
-  requestAnimationFrame(tick)};
+  requestAnimationFrame(tick)}
+/* ---------- MEDIC : écran de départ et entraînement (un exercice par outil, sans risque) ---------- */
+RUN.medic=(root,app,opt={})=>{
+  document.body.classList.remove("wide");
+  if(opt.op)return medicOp(root,app);
+  if(!opt.train){root.innerHTML=`<h2>${esc(app.nom)}</h2><div class="md md-intro">
+      <p>Un enfant grièvement blessé à l'abdomen est sur la table. Chaque seconde compte.</p>
+      <p>Cinq outils sont à votre disposition : <b>ASPIRER</b>, <b>LOUPE</b>, <b>CLAMP</b>, <b>PINCE</b> et <b>FIL</b>.</p>
+      <div class="row"><button class="md-go-tr">🎓 ENTRAÎNEMENT (RECOMMANDÉ)</button><button class="md-go-op">⏩ OPÉRATION DIRECTE</button></div></div>`;
+    $(".md-go-tr",root).onclick=()=>RUN.medic(root,app,{train:true});$(".md-go-op",root).onclick=()=>RUN.medic(root,app,{op:true});return}
+  const TOOLS={aspi:["🩸","ASPIRER"],loupe:["🔍","LOUPE"],clamp:["🗜","CLAMP"],pince:["✂","PINCE"],fil:["🧵","FIL"]};
+  const EX=[
+    {t:"aspi",txt:"Le sang envahit régulièrement la plaie et masque la zone d'intervention : tant qu'une flaque recouvre une cible, aucun geste n'est possible. Sélectionnez ASPIRER, puis maintenez le pointeur sur la flaque et passez dessus jusqu'à ce qu'elle disparaisse."},
+    {t:"loupe",txt:"Certains éléments sont trop petits pour être traités à l'œil nu. Sélectionnez la LOUPE et touchez le tissu pour agrandir la zone : repérez l'objet brillant. Reprenez ensuite la LOUPE (bouton à droite) pour revenir à la vue normale."},
+    {t:"clamp",txt:"Un vaisseau ouvert fait chuter la vie du patient. Sélectionnez CLAMP, posez le pointeur dans l'anneau blanc qui tremble au bout du vaisseau et suivez-le sans en sortir pendant environ 2 secondes : le clamp se ferme."},
+    {t:"pince",txt:"Les corps étrangers se retirent avec la PINCE. Saisissez l'éclat et faites-le glisser jusqu'au bac en restant dans le passage vert. Toucher le bord provoque un « bzzz » (en opération, le patient perd de la vie)."},
+    {t:"fil",txt:"Le FIL sert à suturer. Partez du point vert et suivez la ligne en pointillés jusqu'au bout sans en sortir. Touchez ensuite les points 1 → 4 dans l'ordre pour refermer."}];
+  let k=0,tool=null,T,alive=true;
+  root.innerHTML=`<h2>${esc(app.nom)} — 🎓 ENTRAÎNEMENT</h2><div class="md">
+    <div class="md-step"></div><div class="md-help md-tr-txt"></div>
+    <div class="md-play"><svg class="md-svg" viewBox="0 0 400 300"></svg><div class="md-tools">${Object.entries(TOOLS).map(([key,[i,t]])=>`<button data-tool="${key}">${i}<br><small>${t}</small></button>`).join("")}</div></div>
+    <div class="md-msg"></div><div class="row"><button class="md-skip">⏩ PASSER L'ENTRAÎNEMENT</button></div></div>`;
+  const svg=$(".md-svg",root),msg=$(".md-msg",root);
+  const flash=(t,bad)=>{msg.textContent=t;msg.className="md-msg"+(bad?" warn":"");clearTimeout(flash.t);flash.t=setTimeout(()=>msg.textContent="",2000)};
+  $(".md-skip",root).onclick=()=>{alive=false;RUN.medic(root,app,{op:true})};
+  root.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{if(b.dataset.tool==="loupe"&&T&&T.zoomed){T.unzoom();return}tool=b.dataset.tool;head()});
+  const head=()=>{$(".md-step",root).innerHTML=EX.map((e,i)=>`<span class="${i<k?"ok":i===k?"on":""}">${TOOLS[e.t][0]} ${TOOLS[e.t][1]}</span>`).join("");
+    root.querySelectorAll("[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===tool))};
+  const need=()=>{if(tool===EX[k].t)return true;GX.buzz(140,.12);flash(`Sélectionnez l'outil ${TOOLS[EX[k].t][1]} (colonne de droite)`,true);return false};
+  const pad=`<rect width="400" height="300" fill="#0b1a1a"/><rect x="20" y="20" width="360" height="260" rx="14" fill="#e9e2d6"/><path d="M20 60H380M20 100H380M20 140H380M20 180H380M20 220H380M20 260H380M60 20V280M100 20V280M140 20V280M180 20V280M220 20V280M260 20V280M300 20V280M340 20V280" stroke="#cfc6b7" stroke-width="1"/>
+    <ellipse cx="200" cy="150" rx="150" ry="100" fill="#c9566a" opacity=".55"/><ellipse cx="200" cy="150" rx="120" ry="78" fill="#a8323f" opacity=".5"/>`;
+  function win(){GX.ok();flash("✔ Bien joué !");T=null;k++;setTimeout(()=>{if(!alive)return;if(k<EX.length)ex();else end()},900)}
+  function end(){head();$(".md-tr-txt",root).textContent="Entraînement terminé : vous connaissez les 5 outils. Rappel : surveillez la barre de vie, aspirez le sang dès qu'il gêne, et utilisez la LOUPE sur le foie.";
+    svg.innerHTML=pad+`<text x="200" y="158" font-size="22" text-anchor="middle" fill="#0b3" font-family="monospace" font-weight="bold">PRÊT ✔</text>`;
+    const b=$(".md-skip",root);b.textContent="▶ COMMENCER L'OPÉRATION"}
+  function ex(){head();$(".md-tr-txt",root).textContent=`${k+1}/5 — ${TOOLS[EX[k].t][0]} ${TOOLS[EX[k].t][1]} : ${EX[k].txt}`;svg.setAttribute("viewBox","0 0 400 300");
+    const D=document.createElementNS("http://www.w3.org/2000/svg","g");svg.innerHTML=pad;svg.append(D);T={};const t=EX[k].t;let down=false,P=null;
+    const pt=e=>GX.pt(svg,e);
+    if(t==="aspi"){T.r=42;T.seed=Math.random()*6;
+      const draw=()=>{let d="";for(let i=0;i<9;i++){const a=i/9*2*Math.PI,r=T.r*(.75+.3*Math.sin(T.seed+i*1.7));d+=(i?"L":"M")+(200+r*Math.cos(a)).toFixed(1)+" "+(150+r*Math.sin(a)).toFixed(1)}
+        D.innerHTML=(T.r>2.5?`<path d="${d}Z" fill="#8a0010" stroke="#b3001a" stroke-width="2"/>`:"")+`<text x="200" y="154" font-size="12" text-anchor="middle" fill="#fff" font-family="monospace" opacity="${T.r>2.5?.9:0}">CIBLE MASQUÉE</text>`+(P&&tool==="aspi"?`<circle cx="${P[0]}" cy="${P[1]}" r="12" fill="none" stroke="#9fe" stroke-width="2" stroke-dasharray="${down?"2 2":"5 3"}"/>`:"")};
+      let last=performance.now();const loop=now=>{if(!alive||T===null||!svg.isConnected)return;const dt=Math.min(.1,(now-last)/1000);last=now;
+        if(down&&P&&tool==="aspi"&&GX.d(P,[200,150])<T.r+14)T.r-=dt*34;draw();if(T.r<=2.5)return win();requestAnimationFrame(loop)};requestAnimationFrame(loop);
+      svg.onpointerdown=e=>{P=pt(e);if(!need())return;svg.setPointerCapture(e.pointerId);down=true};svg.onpointermove=e=>{P=pt(e)};svg.onpointerup=svg.onpointercancel=()=>down=false}
+    if(t==="loupe"){const O=[292,206];T.zoomed=false;T.seen=false;
+      const anim=to=>{const from=svg.getAttribute("viewBox").split(" ").map(Number),t0=performance.now();const st=now=>{const q=Math.min(1,(now-t0)/350),e=q<.5?2*q*q:1-Math.pow(-2*q+2,2)/2;svg.setAttribute("viewBox",from.map((v,i)=>(v+(to[i]-v)*e).toFixed(2)).join(" "));if(q<1)requestAnimationFrame(st)};requestAnimationFrame(st)};
+      D.innerHTML=`<circle cx="${O[0]}" cy="${O[1]}" r="2.2" fill="#c87533" stroke="#5a2e10" stroke-width=".5"/><circle cx="${O[0]-.6}" cy="${O[1]-.6}" r=".7" fill="#ffd2a0"/><text class="lp" x="${O[0]}" y="${O[1]+7}" font-size="3" text-anchor="middle" fill="#fff" font-family="monospace" opacity="0">OBJET REPÉRÉ ✔</text>`;
+      T.unzoom=()=>{if(!T.zoomed)return;T.zoomed=false;anim([0,0,400,300]);if(T.seen)setTimeout(win,400)};
+      svg.onpointerdown=e=>{if(!need())return;if(T.zoomed){T.unzoom();return}T.zoomed=true;T.seen=true;anim([O[0]-30,O[1]-21,60,42]);D.querySelector(".lp").setAttribute("opacity","1");flash("🔍 Vue agrandie : l'objet est visible. Reprenez la LOUPE pour revenir.")}}
+    if(t==="clamp"){const tip=[210,150];T.h=0;
+      const ring=now=>[tip[0]+6*Math.sin(now/310),tip[1]+5*Math.cos(now/270)];
+      let last=performance.now();const loop=now=>{if(!alive||T===null||!svg.isConnected)return;const dt=Math.min(.1,(now-last)/1000);last=now;const c=ring(now);
+        if(down){if(P&&GX.d(P,c)<=10){T.h+=dt;if(T.h>=1.8)return win()}else{down=false;T.h=0;GX.buzz();flash("⚡ Le clamp a glissé : recommencez",true)}}
+        D.innerHTML=`<path d="M70 150 Q140 140 ${tip.join(" ")}" stroke="#7a0f18" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M70 150 Q140 140 ${tip.join(" ")}" stroke="#d3283a" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <circle cx="${tip[0]}" cy="${tip[1]}" r="5" fill="#3a0006" stroke="#ff4a5a" stroke-width="1.5"/>${[0,1,2].map(i=>`<circle class="md-drop" style="animation-delay:${i*.4}s" cx="${tip[0]}" cy="${tip[1]+5}" r="3" fill="#d3283a"/>`).join("")}
+          <circle cx="${c[0]}" cy="${c[1]}" r="10" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 2"/>${T.h?`<circle cx="${c[0]}" cy="${c[1]}" r="14" fill="none" stroke="#5fa" stroke-width="3" stroke-dasharray="${(T.h/1.8*88).toFixed(1)} 88" transform="rotate(-90 ${c[0]} ${c[1]})"/>`:""}`;
+        requestAnimationFrame(loop)};requestAnimationFrame(loop);
+      svg.onpointerdown=e=>{P=pt(e);if(!need())return;svg.setPointerCapture(e.pointerId);if(GX.d(P,ring(performance.now()))<16){down=true;T.h=0}};svg.onpointermove=e=>{P=pt(e)};svg.onpointerup=svg.onpointercancel=()=>{down=false;T&&(T.h=0)}}
+    if(t==="pince"){const path=[[110,160],[160,120],[220,175],[290,135],[340,150]];T.p=path[0];T.drag=false;
+      const draw=()=>{D.innerHTML=`<polyline points="${GX.poly(path)}" fill="none" stroke="#5fa" stroke-opacity=".3" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="330" y="132" width="44" height="36" rx="5" fill="#1d3436" stroke="#5fa"/><text x="352" y="180" font-size="9" text-anchor="middle" fill="#0b3" font-family="monospace">BAC</text>
+        <polygon points="${T.p[0]-7},${T.p[1]+3} ${T.p[0]-1},${T.p[1]-8} ${T.p[0]+8},${T.p[1]-2} ${T.p[0]+3},${T.p[1]+7}" fill="#cfd8dc" stroke="#607d8b" stroke-width="1.2"/>`};draw();
+      svg.onpointerdown=e=>{const p=pt(e);if(!need())return;if(GX.d(p,T.p)<16){svg.setPointerCapture(e.pointerId);T.drag=true}};
+      svg.onpointermove=e=>{if(!T||!T.drag)return;const p=pt(e),r=GX.proj(p,path);if(r.d>9){T.drag=false;T.p=path[0];GX.buzz();GX.shake(svg);flash("⚡ BZZZ — contact avec le bord : l'éclat retombe",true);draw();return}
+        T.p=p;draw();if(GX.d(p,path[path.length-1])<14){T.drag=false;win()}};
+      svg.onpointerup=svg.onpointercancel=()=>{if(T&&T.drag){T.drag=false}}}
+    if(t==="fil"){const L=[[90,100],[130,122],[170,100],[210,122],[250,100],[290,122]],PTS=[[120,190],[260,190],[140,240],[280,240]];T.max=0;T.tr=false;T.st=0;
+      const total=GX.proj(L[L.length-1],L).len;
+      const draw=()=>{let h=`<polyline points="${GX.poly(L)}" fill="none" stroke="#3a0a0a" stroke-width="2.5" stroke-dasharray="${T.max>=total-3?"0":"4 3"}"/>`;
+        if(T.max>0){const pts=[L[0]];let acc=0;for(let i=1;i<L.length;i++){const s=GX.d(L[i-1],L[i]);if(acc+s<=T.max){pts.push(L[i]);acc+=s}else{pts.push(GX.along(L,T.max));break}}h+=`<polyline points="${GX.poly(pts)}" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 2"/>`}
+        if(T.max<total-3)h+=`<circle cx="${L[0][0]}" cy="${L[0][1]}" r="7" fill="#5fa"/>`;
+        else{for(let i=1;i<T.st;i++)h+=`<line x1="${PTS[i-1][0]}" y1="${PTS[i-1][1]}" x2="${PTS[i][0]}" y2="${PTS[i][1]}" stroke="#1b1b1b" stroke-width="3"/>`;
+          PTS.forEach((q,i)=>h+=`<circle cx="${q[0]}" cy="${q[1]}" r="9" fill="${i<T.st?"#5fa":"#000"}" stroke="#5fa" stroke-width="1.5"/><text x="${q[0]}" y="${q[1]+4}" font-size="10" text-anchor="middle" fill="${i<T.st?"#000":"#5fa"}" font-family="monospace" font-weight="bold">${i+1}</text>`)}
+        D.innerHTML=h};draw();
+      svg.onpointerdown=e=>{const p=pt(e);if(!need())return;
+        if(T.max<total-3){if(GX.d(p,L[0])<12){svg.setPointerCapture(e.pointerId);T.tr=true}return}
+        if(GX.d(p,PTS[T.st])<13){T.st++;GX.ok();draw();if(T.st>=PTS.length)win()}else{GX.buzz();flash("⚡ Mauvais point : suivez l'ordre 1 → 4",true)}};
+      svg.onpointermove=e=>{if(!T||!T.tr)return;const p=pt(e),r=GX.proj(p,L);if(r.d>6){T.tr=false;T.max=0;GX.buzz();flash("⚡ Vous sortez de la ligne : recommencez au point vert",true);draw();return}
+        T.max=Math.max(T.max,Math.min(r.at,T.max+14));draw();if(T.max>=total-3){T.tr=false;GX.ok();flash("✔ Suture terminée : touchez maintenant les points 1 → 4")}};
+      svg.onpointerup=svg.onpointercancel=()=>{if(T&&T.tr){T.tr=false;if(T.max<total-3){T.max=0;draw()}}}}
+  }
+  ex()};
+
 
 /* ============ APP : TECH (contournement d'un système de sécurité) ============
    4 tâches : câblage · calibrage des relais · alignement de phase · séquence d'accès */
