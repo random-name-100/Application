@@ -288,9 +288,139 @@ L'accès au sous-sol enfin déverrouillé, l'escouade plonge dans l'abîme. Ils 
   ]}]},
 /* cache:true = titre, sous-titre et résumé masqués façon dossier confidentiel. Passer à false (et remplir titre/resume/histoire) pour révéler la session */
 {id:3,cache:true,titre:"",resume:"",histoire:"",apps:[
+ {id:"s3net",type:"net",nom:"NET // Terminal du point de transfert",code:"NET-03",desc:"Terminal du point de transfert des Metal Heads : un seul point de contrôle, puis la messagerie interne.",
+  /* mails : affichés dans la messagerie une fois le point de contrôle franchi */
+  files:[
+   {titre:"Mail — Kord ↔ Mr. H (NCPD)",texte:`================================================================
+// MESSAGERIE SÉCURISÉE — TERMINAL DU POINT DE TRANSFERT
+// FIL : 3 MESSAGES — CHIFFREMENT LEVÉ
+================================================================
+DE    : papa.kord@[relais-anonyme].nc
+À     : mr.h@[relais-anonyme].nc
+DATE  : 21/10/2045 — 23:48
+OBJET : Contrôles sur les docks
+
+H.,
+Deux patrouilles du Precinct #1 ont tourné autour du hangar hier soir.
+Ça n'était pas prévu dans notre arrangement. Le chargement de jeudi
+ne peut PAS être retardé, le client ne tolère aucun écart.
+Je paie pour ne plus voir de gyrophares dans le secteur.
+— K.
+
+----------------------------------------------------------------
+DE    : mr.h@[relais-anonyme].nc
+À     : papa.kord@[relais-anonyme].nc
+DATE  : 22/10/2045 — 07:12
+OBJET : RE: Contrôles sur les docks
+
+Kord,
+Deux bleus qui n'étaient pas dans la boucle. C'est réglé : ils sont
+mutés à la circulation à partir de lundi. Les rapports de la nuit ont
+été « égarés » au service des archives.
+Rappel : la donation du mois passe par le compte habituel du Dpt. Vice.
+Et ne m'écris plus en direct pour ce genre de détail, mes collègues du
+Precinct #2 et de la brigade des docks ont aussi leur part du gâteau,
+je ne suis pas le seul à devoir rester discret.
+— H.
+
+----------------------------------------------------------------
+DE    : papa.kord@[relais-anonyme].nc
+À     : mr.h@[relais-anonyme].nc
+DATE  : 22/10/2045 — 07:30
+OBJET : RE: RE: Contrôles sur les docks
+
+Compris. 5 000 eb versés ce matin. Dis à tes « collègues » que le
+prochain qui fouine sans prévenir finira dans une cuve avec le reste
+de la marchandise.
+================================================================`},
+   {titre:"Mail — Relocalisation vers Bridgetown",texte:`================================================================
+// MESSAGERIE SÉCURISÉE — TERMINAL DU POINT DE TRANSFERT
+================================================================
+DE    : logistique@by-corp-holding.nc
+À     : papa.kord@[relais-anonyme].nc
+CC    : transferts@by-corp-logistics.nc
+DATE  : 24/10/2045 — 14:05
+OBJET : Nouvelle chaîne d'approvisionnement — Lot A3 et suivants
+
+Monsieur Kord,
+
+Suite aux « incidents » récents sur votre site, la holding BY Corp
+a validé le transfert des opérations vers un nouveau point d'échange
+au nord-est de Little China, dans l'ancienne zone des conteneurs de
+Bridgetown (entrepôt B-17, accès par le quai de service).
+
+Calendrier :
+> Les sujets en attente d'expédition seront déplacés par convois
+  de nuit à partir du 28/10.
+> Le site actuel ne sert plus que de centre de tri temporaire.
+> Effacement complet des données locales sous 72 h.
+
+Rappel de nos exigences : la « matière première » doit rester
+vivante, intacte et non chromée. Les sujets sont destinés au
+programme d'expérimentation transhumaine du client final
+(protocoles d'augmentation cybernétique de nouvelle génération).
+Tout sujet présentant un rejet cybernétique sera refusé et non payé.
+
+Les règlements continueront de transiter par BY Corp Holding.
+Aucune autre entité ne doit apparaître sur vos documents.
+
+Cordialement,
+Service Logistique — BY Corp Holding
+« Building Your Future »
+================================================================`},
+   {titre:"Mail — « Re: t'as vu le dernier virement ? »",texte:`================================================================
+// MESSAGERIE INTERNE — CANAL ÉQUIPE DE NUIT
+================================================================
+DE    : rook@pt-transfert.local
+À     : sand@pt-transfert.local
+DATE  : 25/10/2045 — 03:17
+OBJET : Re: t'as vu le dernier virement ?
+
+80 000 eb pour UNE fille. Commande spéciale, priorité absolue,
+« Sujet L.F.O. ». J'ai jamais vu un chiffre pareil.
+
+----------------------------------------------------------------
+DE    : sand@pt-transfert.local
+À     : rook@pt-transfert.local
+DATE  : 25/10/2045 — 03:22
+
+Ils peuvent se le permettre. Tu crois vraiment que « BY Corp »
+existe ? Holding par-ci, logistique par-là, trois boîtes aux lettres
+à Pacifica et une adresse à Night City Est qui mène à un parking.
+Ils se donnent un mal de chien pour se cacher derrière leurs
+sociétés écrans, alors que tout le monde ici sait que c'est RA qui
+tire les ficelles. Les camions repartent toujours vers leur campus.
+
+----------------------------------------------------------------
+DE    : rook@pt-transfert.local
+À     : sand@pt-transfert.local
+DATE  : 25/10/2045 — 03:25
+
+Chut, efface ça. Et puis franchement, une boîte qui vend du chrome
+« pour l'humain de demain » et qui choisit de s'appeler comme un
+caillou… ROCK-ling Augmentics. Un rocher, c'est la seule chose au
+monde qui n'a jamais eu besoin d'une mise à jour.
+Tu veux le futur ? Achète pas un rocher. :)
+
+----------------------------------------------------------------
+DE    : sand@pt-transfert.local
+À     : rook@pt-transfert.local
+DATE  : 25/10/2045 — 03:26
+
+Ha. Garde tes blagues pour le jour où ils te feront « augmenter »
+toi aussi. Je supprime le fil.
+[SUPPRESSION ÉCHOUÉE — CACHE LOCAL CONSERVÉ]
+================================================================`}],
+  strates:[
+   {nom:"STRATE 1 - Pare-feu du terminal",nodes:[
+    {id:"pc",type:"password",nom:"Point de contrôle",diff:"SD 10",ouvre:2}]},
+   {nom:"STRATE 2 - Messagerie du terminal",nodes:[
+    {id:"m1",type:"mail",nom:"De : papa.kord — À : mr.h — « Contrôles sur les docks »",f:0},
+    {id:"m2",type:"mail",nom:"De : logistique@by-corp-holding — « Nouvelle chaîne d'approvisionnement »",f:1},
+    {id:"m3",type:"mail",nom:"De : rook — À : sand — « Re: t'as vu le dernier virement ? »",f:2}]}]},
  {id:"s3track",type:"track",nom:"TRACK // Poursuite urbaine",code:"TRACK-03",desc:"Traque en voiture sur le plan de Night City : deux véhicules de traque contre une voiture de police, au tour par tour.",files:[],
   /* départs : coordonnées de la carte officielle (2000 × 1332) ; vmax = carrefours franchissables par tour */
-  voitures:{t1:{nom:"TRAQUEUR 1",col:"#00ff9c",dep:[960,470],vmax:4},t2:{nom:"TRAQUEUR 2",col:"#ffd400",dep:[1010,525],vmax:4},police:{nom:"POLICE",col:"#3d8bff",dep:[1190,650],vmax:4}},
+  voitures:{t1:{nom:"TRAQUEUR 1",col:"#00ff9c",dep:[960,470],vmax:4},t2:{nom:"TRAQUEUR 2",col:"#ffd400",dep:[1010,525],vmax:4},police:{nom:"POLICE",col:"#3d8bff",dep:[1035,772],vmax:4}},
   /* destination secrète de la police (visible du MJ seulement) : si elle l'atteint avant le 3e repérage, la traque est réussie */
   objectif:{rues:["Blackout St","S 4th St"],nom:"Bâtiment gris",
     txt:"🎯 Traque réussie : la voiture de police s'arrête devant un bâtiment gris, au coin de Blackout St et de S 4th St. Vous observez la scène à distance, sans avoir été repérés."}}]}
@@ -840,7 +970,7 @@ RUN.track=(root,app)=>{
 /* ============ APP : ARCHITECTURE NET (strates + nœuds) ============ */
 RUN.net=(root,app,ctx)=>{
   const K="net:"+app.id,
-  LB={password:"MOT DE PASSE",cameras:"NŒUD DE CONTRÔLE",tourelles:"NŒUD DE CONTRÔLE",blackice:"PROGRAMME BLACK ICE",fichier:"FICHIER",paydata:"FICHIER PAYDATA"},
+  LB={password:"MOT DE PASSE",cameras:"NŒUD DE CONTRÔLE",tourelles:"NŒUD DE CONTRÔLE",blackice:"PROGRAMME BLACK ICE",fichier:"FICHIER",paydata:"FICHIER PAYDATA",mail:"MAIL"},
   fresh=()=>({max:1,cracked:{},revealed:{},won:{},tourelles:true});
   let st=Object.assign(fresh(),ST.get(K));
   const keep=()=>ST.set(K,st),
@@ -865,7 +995,7 @@ RUN.net=(root,app,ctx)=>{
   const B=$(".nt-body",root);
   function render(){
     B.innerHTML=app.strates.map((s,i)=>i+1>st.max?"":`<section class="nt-strate"><h3>&gt; ${esc(s.nom)}</h3><div class="nt-nodes">${s.nodes.map(nd=>{
-      if(!st.revealed[nd.id])return `<button class="nt-node" data-n="${nd.id}"><span>[ ??? ] Donnée non identifiée<small>Cliquer pour analyser</small></span></button>`;
+      if(!st.revealed[nd.id]&&nd.type!=="mail")return `<button class="nt-node" data-n="${nd.id}"><span>[ ??? ] Donnée non identifiée<small>Cliquer pour analyser</small></span></button>`;
       const done=st.cracked[nd.id]||st.won[nd.id]||(nd.f!==undefined&&opened(nd));
       return `<button class="nt-node${done?" done":""}" data-n="${nd.id}"><span>[${LB[nd.type]}] ${esc(nd.nom)}${nd.diff?`<small>Difficulté : ${esc(nd.diff)}</small>`:""}</span>${tag(nd)}</button>`}).join("")}</div></section>`).join("")
       +(st.max<app.strates.length?`<div class="nt-locked">&gt; STRATE ${st.max+1} : ACCÈS VERROUILLÉ</div>`:"")}
@@ -891,6 +1021,7 @@ RUN.net=(root,app,ctx)=>{
       if(st.won[nd.id])return modal(head+`<p>Glace <b>${esc(nd.nomIA)}</b> neutralisée.</p>`,[FERMER]);
       return modal(head+`<img class="nt-img" src="${esc(nd.image)}" alt="${esc(nd.nomIA)}" onerror="this.remove()"><p>Nom de Glace : <b>${esc(nd.nomIA)}</b> - ${esc(nd.stats)}</p><p class="warn">Combat en cours : impossible de quitter sans choisir.</p>`,
         [["FUIR (1 ACTION)",close],["VICTOIRE",()=>{st.won[nd.id]=true;keep();render();close()}]],true);
+    case "mail":return reveal(app,[nd.f]);
     default:
       if(opened(nd))return openFiles(app,[nd.f],[]);
       return modal(head+"<p>Fichier verrouillé : il faut l’analyser pour le lire.</p>",[["ANALYSER (1 ACTION)",()=>{reveal(app,[nd.f]);render()}],FERMER])}}
