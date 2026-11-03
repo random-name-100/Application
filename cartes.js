@@ -317,14 +317,35 @@ function buildGraph(){
     if(dist(q,e.a)<3)q=e.a;else if(dist(q,e.b)<3)q=e.b;
     else{e.dead=true;E.push({a:e.a,b:q,name:e.name,cls:e.cls},{a:q,b:e.b,name:e.name,cls:e.cls});addG(E.length-2);addG(E.length-1);inc(K(q))}
     if(K(q)!==kp){E.push({a:p,b:q,name,cls});addG(E.length-1);inc(kp);inc(K(q))}});
-  const N={};const node=p=>{const k=K(p);return N[k]||(N[k]={k,p:[Math.round(p[0]),Math.round(p[1])],adj:new Map()})};
+  /* fusion des extrémités distantes de moins de 5 m (un seul carrefour au lieu de plusieurs points collés) */
+  const rep={},pts={};E.forEach(e=>{if(!e.dead)[e.a,e.b].forEach(p=>{pts[K(p)]=p})});
+  const cg=new Map();Object.entries(pts).forEach(([k,p])=>{const c=Math.floor(p[0]/8)+":"+Math.floor(p[1]/8);(cg.get(c)||cg.set(c,[]).get(c)).push(k)});
+  const root=k=>{while(rep[k]&&rep[k]!==k)k=rep[k];return k};
+  Object.entries(pts).forEach(([k,p])=>{const cx=Math.floor(p[0]/8),cy=Math.floor(p[1]/8);
+    for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)(cg.get((cx+x)+":"+(cy+y))||[]).forEach(j=>{if(j!==k&&dist(pts[j],p)<5){const a=root(k),b=root(j);if(a!==b)rep[a]=b}})});
+  const N={};const node=p=>{const k=root(K(p));return N[k]||(N[k]={k,p:pts[k].map(Math.round),adj:new Map()})};
   E.forEach(e=>{if(e.dead)return;const a=node(e.a),b=node(e.b);if(a===b)return;const L=dist(e.a,e.b),o={name:e.name,len:L,cls:e.cls};
     if(!a.adj.has(b.k))a.adj.set(b.k,o);if(!b.adj.has(a.k))b.adj.set(a.k,o)});
-  const inter=Object.values(N).filter(n=>n.adj.size!==2&&n.adj.size>0);
+  /* suppression des bouts de rue de moins de 30 m qui finissent en impasse (faux carrefours) */
+  for(let pass=0;pass<3;pass++)Object.values(N).forEach(n=>{if(!N[n.k]||n.adj.size!==1)return;const chain=[n.k];let prev=n.k,cur=[...n.adj.keys()][0],L=n.adj.get(cur).len,g=0;
+    while(N[cur].adj.size===2&&g++<50){const nx=[...N[cur].adj.keys()].find(k=>k!==prev);chain.push(cur);L+=N[cur].adj.get(nx).len;prev=cur;cur=nx}
+    if(N[cur].adj.size>=3&&L<30){chain.forEach(k=>{[...N[k].adj.keys()].forEach(j=>N[j]&&N[j].adj.delete(k));delete N[k]})}});
+  Object.values(N).forEach(n=>{if(!n.adj.size)delete N[n.k]});
+  /* carrefours dédoublés (moins de 15 m l'un de l'autre) : fusionnés en un seul */
+  for(let pass=0;pass<4;pass++){let ch=0;Object.values(N).forEach(n=>{if(!N[n.k]||n.adj.size<3)return;
+    for(const [j,o] of [...n.adj]){const m=N[j];if(!m||j===n.k||o.len>=15||m.adj.size<3)continue;
+      n.p=[Math.round((n.p[0]+m.p[0])/2),Math.round((n.p[1]+m.p[1])/2)];n.adj.delete(j);
+      for(const [x,ox] of m.adj){if(x===n.k)continue;const X=N[x];if(!X)continue;X.adj.delete(j);if(!X.adj.has(n.k))X.adj.set(n.k,ox);if(!n.adj.has(x))n.adj.set(x,ox)}
+      delete N[j];ch++}});if(!ch)break}
+  const inter=Object.values(N).filter(n=>n.adj.size>=3);
   return CACHE.g={N,inter};
 }
 /* carrefour le plus proche d'un point (repère du plan) */
 function nearestInter(p,max=1e9){const g=buildGraph();let best=null,bd=max;g.inter.forEach(n=>{const d=dist(n.p,p);if(d<bd){bd=d;best=n}});return best}
+/* position enregistrée → carrefour valide du graphe actuel (après une mise à jour de la carte) */
+function fixCar(c){if(!c)return c;const g=buildGraph();let n=g.N[c.n];
+  if(!n||n.adj.size<3&&n.adj.size!==1){const xy=String(c.n).split(":").map(Number);n=nearestInter(xy)}
+  if(!n)return c;const f=n.adj.has(c.f)?c.f:[...n.adj.keys()][0];return{n:n.k,f}}
 /* nom des rues d'un carrefour */
 function interName(k){const n=buildGraph().N[k];if(!n)return"";return[...new Set([...n.adj.values()].map(o=>o.name).filter(Boolean))].slice(0,3).join(" × ")}
 /* un pas : depuis le carrefour n (arrivé depuis le nœud voisin f), choix c = "S" tout droit, "L" gauche, "R" droite, "U" demi-tour */
@@ -609,5 +630,5 @@ function render(view,id,opt={}){
 }
 const $=(s,e=document)=>e.querySelector(s);
 
-window.NC_CARTE={render,QUARTIERS,buildCity,buildGraph,nearestInter,interName,step,course,hops,mountMap,C};
+window.NC_CARTE={render,QUARTIERS,buildCity,buildGraph,nearestInter,fixCar,interName,step,course,hops,mountMap,C};
 })();
