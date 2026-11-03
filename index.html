@@ -110,7 +110,8 @@ h2 .redact{background:var(--c);color:var(--c)}
 .card .fin{opacity:1;text-shadow:0 0 8px var(--c)}
 .tk-wrap{position:relative}
 .tk-alert{display:none;position:absolute;left:50%;top:18px;transform:translateX(-50%);z-index:6;max-width:90%;background:#000e;border:2px solid #ffb000;color:#ffb000;padding:12px 18px;font-size:16px;letter-spacing:.06em;text-align:center;box-shadow:0 0 24px #ffb00088;cursor:pointer}
-.tk-alert.on{display:block;animation:ntin .3s}.tk-alert.rouge{border-color:#ff2a3d;color:#ff2a3d;box-shadow:0 0 30px #ff2a3daa}
+.tk-alert.on{display:block;animation:ntin .3s}.tk-alert.vert{border-color:#39ff6a;color:#39ff6a;box-shadow:0 0 30px #39ff6aaa}
+.tk-win{font-size:15px;letter-spacing:.12em;color:#39ff6a;text-shadow:0 0 10px #39ff6a;margin-bottom:6px}.tk-alert.rouge{border-color:#ff2a3d;color:#ff2a3d;box-shadow:0 0 30px #ff2a3daa}
 .tk-pick{display:flex;flex-direction:column;gap:8px;margin:10px 0}.tk-pick button{font-size:16px;padding:14px;border-color:var(--k);color:var(--k)}.tk-pick button:hover{background:var(--k);color:#000}
 .tk-rep{font-size:13px;letter-spacing:.1em;margin-bottom:6px;opacity:.75}.tk-rep.on{color:#ffb000;opacity:1}.tk-rep.chasse{color:#ff2a3d;opacity:1;animation:fdb 1s infinite}
 .tk-leg div{display:flex;gap:8px;align-items:center;font-size:12px}.tk-leg svg{flex:none}
@@ -288,7 +289,10 @@ L'accès au sous-sol enfin déverrouillé, l'escouade plonge dans l'abîme. Ils 
 {id:3,cache:true,titre:"",resume:"",histoire:"",apps:[
  {id:"s3track",type:"track",nom:"TRACK // Poursuite urbaine",code:"TRACK-03",desc:"Traque en voiture sur le plan de Night City : deux véhicules de traque contre une voiture de police, au tour par tour.",files:[],
   /* départs : coordonnées de la carte officielle (2000 × 1332) ; vmax = carrefours franchissables par tour */
-  voitures:{t1:{nom:"TRAQUEUR 1",col:"#00ff9c",dep:[960,470],vmax:4},t2:{nom:"TRAQUEUR 2",col:"#ffd400",dep:[1010,525],vmax:4},police:{nom:"POLICE",col:"#3d8bff",dep:[1190,650],vmax:4}}}]}
+  voitures:{t1:{nom:"TRAQUEUR 1",col:"#00ff9c",dep:[960,470],vmax:4},t2:{nom:"TRAQUEUR 2",col:"#ffd400",dep:[1010,525],vmax:4},police:{nom:"POLICE",col:"#3d8bff",dep:[1190,650],vmax:4}},
+  /* destination secrète de la police (visible du MJ seulement) : si elle l'atteint avant le 3e repérage, la traque est réussie */
+  objectif:{rues:["Blackout St","S 4th St"],nom:"Bâtiment gris",
+    txt:"🎯 Traque réussie : la voiture de police s'arrête devant un bâtiment gris, au coin de Blackout St et de S 4th St. Vous observez la scène à distance, sans avoir été repérés."}}]}
 ];
 /* ============ APPLICATIONS EN RÉSERVE (onglet MJ) ============
    Non rattachées à une session : leur code n'est accepté nulle part.
@@ -623,6 +627,8 @@ RUN.track=(root,app)=>{
   if(role==="mj"&&!mjOk)role="";  /* le rôle MJ n'est proposé qu'après saisie du code dans ⚿ ACCÈS MJ */
   let pub=null,priv=null,ord={t1:null,t2:null},draft=[],placing=null,anim=null,animTour=0,unsubs=[],privSub=null,msg="",busy=false,seenAlert=null,legOpen=true;
   /* r1 : portée des cônes de vision de la police · ang : demi-angle des cônes · r2 : distance de traque */
+  /* carrefour objectif (retrouvé par le nom de ses rues) */
+  const OBJ=app.objectif&&(()=>{const n=M.buildGraph().inter.find(n=>{const ns=[...n.adj.values()].map(o=>o.name);return app.objectif.rues.every(r=>ns.includes(r))});return n?n.k:null})();
   const RAY0={r1:70,r2:110,ang:35},ray=()=>({...RAY0,...(pub&&pub.rayons||{})});
   /* MJ = code MJ saisi dans l'onglet ⚿ ACCÈS MJ (+ compte MJ Firebase ou propriétaire de la page claude.ai) */
   const isMJ=()=>!!mjOk&&(SYNC.kind==="firebase"?!!SYNC.user:SYNC.kind==="claude"?!!SYNC.canWrite:true);
@@ -643,7 +649,7 @@ RUN.track=(root,app)=>{
   const myCar=()=>role==="mj"?"police":role;
   const ready=c=>c==="police"?!!pub&&pub.policeOk===pub.tour:!!ord[c]&&!!pub&&ord[c].tour===pub.tour;
   function defaults(){const cars={};CARS.forEach(c=>{const n=M.nearestInter(M.C(V[c].dep));cars[c]={n:n.k,f:[...n.adj.keys()][0]}});
-    return{pub:{tour:1,cars:{t1:cars.t1,t2:cars.t2,police:cars.police},vmax:{t1:V.t1.vmax,t2:V.t2.vmax},policeOk:0,cacher:false,reperage:0,chasse:false,rayons:{...RAY0},alerte:null,
+    return{pub:{tour:1,cars:{t1:cars.t1,t2:cars.t2,police:cars.police},vmax:{t1:V.t1.vmax,t2:V.t2.vmax},policeOk:0,cacher:false,reperage:0,chasse:false,fin:null,rayons:{...RAY0},alerte:null,
       log:[{t:0,txt:"Nouvelle traque. Le MJ place les véhicules, puis chacun donne ses ordres."}],last:{tour:0,paths:{}},maj:Date.now()},
       priv:{police:cars.police,vmax:V.police.vmax,ordres:[],tour:0}}}
   const fail=e=>{busy=false;const c=e&&e.code||e&&e.message||"erreur";msg=/permission|denied|not_found|invalid_argument/i.test(c)?
@@ -680,6 +686,7 @@ RUN.track=(root,app)=>{
      if(pp){const R=ray(),hd=pf?Math.atan2(pp[1]-pf[1],pp[0]-pf[0]):0,st=`fill="#ff2a3d" fill-opacity=".14" stroke="#ff2a3d" stroke-width="${2.5*u}" stroke-dasharray="${5*u} ${4*u}"`;
        L.push(`<circle cx="${pp[0]}" cy="${pp[1]}" r="${R.r2}" fill="#ffb000" fill-opacity=".05" stroke="#ffb000" stroke-width="${2.5*u}" stroke-dasharray="${9*u} ${6*u}"/>`,
          `<path d="${wedge(pp,hd,R.r1,rad(R.ang))}" ${st}/>`,`<path d="${wedge(pp,hd+Math.PI,R.r1,rad(R.ang))}" ${st}/>`)}}
+    if(OBJ&&isMJ()&&role==="mj"){const o=P(OBJ);if(o)L.push(`<g><circle cx="${o[0]}" cy="${o[1]}" r="${16*u}" fill="none" stroke="#39ff6a" stroke-width="${3*u}"/><circle cx="${o[0]}" cy="${o[1]}" r="${6*u}" fill="#39ff6a"/><path d="M${o[0]-24*u} ${o[1]}H${o[0]+24*u}M${o[0]} ${o[1]-24*u}V${o[1]+24*u}" stroke="#39ff6a" stroke-width="${2*u}"/><text x="${o[0]}" y="${o[1]+36*u}" font-size="${12*u}" text-anchor="middle" fill="#39ff6a" stroke="#000" stroke-width="${3*u}" paint-order="stroke" font-family="monospace" font-weight="bold">OBJECTIF (MJ)</text></g>`)}
     CARS.forEach(c=>{if(!show(c))return;const car=carOf(c);if(!car)return;let p=P(car.n),f=P(car.f);
       if(anim&&anim.pos[c]){p=anim.pos[c].p;f=anim.pos[c].f}if(!p)return;
       let dx=1,dy=0;if(f){dx=p[0]-f[0];dy=p[1]-f[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l}
@@ -710,7 +717,10 @@ RUN.track=(root,app)=>{
   /* ---- résolution du tour (MJ) ---- */
   async function resolve(){if(!pub||!priv)return;busy=true;render();
     const O={t1:ready("t1")?ord.t1.ordres:[],t2:ready("t2")?ord.t2.ordres:[],police:priv.tour===pub.tour?priv.ordres:[]};
-    const st={t1:pub.cars.t1,t2:pub.cars.t2,police:priv.police},R={};CARS.forEach(c=>R[c]=M.course(st[c].n,st[c].f,(O[c]||[]).slice(0,vmaxOf(c))));
+    const st={t1:carOf("t1"),t2:carOf("t2"),police:M.fixCar(priv.police)},R={};CARS.forEach(c=>R[c]=M.course(st[c].n,st[c].f,(O[c]||[]).slice(0,vmaxOf(c))));
+    /* objectif atteint en route : la police s'arrête devant le bâtiment */
+    let arrive=!pub.fin&&!pub.chasse&&OBJ&&R.police.pos.indexOf(OBJ)>=0;
+    if(arrive){const j=R.police.pos.indexOf(OBJ);R.police=M.course(st.police.n,st.police.f,(O.police||[]).slice(0,j))}
     const at=(r,i)=>r.pos[Math.min(i,r.pos.length-1)],log=[],T=pub.tour,hide=!!pub.cacher;
     ["t1","t2"].forEach(c=>{const r=R[c],o=O[c]||[];
       log.push({t:T,txt:`${V[c].nom} : ${o.length?o.map(x=>ICON[x]).join(" ")+" → "+nm(r.n):"aucun ordre, reste sur place"}${r.notes.length?" ("+r.notes.join(", ")+")":""}`})});
@@ -722,14 +732,19 @@ RUN.track=(root,app)=>{
         for(let i=0;i<m;i++){const j=Math.min(i,b.pos.length-1),pp=P(b.pos[j]),pf=P(b.fs[j]),hd=pf?Math.atan2(pp[1]-pf[1],pp[0]-pf[0]):0;if(vu(pp,hd,P(at(a,i)),RY))return true}return false});
       det.forEach(c=>{if(rep<3){rep++;log.push({t:T,txt:`👁 REPÉRAGE ${rep}/3 : la police a remarqué ${V[c].nom}`})}});
       if(det.length){if(rep>=3){chasse=true;niv="rouge";alerts.push("🚨 La police vous a repéré et vous prend en chasse");log.push({t:T,txt:"🚨 La police vous a repéré et vous prend en chasse"})}
-        else{niv="orange";alerts.push("👁 La police est méfiante de votre véhicule et décide d'accélérer");const x=M.course(pol.n,pol.f,["S","S","S"]);pol={n:x.n,f:x.f};ppath=ppath.concat(x.path.slice(1));
+        else if(!arrive){niv="orange";alerts.push("👁 La police est méfiante de votre véhicule et décide d'accélérer");let x=M.course(pol.n,pol.f,["S","S","S"]);
+          if(OBJ&&x.pos.indexOf(OBJ)>0){x=M.course(pol.n,pol.f,["S","S","S"].slice(0,x.pos.indexOf(OBJ)));arrive=true}
+          pol={n:x.n,f:x.f};ppath=ppath.concat(x.path.slice(1));
           log.push({t:T,txt:"La police est méfiante de votre véhicule et décide d'accélérer (+3 carrefours)"})}}}
+    /* traque réussie : objectif atteint avant le 3e repérage */
+    let fin=pub.fin||null;
+    if(arrive&&!chasse){fin="reussie";niv="vert";alerts.length=0;alerts.push(app.objectif.txt);log.push({t:T,txt:app.objectif.txt})}
     /* distance de traque : au moins un traqueur à moins de r2 */
-    if(!chasse&&["t1","t2"].every(c=>dd(R[c].n,pol.n)>RY.r2)){alerts.push("⚠ Vous perdez la trace de la police : rapprochez-vous !");niv=niv||"orange";log.push({t:T,txt:`⚠ HORS DE PORTÉE : aucun traqueur à moins de ${RY.r2} m de la police`})}
+    if(!chasse&&!fin&&["t1","t2"].every(c=>dd(R[c].n,pol.n)>RY.r2)){alerts.push("⚠ Vous perdez la trace de la police : rapprochez-vous !");niv=niv||"orange";log.push({t:T,txt:`⚠ HORS DE PORTÉE : aucun traqueur à moins de ${RY.r2} m de la police`})}
     const cars={t1:{n:R.t1.n,f:R.t1.f},t2:{n:R.t2.n,f:R.t2.f},police:hide?null:pol};
     const paths={t1:R.t1.path,t2:R.t2.path};if(!hide)paths.police=ppath;
     try{await putPriv({...priv,police:pol,ordres:[],tour:T});
-      await putPub({...pub,tour:T+1,cars,policeOk:0,reperage:rep,chasse,alerte:alerts.length?{id:Date.now(),txt:alerts.join(" | "),niv}:(pub.alerte||null),
+      await putPub({...pub,tour:T+1,cars,policeOk:0,reperage:rep,chasse,fin,alerte:alerts.length?{id:Date.now(),txt:alerts.join(" | "),niv}:(pub.alerte||null),
         last:{tour:T+1,paths},log:[...log.reverse(),...(pub.log||[])].slice(0,120)});msg="▓ TOUR "+T+" RÉSOLU"}catch(e){fail(e)}
     busy=false;render()}
   /* ---- panneau ---- */
@@ -741,7 +756,7 @@ RUN.track=(root,app)=>{
     const chip=k=>`<span class="tk-chip${ready(k)?" ok":""}" style="--k:${V[k].col}">${k==="police"?"P":k.toUpperCase()} ${ready(k)?"✓":"…"}</span>`;
     const rp=pub.reperage||0;
     let h=`<div class="tk-tour">TOUR ${pub.tour} ${CARS.map(chip).join("")}</div>
-      <div class="tk-rep${pub.chasse?" chasse":rp?" on":""}">👁 REPÉRAGE ${rp}/3 ${"●".repeat(rp)}${"○".repeat(3-rp)}${pub.chasse?" — 🚨 POURSUITE !":""}</div>`;
+      <div class="tk-rep${pub.chasse?" chasse":rp?" on":""}">👁 REPÉRAGE ${rp}/3 ${"●".repeat(rp)}${"○".repeat(3-rp)}${pub.chasse?" — 🚨 POURSUITE !":""}</div>${pub.fin==="reussie"?`<div class="tk-win">🎯 TRAQUE RÉUSSIE</div>`:""}`;
     if(!SYNC.kind)h+=`<p class="warn"><small>MODE LOCAL : la traque n'est pas partagée entre appareils.</small></p>`;
     h+=roleHTML();
     if(!role){side.innerHTML=h;bindRole();return}  /* premier écran : choix du véhicule */
@@ -767,6 +782,7 @@ RUN.track=(root,app)=>{
           <span class="tk-ctl"><small style="color:#ff2a3d">CÔNES DE VISION : PORTÉE</small><button data-r="r1" data-d="-5">−</button><b>${ray().r1} m</b><button data-r="r1" data-d="5">+</button>
             <small style="color:#ff2a3d">ANGLE</small><button data-r="ang" data-d="-5">−</button><b>±${ray().ang}°</b><button data-r="ang" data-d="5">+</button></span>
           <span class="tk-ctl"><small style="color:#ffb000">DISTANCE DE TRAQUE</small><button data-r="r2" data-d="-10">−</button><b>${ray().r2} m</b><button data-r="r2" data-d="10">+</button></span></div>
+        ${OBJ?`<small style="color:#39ff6a">⌖ OBJECTIF SECRET DE LA POLICE : ${esc(app.objectif.nom)} — ${esc(nm(OBJ))}${pub.fin==="reussie"?" (ATTEINT)":""}</small>`:""}
         <label class="tk-chk"><input type="checkbox" data-a="hide" ${pub.cacher?"checked":""}> Cacher la police aux joueurs</label>
         <div class="row"><button data-a="resolve" class="tk-go" ${busy?"disabled":""}>▶ RÉSOLUTION DU TOUR ${pub.tour}</button></div>
         <div class="row"><button data-a="reset">↺ NOUVELLE TRAQUE</button></div></div>`}
