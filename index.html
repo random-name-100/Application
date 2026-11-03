@@ -141,6 +141,7 @@ h2 .redact{background:var(--c);color:var(--c)}
 .tk-go{flex:1;font-size:15px}
 .tk-log{font-size:12px;border-top:1px solid var(--dim);margin-top:8px;padding-top:6px;max-height:260px;overflow:auto}.tk-log div{padding:2px 0}
 .bt-map{height:min(80vh,880px);min-height:360px}
+.bt-edit{border-color:#ffb000;color:#ffb000;font-weight:bold;box-shadow:0 0 10px #ffb00066}.bt-edit.on,.bt-edit:hover{background:#ffb000;color:#000}
 .bt-pick button{display:flex;align-items:center;gap:10px;text-align:left}
 .bt-av{position:relative;flex:none;width:38px;height:38px;border-radius:50%;border:2px solid #000;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#000;font-size:18px}
 .bt-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -459,14 +460,15 @@ Dernier badge autorisé avant l'incident : RA-SEC-0042 (badge externe, prestatai
     {id:"techie",nom:"Techie",col:"#00e5ff",img:"Images/Session 3/BATTLE-03/techie.png"},{id:"media",nom:"Media",col:"#ff4dd2",img:"Images/Session 3/BATTLE-03/media.png"},
     {id:"justicier",nom:"Justicier",col:"#3d8bff",img:"Images/Session 3/BATTLE-03/justicier.png"},{id:"netrunner",nom:"Netrunner",col:"#d27bff",img:"Images/Session 3/BATTLE-03/netrunner.png"}],
   /* jetons du MJ (position de départ en case colonne/rangée, regard en degrés : 0 = vers la droite, 180 = vers la gauche ; c:"milieu" = à mi-chemin joueurs / policiers) */
-  ennemis:[{kind:"police",nom:"Policier 1",c:18,r:7,dir:180,img:"Images/Session 3/BATTLE-03/policier.png"},
-    {kind:"police",nom:"Policier 2",c:18,r:9,dir:180,img:"Images/Session 3/BATTLE-03/policier.png"},
-    {kind:"capitaine",nom:"Capitaine du trafic",c:16,r:8,dir:0,img:"Images/Session 3/BATTLE-03/capitaine.png"},
-    {kind:"trafiquant",nom:"Trafiquant",c:3,r:4,dir:0,img:"Images/Session 3/BATTLE-03/trafiquant.png"},
+  ennemis:[{kind:"police",nom:"Policier 1",c:18,r:7,dir:0,img:"Images/Session 3/BATTLE-03/policier.png"},
+    {kind:"police",nom:"Policier 2",c:18,r:9,dir:0,img:"Images/Session 3/BATTLE-03/policier.png"},
+    {kind:"capitaine",nom:"Capitaine du trafic",c:20,r:8,dir:180,img:"Images/Session 3/BATTLE-03/capitaine.png"},
+    {kind:"trafiquant",nom:"Trafiquant",c:24,r:2,dir:90,img:"Images/Session 3/BATTLE-03/trafiquant.png"},
     {kind:"enfant",nom:"Enfant",c:"milieu",dir:0,mouv:3,img:"Images/Session 3/BATTLE-03/enfant.png"}],
   /* battle map personnalisée (facultatif) : décommenter et indiquer l'image et sa taille en cases de 2 m
      (ex. image de 3200 × 1700 px = 32 × 17 cases de 100 px). Les obstacles se marquent ensuite par le MJ (✎ OBSTACLES). */
-  // fond:{img:"Images/Session 3/BATTLE-03/carte.png",cols:32,rows:17},
+  fond:{img:"Images/Session 3/BATTLE-03/carte.jpg",cols:30,rows:16,depart:[[0,7],[0,8],[2,7],[2,8],[4,7],[4,8]],
+    obst:["0,11","0,13","0,14","0,15","1,0","1,1","1,11","1,12","1,13","1,14","1,15","1,2","1,3","1,4","1,5","1,6","1,9","10,10","10,13","10,6","10,7","10,8","10,9","11,14","11,4","11,5","11,6","12,14","12,4","12,6","12,7","12,8","12,9","13,10","13,14","13,15","13,3","13,4","13,6","13,7","13,8","13,9","14,10","14,15","14,3","14,5","14,6","14,7","14,8","14,9","15,10","15,14","15,15","15,3","15,5","15,6","15,7","15,8","15,9","16,10","16,11","16,12","16,14","16,15","16,3","16,5","16,6","16,7","16,8","16,9","17,10","17,11","17,14","17,15","17,3","17,4","17,6","17,7","17,8","17,9","18,11","18,14","18,15","18,4","19,11","2,0","2,1","2,13","2,14","2,15","2,2","2,3","2,4","2,5","2,6","2,9","20,0","20,1","20,12","20,13","20,14","20,15","20,2","20,3","20,4","20,6","21,6","22,6","23,6","24,6","24,7","25,11","25,12","25,13","25,14","25,15","25,6","25,7","25,8","26,11","26,12","26,13","26,14","26,15","26,6","26,7","26,8","27,11","27,12","27,13","27,14","27,15","27,6","27,7","27,8","28,11","28,12","28,13","28,14","28,15","28,6","28,7","28,8","28,9","29,11","29,12","29,13","29,14","29,15","29,6","29,7","29,8","29,9","3,0","3,1","3,13","3,14","3,15","3,2","3,3","3,4","3,5","3,6","3,9","4,0","4,1","4,10","4,2","4,3","4,4","4,5","4,6","4,9","5,0","5,1","5,10","5,11","5,2","5,3","6,0","6,1","6,11","6,12","6,13","6,14","6,15","6,2","6,3","7,0","7,1","7,2","7,3","8,0","8,1","8,10","8,2","8,3","8,6","8,9","9,0","9,1","9,13","9,2","9,3"]},
   },
  {id:"s3track",type:"track",nom:"TRACK // Poursuite urbaine",code:"TRACK-03",desc:"Traque en voiture sur le plan de Night City : deux véhicules de traque contre une voiture de police, au tour par tour.",files:[],
   /* départs : coordonnées de la carte officielle (2000 × 1332) ; vmax = carrefours franchissables par tour */
@@ -1180,7 +1182,7 @@ RUN.tech=(root,app)=>{
 RUN.battle=(root,app)=>{
   const M=window.NC_CARTE;if(!M||!M.zoomable){root.innerHTML="<p>CARTE INDISPONIBLE.</p>";return}
   document.body.classList.add("wide");M.css();
-  const FOND=app.fond||null,LV=3; /* LV : version de la disposition (une ancienne disposition enregistrée est ignorée) */
+  const FOND=app.fond||null,LV=4; /* LV : version de la disposition (une ancienne disposition enregistrée est ignorée) */
   const ID=app.id,C=40,COLS=FOND?FOND.cols:32,ROWS=FOND?FOND.rows:17,W=COLS*C,H=ROWS*C,X0=FOND?COLS:30,ROLES=app.roles,NS="http://www.w3.org/2000/svg";
   const K=(c,r)=>c+","+r,blocked=new Set(),walls=new Set(),shutterE=new Set();
   /* ---------- plan de l'entrepôt ---------- */
@@ -1203,7 +1205,7 @@ RUN.battle=(root,app)=>{
   /* ---------- état ---------- */
   const RK="nr:battle-role:"+ID;let role=(()=>{try{return localStorage.getItem(RK)||""}catch(e){return""}})();if(role==="mj"&&!mjOk)role="";
   const isMJ=()=>!!mjOk&&(SYNC.kind==="firebase"?!!SYNC.user:SYNC.kind==="claude"?!!SYNC.canWrite:true);
-  const mid=Math.floor(ROWS/2),DEF_P=FOND?[[COLS-2,mid-1],[COLS-1,mid-1],[COLS-2,mid+1],[COLS-1,mid+1],[COLS-2,mid+2],[COLS-1,mid+2]]:[[30,12],[31,12],[30,14],[31,14],[30,15],[31,15]],
+  const mid=Math.floor(ROWS/2),DEF_P=FOND&&FOND.depart?FOND.depart:FOND?[[COLS-2,mid-1],[COLS-1,mid-1],[COLS-2,mid+1],[COLS-1,mid+1],[COLS-2,mid+2],[COLS-1,mid+2]]:[[30,12],[31,12],[30,14],[31,14],[30,15],[31,15]],
     DEF_E=[[3,3],[5,6],[15,8],[17,8],[11,9],[23,7]];
   const KIND={police:{col:"#ff2a3d",lab:"P"},capitaine:{col:"#ff8a00",lab:"C"},trafiquant:{col:"#b3001a",lab:"T"},enfant:{col:"#f2f2f2",lab:"E"},ennemi:{col:"#ff2a3d",lab:"X"}};
   /* case libre la plus proche d'un point (pour le jeton placé « au milieu ») */
@@ -1215,9 +1217,9 @@ RUN.battle=(root,app)=>{
       return{id:"e"+(i+1),kind:e.kind||"ennemi",nom:e.nom||("Ennemi "+(i+1)),img:e.img||"",c,r,dir:e.dir||0,mouv:e.mouv||6,used:0,t:1}})}};
   let main=null,toks={},sel=null,msg="",busy=false,unsubs=[];
   /* mode image : obstacles = cases marquées par le MJ */
-  const syncObst=()=>{if(!FOND)return;blocked.clear();((main||defMain()).obst||[]).forEach(k=>blocked.add(k))};let edit=false;
+  const syncObst=()=>{if(!FOND)return;blocked.clear();((main?main.obst:FOND.obst)||[]).forEach(k=>blocked.add(k))};let edit=false;syncObst();
   const tour=()=>main?main.tour:1,usedOf=t=>t&&t.t===tour()?t.used||0:0;
-  const posOf=id=>{if(id.startsWith("e")){const e=(main||defMain()).enn.find(x=>x.id===id);return e?[e.c,e.r]:null}const t=toks[id],i=ROLES.findIndex(x=>x.id===id);return t&&t.c!==undefined?[t.c,t.r]:DEF_P[i]};
+  const posOf=id=>{if(id.startsWith("e")){const e=(main||defMain()).enn.find(x=>x.id===id);return e?[e.c,e.r]:null}const t=toks[id],i=ROLES.findIndex(x=>x.id===id);return t&&t.c!==undefined&&t.v===LV?[t.c,t.r]:DEF_P[i]};
   const allIds=()=>[...ROLES.map(r=>r.id),...((main||defMain()).enn.map(e=>e.id))];
   const alive=()=>{if(root.isConnected)return true;unsubs.forEach(f=>{try{f()}catch(e){}});unsubs=[];return false};
   /* ---------- déplacement ---------- */
@@ -1234,7 +1236,7 @@ RUN.battle=(root,app)=>{
   const rest=id=>{const m=mouvOf(id);if(!m)return 0;const u=id.startsWith("e")?usedOf((main||defMain()).enn.find(e=>e.id===id)):usedOf(toks[id]);return Math.max(0,2*m-u)};
   async function move(id,c,r,cost){busy=true;try{
       if(id.startsWith("e")){const m=JSON.parse(JSON.stringify(main||defMain()));const e=m.enn.find(x=>x.id===id);e.used=usedOf(e)+cost;e.t=m.tour;e.c=c;e.r=r;await SYNC.put("traque",ID+"-main",{...m,maj:Date.now()})}
-      else{const t=toks[id]||{};await SYNC.put("traque",ID+"-"+id,{c,r,mouv:t.mouv||mouvOf(id),used:usedOf(t)+cost,t:tour(),maj:Date.now()})}
+      else{const t=toks[id]||{};await SYNC.put("traque",ID+"-"+id,{...t,c,r,v:LV,mouv:t.mouv||mouvOf(id),used:usedOf(t)+cost,t:tour(),dir:t.dir||0,maj:Date.now()})}
       msg=`▓ DÉPLACEMENT : ${cost} m`}catch(e){msg="░ ÉCHEC : "+(e&&e.code||e)}busy=false;render()}
   const putMain=m=>SYNC.put("traque",ID+"-main",{...m,maj:Date.now()});
   /* ---------- carte ---------- */
@@ -1296,12 +1298,23 @@ RUN.battle=(root,app)=>{
       :`<rect x="${X0*C-7}" y="${6*C}" width="14" height="${5*C}" fill="url(#btz)" stroke="#111" stroke-width="2"/>`;
     if(sel&&can(sel)){const R2=reach(sel,Math.floor(rest(sel)/2));R2.forEach((d,k)=>{if(!d)return;const [c,r]=k.split(",").map(Number);
       h+=`<rect x="${c*C+2}" y="${r*C+2}" width="${C-4}" height="${C-4}" fill="#00ff9c" fill-opacity=".18" stroke="#00ff9c" stroke-opacity=".5"/><text x="${c*C+C/2}" y="${r*C+C-6}" font-size="9" text-anchor="middle" fill="#bfffe5" font-family="monospace">${d*2}m</text>`})}
+    /* cônes de vision des joueurs : 30°, arrêtés par les obstacles, les murs et le bord de la carte */
+    const losPoly=(id,dir)=>{const p=posOf(id),x0=(p[0]+.5)*C,y0=(p[1]+.5)*C,pts=[[x0,y0]];
+      for(let a=-15;a<=15;a+=1){const t=(dir+a)*Math.PI/180,dx=Math.cos(t),dy=Math.sin(t);let x=x0,y=y0,pc=p[0],pr=p[1];
+        for(let k=0;k<2000;k++){const nx=x+dx*4,ny=y+dy*4,c=Math.floor(nx/C),r=Math.floor(ny/C);
+          if(c<0||r<0||c>=COLS||r>=ROWS)break;if((c!==pc||r!==pr)&&(blocked.has(K(c,r))||(c!==pc&&wall(pc,pr,c,pr))||(r!==pr&&wall(c,pr,c,r))))break;x=nx;y=ny;pc=c;pr=r}
+        pts.push([x,y])}return pts};
+    const inCone=(pts,q)=>{let ins=false;for(let i=0,j=pts.length-1;i<pts.length;j=i++){const a=pts[i],b=pts[j];if((a[1]>q[1])!==(b[1]>q[1])&&q[0]<(b[0]-a[0])*(q[1]-a[1])/(b[1]-a[1])+a[0])ins=!ins}return ins};
+    const seen=new Set();
+    ROLES.forEach(ro=>{const t=toks[ro.id];if(!posOf(ro.id))return;const mine=ro.id===role,pts=losPoly(ro.id,(t&&t.dir)||0);
+      h+=`<polygon points="${pts.map(q=>q.map(v=>v.toFixed(1)).join(",")).join(" ")}" fill="${ro.col}" fill-opacity="${mine?.2:.07}" stroke="${ro.col}" stroke-opacity="${mine?.85:.3}" stroke-width="${mine?2:1}" stroke-dasharray="${mine?"6 4":"3 4"}"/>`;
+      if(mine)((main||defMain()).enn||[]).forEach(e=>{if(inCone(pts,[(e.c+.5)*C,(e.r+.5)*C]))seen.add(e.id)})});
     if(FOND&&edit)blocked.forEach(k=>{const [c,r]=k.split(",").map(Number);h+=`<rect x="${c*C}" y="${r*C}" width="${C}" height="${C}" fill="url(#btz)" opacity=".55"/>`});
     allIds().forEach(id=>{const p=posOf(id);if(!p)return;const x=p[0]*C+C/2,y=p[1]*C+C/2,ro=roleOf(id),en=!ro,E=en?(main||defMain()).enn.find(e=>e.id===id)||{}:null,KD=en?KIND[E.kind]||KIND.ennemi:null;
       const col=en?KD.col:ro.col,lab=en?(E.kind==="police"?"P"+((E.nom.match(/\d+/)||[""])[0]):KD.lab):ro.nom[0],nm=en?E.nom:ro.nom,im=en?(E.img&&imgOk["E:"+E.img]?E.img:""):(imgOk[ro.id]?ro.img:"");
       if(en&&E.img&&imgOk["E:"+E.img]===undefined){imgOk["E:"+E.img]=false;const q=new Image();q.onload=()=>{imgOk["E:"+E.img]=true;draw()};q.src=E.img}
       const dr=(E&&E.dir||0)*Math.PI/180,ax=x+Math.cos(dr)*C*.82,ay=y+Math.sin(dr)*C*.82,bx=x+Math.cos(dr+.62)*C*.4,by=y+Math.sin(dr+.62)*C*.4,cx2=x+Math.cos(dr-.62)*C*.4,cy2=y+Math.sin(dr-.62)*C*.4;
-      h+=`<g>${en?`<polygon points="${ax},${ay} ${bx},${by} ${cx2},${cy2}" fill="${col}" stroke="#000" stroke-width="2"/>`:""}${sel===id?`<circle cx="${x}" cy="${y}" r="${C*.62}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 4"/>`:""}
+      h+=`<g>${seen.has(id)?`<circle cx="${x}" cy="${y}" r="${C*.7}" fill="none" stroke="#fff" stroke-width="3"/><text x="${x+C*.55}" y="${y-C*.45}" font-size="14">👁</text>`:""}${en?`<polygon points="${ax},${ay} ${bx},${by} ${cx2},${cy2}" fill="${col}" stroke="#000" stroke-width="2"/>`:""}${sel===id?`<circle cx="${x}" cy="${y}" r="${C*.62}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 4"/>`:""}
         <circle cx="${x}" cy="${y}" r="${C*.44}" fill="${col}" stroke="#000" stroke-width="3"/><text x="${x}" y="${y+6}" font-size="17" text-anchor="middle" font-weight="bold" fill="#000" font-family="monospace">${esc(lab)}</text>
         ${im?`<clipPath id="btk-${id}"><circle cx="${x}" cy="${y}" r="${C*.42}"/></clipPath><image href="${esc(im)}" x="${x-C*.42}" y="${y-C*.42}" width="${C*.84}" height="${C*.84}" clip-path="url(#btk-${id})" preserveAspectRatio="xMidYMid slice"/>`:""}
         <circle cx="${x}" cy="${y}" r="${C*.44}" fill="none" stroke="${col}" stroke-width="3"/>
@@ -1330,13 +1343,14 @@ RUN.battle=(root,app)=>{
       h+=`<div class="tk-box"><b style="color:${ro.col}">▓ ${esc(ro.nom)}</b>
         <label class="nt-if">MOUV <input type="number" min="1" max="12" class="bt-mv" value="${m}" placeholder="?"></label>
         ${m?`<div class="bt-bar"><i style="width:${mx?Math.max(0,(mx-u)/mx*100):0}%"></i><em>${Math.max(0,mx-u)} / ${mx} m</em></div>`:`<small class="warn">Indiquez votre MOUV pour pouvoir vous déplacer.</small>`}
-        <small>Touchez votre jeton, puis une case en surbrillance (distance indiquée en mètres).</small></div>`}
+        <div class="tk-ctl"><small>VUE (CÔNE DE 30°)</small><button data-vue="-45" title="Tourner à gauche">⟲ 45°</button><button data-vue="-15">⟲</button><b>${Math.round(t.dir||0)}°</b><button data-vue="15">⟳</button><button data-vue="45" title="Tourner à droite">⟳ 45°</button></div>
+        <small>Touchez votre jeton, puis une case en surbrillance (distance indiquée en mètres). Le cône montre votre ligne de vue, bloquée par les obstacles.</small></div>`}
     if(mj){if(!isMJ())h+=`<p class="warn"><small>${SYNC.kind==="firebase"?"CONNECTEZ-VOUS AVEC LE COMPTE MJ DANS ⚿ ACCÈS MJ.":"SEUL LE PROPRIÉTAIRE DE LA PAGE PEUT ÊTRE MJ."}</small></p>`;
       const m=main||defMain();
       h+=`<div class="tk-box"><b>▓ CONTRÔLE MJ</b>${m.enn.map(e=>`<div class="tk-car"><span style="color:${(KIND[e.kind]||KIND.ennemi).col}">■ ${esc(e.nom)}</span><span class="tk-ctl"><button data-rot="${e.id}" title="Tourner le regard">↻</button><small>MOUV</small><button data-mv="${e.id}" data-d="-1">−</button><b>${e.mouv}</b><button data-mv="${e.id}" data-d="1">+</button>
           <small>${Math.max(0,2*e.mouv-usedOf(e))} m</small><button data-del="${e.id}" title="Retirer">✕</button></span></div>`).join("")}
-        <div class="row"><button data-a="add">＋ ENNEMI</button>${FOND?`<button data-a="edit" class="${edit?"on":""}">✎ OBSTACLES</button>`:`<button data-a="shut">${m.rideau?"FERMER":"OUVRIR"} LE RIDEAU</button>`}</div>
-        ${FOND&&edit?`<small class="warn">MODE OBSTACLES : touchez une case pour la rendre infranchissable (ou la libérer).</small>`:""}
+        <div class="row"><button data-a="add">＋ ENNEMI</button>${FOND?`<button data-a="edit" class="bt-edit ${edit?"on":""}">✎ OBSTACLES — CASES INFRANCHISSABLES ${edit?"(ACTIF)":""}</button>`:`<button data-a="shut">${m.rideau?"FERMER":"OUVRIR"} LE RIDEAU</button>`}</div>
+        ${FOND?`<small class="${edit?"warn":""}">${edit?"MODE OBSTACLES ACTIF : touchez une case pour la rendre infranchissable (hachurée) ou la libérer. Les cases hachurées bloquent les déplacements et les lignes de vue.":"Les obstacles de la carte (béton, mobilier, murs) sont pré-marqués ; ✎ OBSTACLES pour les afficher et les corriger."}</small>`:""}
         <div class="row"><button data-a="turn" class="tk-go">▶ NOUVEAU TOUR (${m.tour+1})</button></div>
         <div class="row"><button data-a="reset">↺ RÉINITIALISER LE COMBAT</button></div><small>Touchez un ennemi puis une case pour le déplacer.</small></div>`}
     h+=`<div class="msg">${esc(msg)}</div><div class="tk-box tk-leg"><b>▓ LÉGENDE</b>
@@ -1345,11 +1359,14 @@ RUN.battle=(root,app)=>{
       <div><svg width="26" height="18"><rect x="3" y="3" width="20" height="12" fill="#00ff9c" fill-opacity=".25" stroke="#00ff9c"/></svg><span>Cases atteignables ce tour (distance en m)</span></div>
       <div><svg width="26" height="18"><rect x="9" y="1" width="8" height="16" fill="url(#btz)"/></svg><span>Rideau métallique (fermé : infranchissable)</span></div>
       ${[["police","Policier"],["capitaine","Capitaine du trafic"],["trafiquant","Trafiquant"],["enfant","Enfant"]].map(([k,t])=>`<div><svg width="26" height="18"><circle cx="11" cy="9" r="7" fill="${KIND[k].col}" stroke="#000"/><polygon points="24,9 17,5 17,13" fill="${KIND[k].col}" stroke="#000"/></svg><span>${t} (MJ) — la pointe indique le regard</span></div>`).join("")}
+      <div><svg width="26" height="18"><path d="M3 9L24 3L24 15Z" fill="#00e5ff" fill-opacity=".25" stroke="#00e5ff" stroke-dasharray="3 2"/></svg><span>Ligne de vue (cône de 30°) ; 👁 = ennemi dans votre champ de vision</span></div>
       <small>Une case = 2 m · longueur de l'entrepôt : 60 m.</small></div>`;
     if(!mjOk)h+=`<p><a href="#" data-a="chg"><small>↺ changer de personnage</small></a></p>`;
     side.innerHTML=h;bindRole();
     const mv=$(".bt-mv",side);if(mv)mv.onchange=async()=>{const v=Math.max(1,Math.min(12,parseInt(mv.value,10)||0));if(!v)return;const t=toks[role]||{},p=posOf(role);
-      try{await SYNC.put("traque",ID+"-"+role,{c:p[0],r:p[1],...t,mouv:v,maj:Date.now()})}catch(e){msg="░ ÉCHEC";render()}};
+      try{await SYNC.put("traque",ID+"-"+role,{...t,c:p[0],r:p[1],v:LV,mouv:v,dir:t.dir||0,maj:Date.now()})}catch(e){msg="░ ÉCHEC";render()}};
+    side.querySelectorAll("[data-vue]").forEach(b=>b.onclick=async()=>{const t=toks[role]||{},p=posOf(role),d=((t.dir||0)+ +b.dataset.vue+360)%360;
+      toks[role]={...t,c:p[0],r:p[1],v:LV,dir:d};draw();try{await SYNC.put("traque",ID+"-"+role,{...t,c:p[0],r:p[1],v:LV,dir:d,maj:Date.now()})}catch(e){}});
     const A=a=>side.querySelector(`[data-a="${a}"]`);
     if(mj&&isMJ()){const m=()=>JSON.parse(JSON.stringify(main||defMain()));
       side.querySelectorAll("[data-mv]").forEach(b=>b.onclick=()=>{const x=m(),e=x.enn.find(q=>q.id===b.dataset.mv);e.mouv=Math.max(1,Math.min(12,e.mouv+ +b.dataset.d));putMain(x)});
@@ -1361,7 +1378,7 @@ RUN.battle=(root,app)=>{
       side.querySelectorAll("[data-rot]").forEach(b=>b.onclick=()=>{const x=m(),e=x.enn.find(q=>q.id===b.dataset.rot);e.dir=((e.dir||0)+45)%360;putMain(x)});
       A("turn").onclick=()=>{const x=m();x.tour++;putMain(x);msg="▓ TOUR "+x.tour+" — mouvements remis à zéro"};
       let armed=false;A("reset").onclick=async e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER LA RÉINITIALISATION ?";return}
-        await putMain(defMain());for(const [i,ro] of ROLES.entries()){const t=toks[ro.id]||{};await SYNC.put("traque",ID+"-"+ro.id,{c:DEF_P[i][0],r:DEF_P[i][1],mouv:t.mouv||null,used:0,t:1,maj:Date.now()})}sel=null;msg="▓ COMBAT RÉINITIALISÉ"}}}
+        await putMain(defMain());for(const [i,ro] of ROLES.entries()){const t=toks[ro.id]||{};await SYNC.put("traque",ID+"-"+ro.id,{c:DEF_P[i][0],r:DEF_P[i][1],v:LV,mouv:t.mouv||null,used:0,t:1,dir:0,maj:Date.now()})}sel=null;msg="▓ COMBAT RÉINITIALISÉ"}}}
   function bindRole(){side.querySelectorAll("[data-role]").forEach(b=>b.onclick=()=>{role=b.dataset.role;try{localStorage.setItem(RK,role)}catch(e){}sel=null;msg="";draw();render()});
     const chg=side.querySelector('[data-a="chg"]');if(chg){let armed=false;chg.onclick=e=>{e.preventDefault();if(!armed){armed=true;chg.textContent="CONFIRMER LE CHANGEMENT DE PERSONNAGE ?";return}role="";try{localStorage.removeItem(RK)}catch(er){}render();draw()}}}
   draw();render()};
