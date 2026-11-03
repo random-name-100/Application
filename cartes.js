@@ -659,5 +659,5 @@ function render(view,id,opt={}){
 }
 const $=(s,e=document)=>e.querySelector(s);
 
-window.NC_CARTE={PERSO,render,QUARTIERS,buildCity,buildGraph,nearestInter,fixCar,interName,step,course,hops,mountMap,C};
+window.NC_CARTE={zoomable,css,PERSO,render,QUARTIERS,buildCity,buildGraph,nearestInter,fixCar,interName,step,course,hops,mountMap,C};
 })();

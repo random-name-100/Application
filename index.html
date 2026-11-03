@@ -140,6 +140,11 @@ h2 .redact{background:var(--c);color:var(--c)}
 .tk-chk{display:flex;gap:8px;align-items:center;font-size:12px}.tk-chk input{flex:none;min-width:0}
 .tk-go{flex:1;font-size:15px}
 .tk-log{font-size:12px;border-top:1px solid var(--dim);margin-top:8px;padding-top:6px;max-height:260px;overflow:auto}.tk-log div{padding:2px 0}
+.bt-map{height:min(80vh,880px);min-height:360px}
+.bt-pick button{display:flex;align-items:center;gap:10px;text-align:left}
+.bt-av{position:relative;flex:none;width:38px;height:38px;border-radius:50%;border:2px solid #000;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#000;font-size:18px}
+.bt-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bt-bar{position:relative;height:18px;border:1px solid var(--c)}.bt-bar i{display:block;height:100%;background:var(--c);opacity:.6}.bt-bar em{position:absolute;inset:0;text-align:center;line-height:16px;font-style:normal;font-size:12px}
 .tk-blink{animation:fdb 1s infinite}
 /* --- Mini-jeux MEDIC / TECH --- */
 .gx-shake{animation:gxs .35s}@keyframes gxs{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
@@ -448,6 +453,11 @@ L'enfant a été sauvé.
 ----------------------------------------------------------------
 Dernier badge autorisé avant l'incident : RA-SEC-0042 (badge externe, prestataire « sécurité »).
 ================================================================`}]},
+ {id:"s3battle",type:"battle",nom:"BATTLE // Entrepôt du bâtiment gris",code:"BATTLE-03",desc:"Battle map tactique (cases de 2 m) : déplacez votre jeton jusqu'à 2 × MOUV mètres par tour.",files:[],
+  /* jetons : déposer les images dans Images/Session 3/BATTLE-03/ (sinon pastille de couleur avec l'initiale) */
+  roles:[{id:"fixer",nom:"Fixer",col:"#ffb000",img:"Images/Session 3/BATTLE-03/fixer.png"},{id:"medtech",nom:"Medtech",col:"#39ff6a",img:"Images/Session 3/BATTLE-03/medtech.png"},
+    {id:"techie",nom:"Techie",col:"#00e5ff",img:"Images/Session 3/BATTLE-03/techie.png"},{id:"media",nom:"Media",col:"#ff4dd2",img:"Images/Session 3/BATTLE-03/media.png"},
+    {id:"justicier",nom:"Justicier",col:"#3d8bff",img:"Images/Session 3/BATTLE-03/justicier.png"},{id:"netrunner",nom:"Netrunner",col:"#d27bff",img:"Images/Session 3/BATTLE-03/netrunner.png"}]},
  {id:"s3track",type:"track",nom:"TRACK // Poursuite urbaine",code:"TRACK-03",desc:"Traque en voiture sur le plan de Night City : deux véhicules de traque contre une voiture de police, au tour par tour.",files:[],
   /* départs : coordonnées de la carte officielle (2000 × 1332) ; vmax = carrefours franchissables par tour */
   voitures:{t1:{nom:"TRAQUEUR 1",col:"#d27bff",dep:[960,470],vmax:4},t2:{nom:"TRAQUEUR 2",col:"#ffd400",dep:[1010,525],vmax:4},police:{nom:"POLICE",col:"#3d8bff",dep:[1035,772],vmax:4}},
@@ -1152,6 +1162,174 @@ RUN.tech=(root,app)=>{
       inp++;dots();if(inp===seq.length){lock=true;lvl++;if(lvl>=L.length){later(done,400);return}GX.ok();lab.textContent="▓ SÉQUENCE VALIDÉE";later(newLvl,900)}}));
     newLvl()}
   run()};
+
+/* ============ APP : BATTLE (battle map tactique, cases de 2 m) ============
+   Entrepôt de 60 m × 34 m (30 × 17 cases intérieures) + 2 colonnes extérieures à droite (arrivée des héros).
+   Documents partagés (collection « traque ») : <id>-main (tour, rideau, ennemis — MJ) et <id>-<rôle> (jeton de chaque joueur).
+   Déplacement : 2 × MOUV mètres par tour, chemin le plus court (8 directions, 2 m par case) sans traverser obstacles, murs ni jetons. */
+RUN.battle=(root,app)=>{
+  const M=window.NC_CARTE;if(!M||!M.zoomable){root.innerHTML="<p>CARTE INDISPONIBLE.</p>";return}
+  document.body.classList.add("wide");M.css();
+  const ID=app.id,C=40,COLS=32,ROWS=17,W=COLS*C,H=ROWS*C,X0=30,ROLES=app.roles,NS="http://www.w3.org/2000/svg";
+  const K=(c,r)=>c+","+r,blocked=new Set(),walls=new Set(),shutterE=new Set();
+  /* ---------- plan de l'entrepôt ---------- */
+  const rng=(()=>{let a=1907;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}})();
+  const vW=(x,r)=>walls.add("v"+x+","+r),hW=(c,y)=>walls.add("h"+c+","+y);
+  for(let r=0;r<ROWS;r++){if(r===13)continue;if(r>=6&&r<=10){shutterE.add("v"+X0+","+r);continue}vW(X0,r)}          // mur droit : porte (rangée 13), rideau (6-10)
+  for(let r=0;r<8;r++)if(r!==3&&r!==4)vW(7,r);for(let c=0;c<7;c++)hW(c,8);                                              // pièce à gauche, porte ouverte (rangées 3-4)
+  const obst=[],box=(c,r,w,h,kind,lab)=>{obst.push({c,r,w,h,kind,lab});for(let i=0;i<w;i++)for(let j=0;j<h;j++)blocked.add(K(c+i,r+j))};
+  [[10,3],[10,13],[20,3],[20,13]].forEach(([c,r])=>box(c,r,1,1,"pilier"));
+  box(13,0,3,1,"caisses");box(24,0,2,2,"caisses");box(8,16,2,1,"caisses");box(17,16,1,1,"caisses");box(26,15,3,2,"palettes");box(0,0,2,1,"armoires");box(0,16,1,1,"futs");box(1,16,1,1,"futs");
+  box(15,5,3,1,"tv");box(15,9,3,1,"canape");box(13,6,1,2,"fauteuil");box(19,6,1,2,"fauteuil");box(16,7,1,1,"table");
+  /* blocs de béton : 4 m × 1 m, orientés au hasard (tirage fixe), hors salon, piliers, pièce et entrée */
+  const blocks=[],free=(x,y)=>!(x>11&&x<21&&y>3.5&&y<11)&&!(x<8.5&&y<9)&&!(x>25&&y>10)&&!(x>24&&y<3);
+  for(let n=0,guard=0;n<15&&guard<800;guard++){const x=8+rng()*20,y=1+rng()*15,a=Math.round(rng()*12)*15;if(!free(x,y))continue;
+    if(blocks.some(b=>Math.hypot(b.x-x,b.y-y)<3.4))continue;if([[10.5,3.5],[10.5,13.5],[20.5,3.5],[20.5,13.5]].some(([px,py])=>Math.hypot(px-x,py-y)<2.2))continue;blocks.push({x,y,a});n++}
+  blocks.forEach(b=>{const ca=Math.cos(b.a*Math.PI/180),sa=Math.sin(b.a*Math.PI/180);
+    for(let c=Math.floor(b.x-2);c<=Math.floor(b.x+2);c++)for(let r=Math.floor(b.y-2);r<=Math.floor(b.y+2);r++){const dx=c+.5-b.x,dy=r+.5-b.y,u=dx*ca+dy*sa,v=-dx*sa+dy*ca;
+      if(Math.abs(u)<=1.15&&Math.abs(v)<=.62)blocked.add(K(c,r))}});
+  /* ---------- état ---------- */
+  const RK="nr:battle-role:"+ID;let role=(()=>{try{return localStorage.getItem(RK)||""}catch(e){return""}})();if(role==="mj"&&!mjOk)role="";
+  const isMJ=()=>!!mjOk&&(SYNC.kind==="firebase"?!!SYNC.user:SYNC.kind==="claude"?!!SYNC.canWrite:true);
+  const DEF_P=[[30,12],[31,12],[30,14],[31,14],[30,15],[31,15]],DEF_E=[[3,3],[5,6],[15,8],[17,8],[11,9],[23,7]];
+  const defMain=()=>({tour:1,rideau:false,enn:(app.ennemis||DEF_E.slice(0,4)).map((e,i)=>({id:"e"+(i+1),nom:"Policier "+(i+1),c:(Array.isArray(e)?e:DEF_E[i])[0],r:(Array.isArray(e)?e:DEF_E[i])[1],mouv:6,used:0,t:1}))});
+  let main=null,toks={},sel=null,msg="",busy=false,unsubs=[];
+  const tour=()=>main?main.tour:1,usedOf=t=>t&&t.t===tour()?t.used||0:0;
+  const posOf=id=>{if(id.startsWith("e")){const e=(main||defMain()).enn.find(x=>x.id===id);return e?[e.c,e.r]:null}const t=toks[id],i=ROLES.findIndex(x=>x.id===id);return t&&t.c!==undefined?[t.c,t.r]:DEF_P[i]};
+  const allIds=()=>[...ROLES.map(r=>r.id),...((main||defMain()).enn.map(e=>e.id))];
+  const alive=()=>{if(root.isConnected)return true;unsubs.forEach(f=>{try{f()}catch(e){}});unsubs=[];return false};
+  /* ---------- déplacement ---------- */
+  const wall=(c1,r1,c2,r2)=>{let k;if(c1!==c2)k="v"+Math.max(c1,c2)+","+r1;else k="h"+c1+","+Math.max(r1,r2);return walls.has(k)||(!(main&&main.rideau)&&shutterE.has(k))};
+  function reach(id,maxSteps){const s=posOf(id),occ=new Set(allIds().filter(x=>x!==id).map(x=>posOf(x)).filter(Boolean).map(p=>K(...p)));
+    const ok=(c,r)=>c>=0&&r>=0&&c<COLS&&r<ROWS&&!blocked.has(K(c,r))&&!occ.has(K(c,r));
+    const D=new Map([[K(...s),0]]),q=[s];while(q.length){const [c,r]=q.shift(),d=D.get(K(c,r));if(d>=maxSteps)continue;
+      for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){if(!dx&&!dy)continue;const n=[c+dx,r+dy];if(!ok(...n)||D.has(K(...n)))continue;
+        if(dx&&dy){if(!ok(c+dx,r)||!ok(c,r+dy)||wall(c,r,c+dx,r)||wall(c+dx,r,c+dx,r+dy)||wall(c,r,c,r+dy)||wall(c,r+dy,c+dx,r+dy))continue}
+        else if(wall(c,r,...n))continue;D.set(K(...n),d+1);q.push(n)}}
+    return D}
+  const can=id=>id.startsWith("e")?isMJ()&&role==="mj":id===role;
+  const mouvOf=id=>id.startsWith("e")?((main||defMain()).enn.find(e=>e.id===id)||{}).mouv||6:(toks[id]&&toks[id].mouv)||null;
+  const rest=id=>{const m=mouvOf(id);if(!m)return 0;const u=id.startsWith("e")?usedOf((main||defMain()).enn.find(e=>e.id===id)):usedOf(toks[id]);return Math.max(0,2*m-u)};
+  async function move(id,c,r,cost){busy=true;try{
+      if(id.startsWith("e")){const m=JSON.parse(JSON.stringify(main||defMain()));const e=m.enn.find(x=>x.id===id);e.used=usedOf(e)+cost;e.t=m.tour;e.c=c;e.r=r;await SYNC.put("traque",ID+"-main",{...m,maj:Date.now()})}
+      else{const t=toks[id]||{};await SYNC.put("traque",ID+"-"+id,{c,r,mouv:t.mouv||mouvOf(id),used:usedOf(t)+cost,t:tour(),maj:Date.now()})}
+      msg=`▓ DÉPLACEMENT : ${cost} m`}catch(e){msg="░ ÉCHEC : "+(e&&e.code||e)}busy=false;render()}
+  const putMain=m=>SYNC.put("traque",ID+"-main",{...m,maj:Date.now()});
+  /* ---------- carte ---------- */
+  root.innerHTML=`<div class="tk"><div class="tk-wrap"><div class="tk-map bt-map"></div></div><div class="tk-side"><h2 style="margin:0 0 6px">${esc(app.nom)}</h2><div class="bt-body"><p>CONNEXION…</p></div></div></div>`;
+  const side=$(".bt-body",root),boxEl=$(".bt-map",root);boxEl.classList.add("nc-box");
+  boxEl.innerHTML=`<div class="nc-inner"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="bt-svg">${mapSVG()}<g class="bt-lay"></g></svg></div>
+    <div class="nc-tools"><button data-z="in">+</button><button data-z="out">−</button><button data-z="fit">⤢</button><button data-z="fs">⛶</button></div>`;
+  const inner=$(".nc-inner",boxEl),lay=$(".bt-lay",boxEl);inner.style.width=W+"px";inner.style.height=H+"px";
+  const z=M.zoomable(boxEl,inner,W,H,()=>{},onTap);
+  boxEl.querySelector(".nc-tools").onclick=e=>{const a=e.target.closest("button")?.dataset.z;if(a==="in")z.zin();if(a==="out")z.zout();if(a==="fit")z.fit();
+    if(a==="fs"){if(document.fullscreenElement)document.exitFullscreen();else boxEl.requestFullscreen?.().catch(()=>{})}};
+  requestAnimationFrame(()=>z.fit());
+  function mapSVG(){let s=`<defs><pattern id="btf" width="${C*2}" height="${C*2}" patternUnits="userSpaceOnUse"><rect width="${C*2}" height="${C*2}" fill="#3b3f42"/><path d="M0 0h${C*2}v${C*2}" fill="none" stroke="#33373a" stroke-width="2"/><circle cx="23" cy="51" r="1.4" fill="#2d3134"/><circle cx="61" cy="17" r="1" fill="#46494c"/></pattern>
+      <pattern id="bta" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="#1c1e20"/><circle cx="5" cy="7" r=".8" fill="#2a2c2e"/><circle cx="14" cy="15" r=".8" fill="#262829"/></pattern>
+      <pattern id="btz" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="16" height="16" fill="#e8b400"/><rect width="8" height="16" fill="#1a1a1a"/></pattern>
+      <linearGradient id="btc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9b6ae"/><stop offset="1" stop-color="#8f8c85"/></linearGradient></defs>
+      <rect width="${W}" height="${H}" fill="url(#bta)"/><rect width="${X0*C}" height="${H}" fill="url(#btf)"/><rect x="0" y="0" width="${7*C}" height="${8*C}" fill="#34383b"/>`;
+    /* taches, marquages */
+    [[6,12,60,30],[24,10,46,22],[12,3,30,18],[27,6,40,26],[3,13,34,16]].forEach(([c,r,rx,ry])=>s+=`<ellipse cx="${c*C}" cy="${r*C}" rx="${rx}" ry="${ry}" fill="#1b1d1e" opacity=".55"/>`);
+    s+=`<rect x="${(X0-3)*C}" y="${6*C}" width="${3*C}" height="${5*C}" fill="none" stroke="#e8b400" stroke-width="4" stroke-dasharray="20 12" opacity=".7"/><text x="${(X0-1.5)*C}" y="${8.6*C}" font-size="18" text-anchor="middle" fill="#e8b400" opacity=".6" font-family="monospace" font-weight="bold" transform="rotate(-90 ${(X0-1.5)*C} ${8.6*C})">QUAI DE CHARGEMENT</text>`;
+    s+=`<rect x="${12*C}" y="${4.4*C}" width="${9*C}" height="${6.2*C}" rx="10" fill="#4a2c3c" opacity=".55" stroke="#7a3d5c" stroke-width="2"/>`;
+    /* obstacles */
+    obst.forEach(o=>{const x=o.c*C,y=o.r*C,w=o.w*C,h=o.h*C;
+      if(o.kind==="pilier")s+=`<rect x="${x+4}" y="${y+4}" width="${w-8}" height="${h-8}" fill="#6b6f72" stroke="#222" stroke-width="3"/><path d="M${x+4} ${y+4}L${x+w-4} ${y+h-4}" stroke="#555" stroke-width="2"/>`;
+      if(o.kind==="caisses"||o.kind==="palettes"||o.kind==="armoires")for(let i=0;i<o.w;i++)for(let j=0;j<o.h;j++){const a=x+i*C,b=y+j*C;
+        s+=o.kind==="armoires"?`<rect x="${a+3}" y="${b+3}" width="${C-6}" height="${C-6}" fill="#4c5560" stroke="#222" stroke-width="2"/><path d="M${a+3} ${b+14}h${C-6}M${a+3} ${b+26}h${C-6}" stroke="#2c3238" stroke-width="2"/>`
+          :`<rect x="${a+3}" y="${b+3}" width="${C-6}" height="${C-6}" fill="${o.kind==="palettes"?"#8a6a3c":"#7b5a32"}" stroke="#3a2a14" stroke-width="2"/><path d="M${a+3} ${b+3}L${a+C-3} ${b+C-3}M${a+C-3} ${b+3}L${a+3} ${b+C-3}" stroke="#4a3418" stroke-width="2"/>`}
+      if(o.kind==="futs")s+=`<circle cx="${x+C/2}" cy="${y+C/2}" r="${C/2-4}" fill="#3a6a4a" stroke="#14281b" stroke-width="3"/><circle cx="${x+C/2}" cy="${y+C/2}" r="6" fill="none" stroke="#14281b" stroke-width="2"/>`;
+      if(o.kind==="tv")s+=`<rect x="${x+2}" y="${y+12}" width="${w-4}" height="${h-18}" fill="#111" stroke="#00e5ff" stroke-width="3"/><rect x="${x+8}" y="${y+16}" width="${w-16}" height="${h-26}" fill="#06303a"/><text x="${x+w/2}" y="${y+h-12}" font-size="10" text-anchor="middle" fill="#00e5ff" font-family="monospace">◉ N54 NEWS</text><path d="M${x+w/2-30} ${y+h+2}l30 ${C*1.6}l30 -${C*1.6}" fill="#00e5ff" opacity=".07"/>`;
+      if(o.kind==="canape")s+=`<rect x="${x+2}" y="${y+6}" width="${w-4}" height="${h-8}" rx="8" fill="#5a2a2a" stroke="#2a0f0f" stroke-width="3"/><rect x="${x+2}" y="${y+h-14}" width="${w-4}" height="12" rx="5" fill="#4a1f1f"/><path d="M${x+C} ${y+8}v${h-12}M${x+2*C} ${y+8}v${h-12}" stroke="#3a1515" stroke-width="2"/>`;
+      if(o.kind==="fauteuil")s+=`<rect x="${x+4}" y="${y+10}" width="${w-8}" height="${h-20}" rx="8" fill="#5a2a2a" stroke="#2a0f0f" stroke-width="3"/><rect x="${x+(o.c<16?4:w-14)}" y="${y+10}" width="10" height="${h-20}" rx="4" fill="#4a1f1f"/>`;
+      if(o.kind==="table")s+=`<rect x="${x+6}" y="${y+8}" width="${w-12}" height="${h-16}" rx="4" fill="#2b2f33" stroke="#111" stroke-width="2"/><circle cx="${x+14}" cy="${y+18}" r="3" fill="#a33"/>`});
+    blocks.forEach(b=>s+=`<g transform="translate(${b.x*C} ${b.y*C}) rotate(${b.a})"><rect x="${-2*C+4}" y="${-C/2+3}" width="${4*C-8}" height="${C-6}" rx="5" fill="url(#btc)" stroke="#555" stroke-width="3"/>
+      <rect x="${-2*C+12}" y="${-C/2+8}" width="${4*C-24}" height="${C-16}" rx="3" fill="none" stroke="#7d7a73" stroke-width="2"/><rect x="${-14}" y="${-4}" width="28" height="8" fill="url(#btz)" opacity=".8"/></g>`);
+    /* murs */
+    const wl=(x1,y1,x2,y2)=>`<line x1="${x1*C}" y1="${y1*C}" x2="${x2*C}" y2="${y2*C}" stroke="#15181a" stroke-width="12" stroke-linecap="square"/><line x1="${x1*C}" y1="${y1*C}" x2="${x2*C}" y2="${y2*C}" stroke="#8a8f92" stroke-width="5" stroke-linecap="square"/>`;
+    s+=wl(0,0,X0,0)+wl(0,ROWS,X0,ROWS)+wl(0,0,0,ROWS)+wl(X0,0,X0,6)+wl(X0,11,X0,13)+wl(X0,14,X0,ROWS)+wl(7,0,7,3)+wl(7,5,7,8)+wl(0,8,7,8);
+    /* porte ouverte de la pièce, porte d'entrée, rideau */
+    s+=`<path d="M${7*C} ${3*C}A${2*C} ${2*C} 0 0 1 ${9*C} ${5*C}" fill="none" stroke="#8a8f92" stroke-width="2" stroke-dasharray="6 5"/><line x1="${7*C}" y1="${3*C}" x2="${8.4*C}" y2="${1.6*C}" stroke="#a8adb0" stroke-width="6"/>
+      <text x="${3.5*C}" y="${4.4*C}" font-size="15" text-anchor="middle" fill="#9aa" opacity=".55" font-family="monospace">BUREAU</text>
+      <path d="M${X0*C} ${13*C}A${C} ${C} 0 0 0 ${(X0+1)*C} ${14*C}" fill="none" stroke="#8a8f92" stroke-width="2" stroke-dasharray="5 4"/><line x1="${X0*C}" y1="${14*C}" x2="${(X0+1)*C}" y2="${14.1*C}" stroke="#a8adb0" stroke-width="6"/>
+      <text x="${(X0+1)*C}" y="${12.6*C}" font-size="12" text-anchor="middle" fill="#ccc" font-family="monospace" transform="rotate(-90 ${(X0+1)*C} ${12.6*C})">ENTRÉE</text>
+      <g class="bt-shut"></g>
+      <text x="${(X0+1)*C}" y="${2*C}" font-size="12" text-anchor="middle" fill="#777" font-family="monospace" transform="rotate(90 ${(X0+1)*C} ${2*C})">DEHORS</text>`;
+    /* quadrillage 2 m */
+    let g="";for(let c=1;c<COLS;c++)g+=`M${c*C} 0V${H}`;for(let r=1;r<ROWS;r++)g+=`M0 ${r*C}H${W}`;s+=`<path d="${g}" stroke="#000" stroke-opacity=".35" stroke-width="1"/>`;
+    let lb="";for(let c=0;c<COLS;c++)lb+=`<text x="${c*C+C/2}" y="11" font-size="9" text-anchor="middle">${c+1}</text>`;for(let r=0;r<ROWS;r++)lb+=`<text x="3" y="${r*C+C/2+3}" font-size="9">${String.fromCharCode(65+r)}</text>`;
+    s+=`<g fill="#fff" fill-opacity=".35" font-family="monospace">${lb}</g>`;return s}
+  /* ---------- tracé dynamique ---------- */
+  const roleOf=id=>ROLES.find(r=>r.id===id),imgOk={};
+  ROLES.forEach(r=>{if(!r.img)return;const im=new Image();im.onload=()=>{imgOk[r.id]=true;draw();render()};im.src=r.img});
+  function draw(){if(!lay.isConnected)return;let h="";
+    const sh=$(".bt-shut",boxEl);if(sh)sh.innerHTML=main&&main.rideau?`<rect x="${X0*C-5}" y="${6*C}" width="10" height="${5*C}" fill="#e8b400" opacity=".25"/><text x="${(X0+.6)*C}" y="${8.5*C}" font-size="11" fill="#e8b400" font-family="monospace" transform="rotate(-90 ${(X0+.6)*C} ${8.5*C})">RIDEAU OUVERT</text>`
+      :`<rect x="${X0*C-7}" y="${6*C}" width="14" height="${5*C}" fill="url(#btz)" stroke="#111" stroke-width="2"/>`;
+    if(sel&&can(sel)){const R2=reach(sel,Math.floor(rest(sel)/2));R2.forEach((d,k)=>{if(!d)return;const [c,r]=k.split(",").map(Number);
+      h+=`<rect x="${c*C+2}" y="${r*C+2}" width="${C-4}" height="${C-4}" fill="#00ff9c" fill-opacity=".18" stroke="#00ff9c" stroke-opacity=".5"/><text x="${c*C+C/2}" y="${r*C+C-6}" font-size="9" text-anchor="middle" fill="#bfffe5" font-family="monospace">${d*2}m</text>`})}
+    allIds().forEach(id=>{const p=posOf(id);if(!p)return;const x=p[0]*C+C/2,y=p[1]*C+C/2,ro=roleOf(id),en=!ro,col=en?"#ff2a3d":ro.col,lab=en?id.toUpperCase().replace("E","P"):ro.nom[0];
+      const nm=en?((main||defMain()).enn.find(e=>e.id===id)||{}).nom:ro.nom;
+      h+=`<g>${sel===id?`<circle cx="${x}" cy="${y}" r="${C*.62}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 4"/>`:""}
+        <circle cx="${x}" cy="${y}" r="${C*.44}" fill="${col}" stroke="#000" stroke-width="3"/><text x="${x}" y="${y+6}" font-size="17" text-anchor="middle" font-weight="bold" fill="#000" font-family="monospace">${esc(lab)}</text>
+        ${ro&&imgOk[ro.id]?`<clipPath id="btk-${id}"><circle cx="${x}" cy="${y}" r="${C*.42}"/></clipPath><image href="${esc(ro.img)}" x="${x-C*.42}" y="${y-C*.42}" width="${C*.84}" height="${C*.84}" clip-path="url(#btk-${id})" preserveAspectRatio="xMidYMid slice"/>`:""}
+        <circle cx="${x}" cy="${y}" r="${C*.44}" fill="none" stroke="${col}" stroke-width="3"/>
+        <text x="${x}" y="${y+C*.44+12}" font-size="10" text-anchor="middle" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke" font-family="monospace" font-weight="bold">${esc(nm)}</text></g>`});
+    h=h.replace(/font-size="10" text-anchor="middle" fill="#fff"/g,'font-size="9" text-anchor="middle" fill="#fff"');
+    lay.innerHTML=h}
+  function onTap(t,p){const c=Math.floor(p[0]/C),r=Math.floor(p[1]/C),hit=allIds().find(id=>{const q=posOf(id);return q&&q[0]===c&&q[1]===r});
+    if(hit){if(can(hit)){if(!mouvOf(hit)){sel=null;msg="Indiquez d'abord votre MOUV dans le panneau"}else{sel=sel===hit?null:hit;msg=""}}else{msg=hit.startsWith("e")?"Seul le MJ déplace les ennemis":"Ce jeton appartient à un autre joueur";sel=null}draw();render();return}
+    if(sel&&can(sel)&&!busy){const R2=reach(sel,Math.floor(rest(sel)/2)),d=R2.get(K(c,r));if(d){move(sel,c,r,d*2);return}
+      msg=rest(sel)<2?"Plus de mouvement ce tour-ci":"Case hors de portée ou bloquée";render();return}
+    sel=null;draw()}
+  /* ---------- abonnements ---------- */
+  SYNC.ready.then(()=>{if(!alive())return;
+    unsubs.push(SYNC.watch("traque",ID+"-main",d=>{if(!alive())return;main=d;draw();render()}));
+    ROLES.forEach(ro=>unsubs.push(SYNC.watch("traque",ID+"-"+ro.id,d=>{if(!alive())return;toks[ro.id]=d;draw();render()})));render()});
+  /* ---------- panneau ---------- */
+  function render(){if(!side.isConnected)return;
+    if(!role){side.innerHTML=`<div class="tk-intro"><b>▓ COMBAT — ENTREPÔT</b><p>Les héros ont suivi les policiers corrompus jusqu'à ce bâtiment gris. Choisissez votre personnage.</p><p><small>Chaque case fait 2 m. Déplacement maximal par tour : 2 × MOUV mètres.</small></p></div>
+      <div class="tk-pick bt-pick">${ROLES.map(r=>`<button data-role="${r.id}" style="--k:${r.col}"><span class="bt-av" style="background:${r.col}">${imgOk[r.id]?`<img src="${esc(r.img)}" alt="">`:""}<b>${esc(r.nom[0])}</b></span> ${esc(r.nom)}</button>`).join("")}${mjOk?`<button data-role="mj" style="--k:#ff2a3d">■ MJ (ENNEMIS)</button>`:""}</div>`;bindRole();return}
+    const mj=role==="mj",ro=roleOf(role);
+    let h=`<div class="tk-tour">TOUR ${tour()}</div>`;if(!SYNC.kind)h+=`<p class="warn"><small>MODE LOCAL : la carte n'est pas partagée entre appareils.</small></p>`;
+    if(mjOk)h+=`<div class="tk-role">VUE : ${[...ROLES.map(r=>[r.id,r.nom]),["mj","MJ"]].map(([k,n])=>`<button data-role="${k}" class="${role===k?"on":""}">${esc(n)}</button>`).join("")}</div>`;
+    if(ro){const t=toks[ro.id]||{},m=t.mouv||"",u=usedOf(t),mx=m?2*m:0;
+      h+=`<div class="tk-box"><b style="color:${ro.col}">▓ ${esc(ro.nom)}</b>
+        <label class="nt-if">MOUV <input type="number" min="1" max="12" class="bt-mv" value="${m}" placeholder="?"></label>
+        ${m?`<div class="bt-bar"><i style="width:${mx?Math.max(0,(mx-u)/mx*100):0}%"></i><em>${Math.max(0,mx-u)} / ${mx} m</em></div>`:`<small class="warn">Indiquez votre MOUV pour pouvoir vous déplacer.</small>`}
+        <small>Touchez votre jeton, puis une case en surbrillance (distance indiquée en mètres).</small></div>`}
+    if(mj){if(!isMJ())h+=`<p class="warn"><small>${SYNC.kind==="firebase"?"CONNECTEZ-VOUS AVEC LE COMPTE MJ DANS ⚿ ACCÈS MJ.":"SEUL LE PROPRIÉTAIRE DE LA PAGE PEUT ÊTRE MJ."}</small></p>`;
+      const m=main||defMain();
+      h+=`<div class="tk-box"><b>▓ CONTRÔLE MJ</b>${m.enn.map(e=>`<div class="tk-car"><span style="color:#ff2a3d">■ ${esc(e.nom)}</span><span class="tk-ctl"><small>MOUV</small><button data-mv="${e.id}" data-d="-1">−</button><b>${e.mouv}</b><button data-mv="${e.id}" data-d="1">+</button>
+          <small>${Math.max(0,2*e.mouv-usedOf(e))} m</small><button data-del="${e.id}" title="Retirer">✕</button></span></div>`).join("")}
+        <div class="row"><button data-a="add">＋ ENNEMI</button><button data-a="shut">${m.rideau?"FERMER":"OUVRIR"} LE RIDEAU</button></div>
+        <div class="row"><button data-a="turn" class="tk-go">▶ NOUVEAU TOUR (${m.tour+1})</button></div>
+        <div class="row"><button data-a="reset">↺ RÉINITIALISER LE COMBAT</button></div><small>Touchez un ennemi puis une case pour le déplacer.</small></div>`}
+    h+=`<div class="msg">${esc(msg)}</div><div class="tk-box tk-leg"><b>▓ LÉGENDE</b>
+      <div><svg width="26" height="18"><rect x="3" y="4" width="20" height="10" rx="2" fill="#a8a59d" stroke="#555"/></svg><span>Bloc de béton (couvert)</span></div>
+      <div><svg width="26" height="18"><rect x="5" y="3" width="16" height="12" fill="#7b5a32" stroke="#3a2a14"/></svg><span>Caisses, palettes, piliers, mobilier (infranchissables)</span></div>
+      <div><svg width="26" height="18"><rect x="3" y="3" width="20" height="12" fill="#00ff9c" fill-opacity=".25" stroke="#00ff9c"/></svg><span>Cases atteignables ce tour (distance en m)</span></div>
+      <div><svg width="26" height="18"><rect x="9" y="1" width="8" height="16" fill="url(#btz)"/></svg><span>Rideau métallique (fermé : infranchissable)</span></div>
+      <div><svg width="26" height="18"><circle cx="13" cy="9" r="7" fill="#ff2a3d" stroke="#000"/></svg><span>Ennemis (déplacés par le MJ)</span></div>
+      <small>Une case = 2 m · longueur de l'entrepôt : 60 m.</small></div>`;
+    if(!mjOk)h+=`<p><a href="#" data-a="chg"><small>↺ changer de personnage</small></a></p>`;
+    side.innerHTML=h;bindRole();
+    const mv=$(".bt-mv",side);if(mv)mv.onchange=async()=>{const v=Math.max(1,Math.min(12,parseInt(mv.value,10)||0));if(!v)return;const t=toks[role]||{},p=posOf(role);
+      try{await SYNC.put("traque",ID+"-"+role,{c:p[0],r:p[1],...t,mouv:v,maj:Date.now()})}catch(e){msg="░ ÉCHEC";render()}};
+    const A=a=>side.querySelector(`[data-a="${a}"]`);
+    if(mj&&isMJ()){const m=()=>JSON.parse(JSON.stringify(main||defMain()));
+      side.querySelectorAll("[data-mv]").forEach(b=>b.onclick=()=>{const x=m(),e=x.enn.find(q=>q.id===b.dataset.mv);e.mouv=Math.max(1,Math.min(12,e.mouv+ +b.dataset.d));putMain(x)});
+      side.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const x=m();x.enn=x.enn.filter(q=>q.id!==b.dataset.del);if(sel===b.dataset.del)sel=null;putMain(x)});
+      A("add").onclick=()=>{const x=m(),n=1+Math.max(0,...x.enn.map(e=>+e.id.slice(1)));const spot=DEF_E.find(p=>!allIds().some(id=>{const q=posOf(id);return q&&q[0]===p[0]&&q[1]===p[1]}))||[4,12];
+        x.enn.push({id:"e"+n,nom:"Policier "+n,c:spot[0],r:spot[1],mouv:6,used:0,t:x.tour});putMain(x)};
+      A("shut").onclick=()=>{const x=m();x.rideau=!x.rideau;putMain(x)};
+      A("turn").onclick=()=>{const x=m();x.tour++;putMain(x);msg="▓ TOUR "+x.tour+" — mouvements remis à zéro"};
+      let armed=false;A("reset").onclick=async e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER LA RÉINITIALISATION ?";return}
+        await putMain(defMain());for(const [i,ro] of ROLES.entries()){const t=toks[ro.id]||{};await SYNC.put("traque",ID+"-"+ro.id,{c:DEF_P[i][0],r:DEF_P[i][1],mouv:t.mouv||null,used:0,t:1,maj:Date.now()})}sel=null;msg="▓ COMBAT RÉINITIALISÉ"}}}
+  function bindRole(){side.querySelectorAll("[data-role]").forEach(b=>b.onclick=()=>{role=b.dataset.role;try{localStorage.setItem(RK,role)}catch(e){}sel=null;msg="";draw();render()});
+    const chg=side.querySelector('[data-a="chg"]');if(chg){let armed=false;chg.onclick=e=>{e.preventDefault();if(!armed){armed=true;chg.textContent="CONFIRMER LE CHANGEMENT DE PERSONNAGE ?";return}role="";try{localStorage.removeItem(RK)}catch(er){}render();draw()}}}
+  draw();render()};
 
 /* ============ APP : TRACK (poursuite au tour par tour sur le plan complet) ============
    Documents partagés :  traque/<id>        état public (tour, positions des traqueurs, police si visible, journal)
