@@ -278,7 +278,7 @@ L'accès au sous-sol enfin déverrouillé, l'escouade plonge dans l'abîme. Ils 
   ]}]},
 /* cache:true = titre, sous-titre et résumé masqués façon dossier confidentiel. Passer à false (et remplir titre/resume/histoire) pour révéler la session */
 {id:3,cache:true,titre:"",resume:"",histoire:"",apps:[
- {id:"s3track",type:"track",nom:"TRACK // Poursuite urbaine",code:"TRACK-603",desc:"Traque en voiture sur le plan de Night City : deux véhicules de traque contre une voiture de police, au tour par tour.",files:[],
+ {id:"s3track",type:"track",nom:"TRACK // Poursuite urbaine",code:"TRACK-03",desc:"Traque en voiture sur le plan de Night City : deux véhicules de traque contre une voiture de police, au tour par tour.",files:[],
   /* départs : coordonnées de la carte officielle (2000 × 1332) ; vmax = carrefours franchissables par tour */
   voitures:{t1:{nom:"TRAQUEUR 1",col:"#00ff9c",dep:[960,470],vmax:4},t2:{nom:"TRAQUEUR 2",col:"#ffd400",dep:[1010,525],vmax:4},police:{nom:"POLICE",col:"#3d8bff",dep:[1190,650],vmax:4}}}]}
 ];
@@ -388,8 +388,11 @@ async function initClaude(){
   syncReady()})();
 
 /* ---------- Navigation ---------- */
-function route(keep){const y=scrollY;const cm=location.hash.match(/^#carte(?:-([\w-]+))?$/);
-  if(cm){if(keep&&$(".nc-box"))return;window.NC_CARTE?NC_CARTE.render(view,cm[1]):view.innerHTML="<p>CARTE INDISPONIBLE (cartes.js absent).</p>";if(!keep)window.scrollTo(0,0);return}
+function route(keep){const y=scrollY;
+  /* onglet public : carte d'origine seulement ; plans détaillés : dossier CARTES de l'espace MJ */
+  const mm=location.hash.match(/^#mj-carte(?:-([\w-]+))?$/),cm=location.hash.match(/^#carte(?:-[\w-]+)?$/);
+  if(mm&&!mjOk){location.hash="#mj";return}
+  if(mm||cm){if(keep&&$(".nc-box"))return;window.NC_CARTE?NC_CARTE.render(view,mm?mm[1]:null,{mj:!!mm}):view.innerHTML="<p>CARTE INDISPONIBLE (cartes.js absent).</p>";if(!keep)window.scrollTo(0,0);return}
   if(location.hash==="#mj")mj();else{const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home()}window.scrollTo(0,keep?y:0)}
 addEventListener("hashchange",()=>route());
 
@@ -412,7 +415,9 @@ function mj(){
     view.innerHTML=`<a href="#">← INDEX</a><h2>▓ ACCÈS MJ</h2><div class="panel"><div>CODE MAÎTRE DU JEU</div><div class="row"><input id="code" type="password" autocomplete="off" spellcheck="false"><button id="ok">VALIDER</button></div><div class="msg" id="m"></div></div>`;
     const go=()=>{if($("#code").value.trim().toUpperCase()===MJ_CODE){mjOk=true;mj()}else $("#m").textContent="░ CODE INVALIDE — ACCÈS REFUSÉ"};
     $("#ok").onclick=go;$("#code").onkeydown=e=>{if(e.key==="Enter")go()};$("#code").focus();return}
-  view.innerHTML=`<a href="#">← INDEX</a><h2>▓ MJ // CLÔTURE DES SESSIONS</h2><div class="panel" id="clo"></div><h2>▓ MJ // APPLICATIONS NON UTILISÉES</h2><p><small>${RESERVE.length} APPLICATION(S) EN RÉSERVE — NON RATTACHÉES À UNE SESSION, LEUR CODE N’EST ACCEPTÉ NULLE PART.</small></p><div id="tab"></div>`;
+  view.innerHTML=`<a href="#">← INDEX</a><h2>▓ MJ // CLÔTURE DES SESSIONS</h2><div class="panel" id="clo"></div>
+    <h2>▓ MJ // 📁 CARTES</h2><div class="panel"><small>PLANS ROUTIERS RÉSERVÉS AU MJ (NON VISIBLES DANS L'ONGLET CARTE DES JOUEURS).</small>
+      <div class="row">${window.NC_CARTE?[["ville","▦ PLAN COMPLET"],...NC_CARTE.QUARTIERS.slice().sort((a,b)=>a.court.localeCompare(b.court)).map(x=>[x.id,x.court])].map(([i,t])=>`<a href="#mj-carte-${i}"><button>${esc(t)}</button></a>`).join(""):"<small>CARTES INDISPONIBLES</small>"}</div></div><h2>▓ MJ // APPLICATIONS NON UTILISÉES</h2><p><small>${RESERVE.length} APPLICATION(S) EN RÉSERVE — NON RATTACHÉES À UNE SESSION, LEUR CODE N’EST ACCEPTÉ NULLE PART.</small></p><div id="tab"></div>`;
   const clo=$("#clo");
   function cloture(){
     const W=t=>`<p class="warn"><small>${t}</small></p>`;
