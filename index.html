@@ -144,7 +144,12 @@ h2 .redact{background:var(--c);color:var(--c)}
 .md{max-width:560px;margin:0 auto}.md-top{display:flex;flex-direction:column;gap:6px}
 .md-step,.tx-steps{display:flex;flex-wrap:wrap;gap:4px;font-size:11px}.md-step span,.tx-steps span{border:1px solid var(--dim);padding:2px 6px;opacity:.6}
 .md-step .on,.tx-steps .on{border-color:var(--c);opacity:1;box-shadow:0 0 8px var(--dim)}.md-step .ok,.tx-steps .ok{background:var(--dim);opacity:.9}
-.md-vit{display:flex;align-items:center;gap:8px;font-size:12px}.md-bar{flex:1;height:12px;border:1px solid var(--c)}.md-bar i{display:block;height:100%;transition:width .2s}
+.md-vit{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:bold;letter-spacing:.08em}.md-bar{position:relative;flex:1;height:20px;border:2px solid var(--c)}.md-bar i{display:block;height:100%;transition:width .2s}
+.md-pct{position:absolute;inset:0;text-align:center;line-height:16px;font-style:normal;color:#fff;text-shadow:0 0 3px #000}
+.md-vit.crit{color:#ff3344;animation:fdb .8s infinite}.md-vit.crit .md-bar{border-color:#ff3344;box-shadow:0 0 12px #ff3344}
+.md-play{display:grid;grid-template-columns:minmax(0,1fr) 74px;gap:8px;align-items:start}
+.md-tools{display:flex;flex-direction:column;gap:6px}.md-tools button{padding:8px 2px;font-size:20px;line-height:1.1}.md-tools small{font-size:9px;letter-spacing:.05em}
+.md-msg.big{font-size:20px;letter-spacing:.12em;text-align:center}
 .md-help,.tx-help{font-size:13px;margin:8px 0;min-height:36px}
 .md-svg{width:100%;height:auto;display:block;border:1px solid var(--c);touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair}
 .md-drop{animation:mdrop 1.2s linear infinite}@keyframes mdrop{0%{transform:translate(0,0);opacity:1}100%{transform:translate(0,24px);opacity:0}}
@@ -157,8 +162,14 @@ h2 .redact{background:var(--c);color:var(--c)}
 .tx-track input{writing-mode:vertical-lr;direction:rtl;height:190px;width:30px;min-width:0;padding:0;accent-color:#00ff9c}
 .tx-tgt{position:absolute;left:-4px;right:-4px;height:4px;background:#ffd400;box-shadow:0 0 6px #ffd400;transform:translateY(50%);pointer-events:none}
 .tx-meter{height:8px;border:1px solid var(--c);margin-top:10px}.tx-meter i{display:block;height:100%;width:0;background:var(--c)}
-.tx-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:270px;margin:0 auto}.tx-pad button{aspect-ratio:1;padding:0;background:#0a1412}
-.tx-pad button.lit{background:var(--c);box-shadow:0 0 18px var(--c)}.tx-lvl{text-align:center;margin-top:10px;letter-spacing:.12em}
+.tx-pad{display:grid;grid-template-columns:repeat(3,76px);gap:12px;justify-content:center;margin:10px auto}
+.tx-cube{width:76px;height:76px;padding:0;border:3px solid var(--k);background:linear-gradient(145deg,color-mix(in srgb,var(--k) 55%,#000),color-mix(in srgb,var(--k) 20%,#000));
+  box-shadow:inset 0 0 0 4px #0006,0 4px 0 #000;transition:transform .08s,filter .08s;filter:brightness(.75);touch-action:manipulation}
+.tx-cube:hover:not(:disabled){background:linear-gradient(145deg,color-mix(in srgb,var(--k) 55%,#000),color-mix(in srgb,var(--k) 20%,#000));color:inherit;box-shadow:inset 0 0 0 4px #0006,0 4px 0 #000;filter:brightness(.95)}
+.tx-cube.lit,.tx-cube.lit:hover{background:var(--k);filter:brightness(1.25);transform:scale(1.08);box-shadow:0 0 26px var(--k),0 0 6px #fff}
+.tx-pad.busy .tx-cube{cursor:wait}
+.tx-lvl{text-align:center;margin-top:6px;letter-spacing:.1em;font-size:13px;min-height:20px}
+.tx-prog{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;min-height:12px}.tx-prog i{width:10px;height:10px;border:1px solid var(--c)}.tx-prog i.ok{background:var(--c)}
 .tx-win{text-align:center;font-size:24px;letter-spacing:.2em;text-shadow:0 0 12px var(--c)}
 footer{margin:18px 0 4px;font-size:11px;opacity:.6;text-align:center;letter-spacing:.1em}
 </style>
@@ -412,12 +423,8 @@ Ha. Garde tes blagues pour le jour où ils te feront « augmenter » toi aussi. 
   files:[{titre:"Compte rendu opératoire",texte:`================================================================
 // COMPTE RENDU OPÉRATOIRE — BLOC DE FORTUNE
 ================================================================
-PATIENT : enfant, sexe masculin, environ 9 ans. Identité inconnue.
-LÉSIONS : plaie abdominale ouverte, trois vaisseaux sectionnés, éclats de chrome multiples, lacération hépatique.
-GESTES : hémostase par clampage, extraction de 3 éclats, suture hépatique, fermeture cutanée.
-ÉTAT : stabilisé. Pronostic réservé, transfert en clinique indispensable.
-----------------------------------------------------------------
-OBSERVATION : lors de l'extraction, une puce de traçage sous-cutanée a été retirée du flanc gauche. Marquage gravé : « LOT A3 — DEST. B-17 ».
+OPÉRATION RÉUSSIE.
+L'enfant a été sauvé.
 ================================================================`}]},
  {id:"s3tech",type:"tech",nom:"TECH // Contournement de sécurité",code:"TECH-03",desc:"Boîtier de sécurité électronique : recâbler, recalibrer et injecter la séquence d'accès pour le mettre hors ligne.",
   files:[{titre:"Journal du système de sécurité",texte:`================================================================
@@ -793,15 +800,22 @@ RUN.medic=(root,app)=>{
   const TEAR=[[187,350],[197,358],[206,347],[216,359],[226,348],[237,357]];
   const ST=[[150,292],[250,292],[144,321],[256,321],[152,350],[248,350]];
   const STEPS=["HÉMOSTASE","EXTRACTION DES ÉCLATS","SUTURE DU FOIE","FERMETURE"],
-    HELP=["Clampez les 3 vaisseaux : maintenez le pointeur dans l'anneau qui tremble jusqu'à ce que la pince se ferme.",
-      "Faites glisser chaque éclat de chrome jusqu'au bac en restant dans le passage, sans toucher les bords.",
-      "Partez du point vert et suivez la déchirure du foie jusqu'au bout sans sortir du tracé.",
-      "Refermez la plaie : touchez les points de suture dans l'ordre (1 → 6)."];
-  let S;const reset=()=>{S={phase:0,vit:100,clamp:[0,0,0],hold:null,out:[0,0,0],drag:null,trace:null,traced:0,stitch:0,over:null,t0:performance.now(),last:performance.now()}};reset();
+    TOOL=["clamp","pince","fil","fil"],
+    TOOLS={aspi:["🩸","ASPIRER"],clamp:["🗜","CLAMP"],pince:["✂","PINCE"],fil:["🧵","FIL"]},
+    HELP=["Outil CLAMP : maintenez le pointeur dans l'anneau qui tremble sur chaque vaisseau jusqu'à ce que le clamp se ferme.",
+      "Outil PINCE : faites glisser chaque éclat de chrome jusqu'au bac en restant dans le passage, sans toucher les bords.",
+      "Outil FIL : partez du point vert et suivez la déchirure du foie jusqu'au bout sans sortir du tracé.",
+      "Outil FIL : refermez la plaie en touchant les points de suture dans l'ordre (1 → 6)."];
+  /* fuites de sang : apparaissent au hasard dans la plaie, masquent la zone et se retirent avec l'outil ASPIRER */
+  const WC=[200,330],inWound=p=>((p[0]-WC[0])/54)**2+((p[1]-WC[1])/44)**2<=1;
+  let S;const reset=()=>{S={phase:0,vit:100,clamp:[0,0,0],hold:null,out:[0,0,0],drag:null,trace:null,traced:0,stitch:0,over:null,tool:"clamp",
+    stains:[],nextStain:performance.now()+2500,aspi:false,t0:performance.now(),last:performance.now()}};reset();
+  const masked=p=>S.stains.some(st=>GX.d(p,st.p)<st.r);
+  const maskMsg=()=>{GX.buzz(160,.12,"square");flash("🩸 Le sang masque la zone : utilisez l'outil ASPIRER")};
   root.innerHTML=`<h2>${esc(app.nom)}</h2><div class="md">
-    <div class="md-top"><div class="md-step"></div><div class="md-vit"><span>CONSTANTES</span><div class="md-bar"><i></i></div><b class="md-bpm"></b></div></div>
+    <div class="md-top"><div class="md-step"></div><div class="md-vit"><span>VIE DU PATIENT</span><div class="md-bar"><i></i><em class="md-pct"></em></div><b class="md-bpm"></b></div></div>
     <div class="md-help"></div>
-    <svg class="md-svg" viewBox="0 0 400 560">
+    <div class="md-play"><svg class="md-svg" viewBox="0 0 400 560">
       <defs><radialGradient id="mdw" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#9c2430"/><stop offset=".7" stop-color="#5c0e16"/><stop offset="1" stop-color="#2a0408"/></radialGradient>
         <linearGradient id="mdl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9a3a26"/><stop offset="1" stop-color="#5e1d12"/></linearGradient>
         <clipPath id="mdc"><path d="${woundPath()}"/></clipPath></defs>
@@ -809,10 +823,11 @@ RUN.medic=(root,app)=>{
       <rect x="18" y="476" width="78" height="44" rx="6" fill="#1d3436" stroke="#5fa" stroke-opacity=".4"/><text x="57" y="530" font-size="9" fill="#5fa" fill-opacity=".6" text-anchor="middle" font-family="monospace">BAC</text>
       <rect x="304" y="476" width="78" height="44" rx="6" fill="#1d3436" stroke="#5fa" stroke-opacity=".4"/><text x="343" y="530" font-size="9" fill="#5fa" fill-opacity=".6" text-anchor="middle" font-family="monospace">BAC</text>
       ${body()}
-      <g class="md-dyn"></g>
-    </svg>
+      <g class="md-stains"></g><g class="md-dyn"></g>
+    </svg><div class="md-tools">${Object.entries(TOOLS).map(([k,[i,t]])=>`<button data-tool="${k}">${i}<br><small>${t}</small></button>`).join("")}</div></div>
     <div class="md-msg"></div><div class="row"><button class="md-rs">↻ RECOMMENCER L'OPÉRATION</button></div></div>`;
-  const svg=$(".md-svg",root),dyn=$(".md-dyn",root),bar=$(".md-bar i",root),bpm=$(".md-bpm",root),msgEl=$(".md-msg",root);
+  root.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{S.tool=b.dataset.tool;upd()});
+  const svg=$(".md-svg",root),dyn=$(".md-dyn",root),stl=$(".md-stains",root),bar=$(".md-bar i",root),bpm=$(".md-bpm",root),msgEl=$(".md-msg",root);
   $(".md-rs",root).onclick=()=>{reset();msgEl.textContent="";upd()};
   function woundPath(){const c=[200,320],pts=[];for(let k=0;k<26;k++){const a=k/26*2*Math.PI,r=1+(k%2?.1:-.06)+(k%5===0?.08:0);pts.push([c[0]+62*r*Math.cos(a),c[1]+50*r*Math.sin(a)])}return "M"+GX.poly(pts).replace(/ /g,"L")+"Z"}
   function body(){
@@ -846,38 +861,56 @@ RUN.medic=(root,app)=>{
         <circle cx="${v.tip[0]}" cy="${v.tip[1]}" r="4.5" fill="#3a0006" stroke="#ff4a5a" stroke-width="1.5"/>`).join("")}
     </g>`}
   /* ---------- interaction ---------- */
+  const wrong=()=>{const need=TOOLS[TOOL[S.phase]][1];GX.buzz(140,.15);flash(`Outil inadapté : utilisez ${need}`)};
+  /* la cible de l'étape est-elle sous ce point ? */
+  const onTarget=p=>S.phase===0?VES.some((v,k)=>!S.clamp[k]&&GX.d(p,v.tip)<20):S.phase===1?SH.some((s,k)=>!S.out[k]&&GX.d(p,s.p)<14):S.phase===2?GX.d(p,TEAR[0])<12:S.phase===3?GX.d(p,ST[S.stitch])<13:false;
   svg.addEventListener("pointerdown",e=>{if(S.over)return;const p=GX.pt(svg,e);svg.setPointerCapture(e.pointerId);S.p=p;
+    if(S.tool==="aspi"){S.aspi=true;upd();return}
+    if(S.tool!==TOOL[S.phase]){if(onTarget(p))wrong();return}
+    if(masked(p)){maskMsg();return}
     if(S.phase===0){const i=VES.findIndex((v,k)=>!S.clamp[k]&&GX.d(p,v.tip)<20);if(i>=0)S.hold={i,t:0}}
     else if(S.phase===1){const i=SH.findIndex((s,k)=>!S.out[k]&&GX.d(p,s.p)<14);if(i>=0)S.drag={i,p}}
     else if(S.phase===2){if(GX.d(p,TEAR[0])<12)S.trace={max:0}}
     else if(S.phase===3){const q=ST[S.stitch];if(GX.d(p,q)<13){S.stitch++;GX.ok();if(S.stitch>=ST.length)next()}else if(GX.d(p,[200,320])<80)fault(3,"Point de suture mal placé")}
     upd()});
   svg.addEventListener("pointermove",e=>{if(S.over)return;const p=GX.pt(svg,e);S.p=p;
+    if((S.drag||S.trace)&&masked(p)){S.drag=null;if(S.trace){S.trace=null;S.traced=0}maskMsg();upd();return}
     if(S.drag){const s=SH[S.drag.i],r=GX.proj(p,s.path);
       if(r.d>9){S.drag=null;fault(6,"Contact avec les tissus !")}
       else{S.drag.p=p;if(GX.d(p,s.path[s.path.length-1])<14){S.out[S.drag.i]=1;S.drag=null;GX.ok();if(S.out.every(Boolean))next()}}}
     if(S.trace){const r=GX.proj(p,TEAR);if(r.d>6){S.trace=null;S.traced=0;fault(4,"Vous sortez de la déchirure")}
       else{S.trace.max=Math.max(S.trace.max,Math.min(r.at,S.trace.max+14));S.traced=S.trace.max;if(S.trace.max>=r.len-3){S.trace=null;GX.ok();next()}}}
     upd()});
-  const end=()=>{if(S.hold){S.hold=null}if(S.drag){S.drag=null}if(S.trace){S.trace=null;S.traced=0}upd()};
+  const end=()=>{S.aspi=false;if(S.hold){S.hold=null}if(S.drag){S.drag=null}if(S.trace){S.trace=null;S.traced=0}upd()};
   svg.addEventListener("pointerup",end);svg.addEventListener("pointercancel",end);
   function fault(n,t){S.vit=Math.max(0,S.vit-n);GX.buzz();GX.shake(svg);flash(`⚡ BZZZ — ${t} (−${n})`)}
   function flash(t){msgEl.textContent=t;msgEl.className="md-msg warn";clearTimeout(flash.t);flash.t=setTimeout(()=>{if(!S.over)msgEl.textContent=""},1800)}
   function next(){S.phase++;if(S.phase>=STEPS.length){S.over="win";msgEl.className="md-msg";const sec=Math.round((performance.now()-S.t0)/1000);
-      msgEl.innerHTML=`▓ OPÉRATION RÉUSSIE — le patient est stabilisé (${sec} s, constantes ${Math.round(S.vit)} %)`;if(app.files.length)reveal(app,app.files.map((_,i)=>i))}
+      msgEl.className="md-msg big";msgEl.innerHTML=`▓ L'enfant a été sauvé. <small>(${sec} s)</small>`;if(app.files.length)reveal(app,app.files.map((_,i)=>i))}
     else flash("▓ ÉTAPE TERMINÉE : "+STEPS[S.phase-1])}
   /* ---------- boucle : saignement, tremblement de la pince ---------- */
   function tick(now){if(!root.isConnected)return;const dt=Math.min(.1,(now-S.last)/1000);S.last=now;
-    if(!S.over){const bleed=S.clamp.filter(c=>!c).length;S.vit-=dt*(bleed*.55+(S.phase>0?.12:0));
-      if(S.hold){const v=VES[S.hold.i],c=ring(v,now);if(S.p&&GX.d(S.p,c)<=10){S.hold.t+=dt;if(S.hold.t>=1.8){S.clamp[S.hold.i]=1;S.hold=null;GX.ok();if(S.clamp.every(Boolean))next()}}
+    if(!S.over){const bleed=S.clamp.filter(c=>!c).length;S.vit-=dt*(.3+bleed*.45+S.stains.length*.1);
+      if(now>=S.nextStain&&S.stains.length<6){let p;do{p=[WC[0]+(Math.random()*2-1)*50,WC[1]+(Math.random()*2-1)*40]}while(!inWound(p));
+        S.stains.push({p,r:3,max:15+Math.random()*9,seed:Math.random()*6});S.nextStain=now+(bleed?1800:3200)+Math.random()*3500}
+      S.stains.forEach(st=>{if(st.r<st.max)st.r=Math.min(st.max,st.r+dt*12)});
+      if(S.aspi&&S.p){S.stains.forEach(st=>{if(GX.d(S.p,st.p)<st.r+12)st.r-=dt*34});S.stains=S.stains.filter(st=>st.r>2.5)}
+      if(S.hold&&masked(S.hold.c||VES[S.hold.i].tip)){S.hold=null;maskMsg()}
+      if(S.hold){const v=VES[S.hold.i],c=ring(v,now);S.hold.c=c;if(S.p&&GX.d(S.p,c)<=10){S.hold.t+=dt;if(S.hold.t>=1.8){S.clamp[S.hold.i]=1;S.hold=null;GX.ok();if(S.clamp.every(Boolean))next()}}
         else{S.hold=null;fault(5,"La pince a glissé")}}
-      if(S.vit<=0){S.vit=0;S.over="lost";msgEl.className="md-msg warn";msgEl.innerHTML="░ PATIENT PERDU — les constantes sont tombées à zéro. Recommencez l'opération."}}
+      if(S.vit<=0){S.vit=0;S.over="lost";GX.buzz(70,1.2,"sine");msgEl.className="md-msg warn big";msgEl.innerHTML="✝ L'enfant est décédé."}}
     upd(now);requestAnimationFrame(tick)}
   const ring=(v,now)=>[v.tip[0]+6*Math.sin(now/310+v.tip[0]),v.tip[1]+5*Math.cos(now/270+v.tip[1])];
   function upd(now=performance.now()){
     $(".md-step",root).innerHTML=STEPS.map((t,i)=>`<span class="${i<S.phase?"ok":i===S.phase&&!S.over?"on":""}">${i+1}. ${t}</span>`).join("");
     $(".md-help",root).textContent=S.over?"":HELP[S.phase];
     const v=Math.max(0,S.vit);bar.style.width=v+"%";bar.style.background=v>50?"var(--c)":v>25?"#ffb000":"#ff3344";
+    $(".md-pct",root).textContent=Math.ceil(v)+" %";$(".md-vit",root).classList.toggle("crit",v<30&&!S.over);
+    root.querySelectorAll("[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===S.tool));
+    svg.style.cursor=S.tool==="aspi"?"cell":"crosshair";
+    stl.innerHTML=S.stains.map(st=>{let d="";for(let k=0;k<9;k++){const a=k/9*2*Math.PI,r=st.r*(.75+.3*Math.sin(st.seed+k*1.7));d+=(k?"L":"M")+(st.p[0]+r*Math.cos(a)).toFixed(1)+" "+(st.p[1]+r*Math.sin(a)).toFixed(1)}
+      return `<path d="${d}Z" fill="#8a0010" stroke="#b3001a" stroke-width="1.5" stroke-linejoin="round"/><circle cx="${st.p[0]-st.r*.3}" cy="${st.p[1]-st.r*.3}" r="${st.r*.18}" fill="#ff5a6a" opacity=".5"/>`}).join("")
+      +(S.tool==="aspi"&&S.p&&!S.over?`<circle cx="${S.p[0]}" cy="${S.p[1]}" r="12" fill="none" stroke="#9fe" stroke-width="2" stroke-dasharray="${S.aspi?"2 2":"5 3"}"/>`:"");
     bpm.textContent=S.over==="lost"?"— BPM":Math.round(150-v*.5+(S.clamp.includes(0)?10:0))+" BPM";
     $(".md-pool",root).setAttribute("opacity",((100-v)/100*.9).toFixed(2));
     let h="";
@@ -907,7 +940,7 @@ RUN.tech=(root,app)=>{
   const TASKS=[["CÂBLAGE","Reliez chaque fil à la borne de même couleur (glisser d'une borne à l'autre)."],
     ["CALIBRAGE DES RELAIS","Appuyez sur VERROUILLER quand l'aiguille passe dans la zone verte. 3 relais."],
     ["ALIGNEMENT DE PHASE","Réglez chaque curseur sur son repère jaune. Les 4 doivent être alignés en même temps."],
-    ["SÉQUENCE D'ACCÈS","Mémorisez la séquence lumineuse puis reproduisez-la. 3 niveaux."]];
+    ["SÉQUENCE D'ACCÈS","Mémorisez l'ordre dans lequel les cubes s'allument puis reproduisez-le. 4 séquences : 3, 6, 9 puis 12 couleurs."]];
   let step=0,alive=true;
   root.innerHTML=`<h2>${esc(app.nom)}</h2><div class="tx"><div class="tx-steps"></div><div class="tx-help"></div><div class="tx-area panel"></div><div class="md-msg"></div>
     <div class="row"><button class="tx-rs">↻ RECOMMENCER</button></div></div>`;
@@ -948,17 +981,23 @@ RUN.tech=(root,app)=>{
     const show=()=>ins.forEach((x,i)=>{$(".v"+i,area).textContent=Math.abs(+x.value-T[i])<=3?"✔":"·"});ins.forEach(x=>x.oninput=show);show();
     const loop=()=>{if(!alive||!area.isConnected||step!==2)return;const ok=chk().every(Boolean);held=ok?held+1:0;$(".tx-meter i",area).style.width=Math.min(100,held/60*100)+"%";
       if(held>=60)return done();requestAnimationFrame(loop)};requestAnimationFrame(loop)}
-  /* --- 4. séquence --- */
-  function simon(){let lvl=0,seq=[],inp=[],lock=true;const L=[3,4,5];
-    area.innerHTML=`<div class="tx-pad">${[...Array(9)].map((_,i)=>`<button data-p="${i}"></button>`).join("")}</div><div class="tx-lvl"></div>`;
-    const btn=i=>area.querySelector(`[data-p="${i}"]`);
-    const play=()=>{lock=true;inp=[];$(".tx-lvl",area).textContent=`NIVEAU ${lvl+1}/3 — OBSERVEZ`;let k=0;
-      const it=setInterval(()=>{if(!area.isConnected)return clearInterval(it);if(k>=seq.length){clearInterval(it);lock=false;$(".tx-lvl",area).textContent=`NIVEAU ${lvl+1}/3 — À VOUS`;return}
-        const b=btn(seq[k]);b.classList.add("lit");GX.buzz(300+seq[k]*60,.15,"triangle");setTimeout(()=>b.classList.remove("lit"),380);k++},620)};
-    const newLvl=()=>{seq=[...Array(L[lvl])].map(()=>Math.floor(Math.random()*9));setTimeout(play,500)};
-    area.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{if(lock||lvl>=3)return;const i=+b.dataset.p;b.classList.add("lit");setTimeout(()=>b.classList.remove("lit"),180);
-      if(i!==seq[inp.length]){fail("Séquence rejetée");setTimeout(play,700);return}GX.buzz(300+i*60,.1,"triangle");inp.push(i);
-      if(inp.length===seq.length){lock=true;lvl++;if(lvl>=3)return setTimeout(done,300);GX.ok();newLvl()}});
+  /* --- 4. séquence : 9 cubes de couleur, 4 séquences de 3, 6, 9 et 12 couleurs --- */
+  function simon(){const L=[3,6,9,12],COL=["#ff3344","#ff8a00","#ffd400","#39ff6a","#00e5ff","#3d6bff","#a24dff","#ff4dd2","#ffffff"],
+      NOM=["ROUGE","ORANGE","JAUNE","VERT","CYAN","BLEU","VIOLET","ROSE","BLANC"];
+    let lvl=0,seq=[],inp=0,lock=true,timers=[];
+    area.innerHTML=`<div class="tx-lvl"></div><div class="tx-pad">${COL.map((c,i)=>`<button class="tx-cube" data-p="${i}" style="--k:${c}" title="${NOM[i]}"></button>`).join("")}</div><div class="tx-prog"></div>`;
+    const btn=i=>area.querySelector(`[data-p="${i}"]`),lab=$(".tx-lvl",area),prog=$(".tx-prog",area);
+    const clear=()=>{timers.forEach(clearTimeout);timers=[]},later=(f,ms)=>timers.push(setTimeout(()=>{if(area.isConnected&&step===3)f()},ms));
+    const light=(i,ms)=>{const b=btn(i);b.classList.add("lit");GX.buzz(260+i*55,.14,"triangle");later(()=>b.classList.remove("lit"),ms)};
+    const dots=()=>{prog.innerHTML=seq.map((_,k)=>`<i class="${k<inp?"ok":""}"></i>`).join("")};
+    const play=()=>{clear();lock=true;inp=0;dots();lab.textContent=`SÉQUENCE ${lvl+1}/4 — ${L[lvl]} COULEURS — OBSERVEZ`;
+      area.querySelector(".tx-pad").classList.add("busy");
+      seq.forEach((c,k)=>later(()=>light(c,380),700+k*560));
+      later(()=>{lock=false;area.querySelector(".tx-pad").classList.remove("busy");lab.textContent=`SÉQUENCE ${lvl+1}/4 — À VOUS (${L[lvl]} COULEURS)`},700+seq.length*560)};
+    const newLvl=()=>{seq=[...Array(L[lvl])].map(()=>Math.floor(Math.random()*9));play()};
+    area.querySelectorAll("[data-p]").forEach(b=>b.addEventListener("pointerdown",e=>{e.preventDefault();if(lock)return;const i=+b.dataset.p;light(i,160);
+      if(i!==seq[inp]){lock=true;fail("Séquence rejetée — on recommence cette séquence");later(play,900);return}
+      inp++;dots();if(inp===seq.length){lock=true;lvl++;if(lvl>=L.length){later(done,400);return}GX.ok();lab.textContent="▓ SÉQUENCE VALIDÉE";later(newLvl,900)}}));
     newLvl()}
   run()};
 
