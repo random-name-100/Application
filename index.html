@@ -48,7 +48,8 @@ canvas{width:100%;height:auto;display:block;border:1px solid var(--c);background
 #ov{display:none;position:fixed;inset:0;z-index:60;background:#000c;align-items:center;justify-content:center;padding:16px}
 #ov.show{display:flex}
 #ov .panel{max-width:620px;width:100%;max-height:85vh;overflow:auto;background:#020805}
-pre{white-space:pre-wrap;font:inherit;margin:0 0 6px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;margin:0 0 6px}
+hr.sep{border:0;border-top:1px dashed var(--dim);margin:8px 0}
 .new{background:var(--c);color:var(--bg);padding:0 6px;margin-left:6px}
 .fd{display:flex;gap:12px}
 .fd-side{width:210px;flex:none;max-height:430px;overflow-y:auto;border-right:1px solid var(--c);padding-right:10px}
@@ -82,6 +83,9 @@ body.wide main{max-width:1500px}
 .nt-tag{white-space:nowrap;font-size:.85em}.nt-tag.off{color:#ff3344}
 .nt-node:hover .nt-tag{color:var(--bg)}
 .nt-locked{padding:14px;border:1px dashed var(--dim);text-align:center;opacity:.7;margin-top:12px}
+.nt-if{display:flex;gap:6px;align-items:center;font-size:12px;letter-spacing:.1em}.nt-if input{width:64px;min-width:0;flex:none;text-align:center}
+.nt-roll{font-size:18px;margin:10px 0;letter-spacing:.06em}.nt-roll.ok{color:var(--c)}.nt-roll.ko{color:#ff3344}
+.nt-die{display:inline-block;min-width:38px;text-align:center;border:2px solid currentColor;padding:2px 6px;font-weight:bold;animation:ntin .3s}
 .nt-img{max-width:100%;display:block;margin:10px 0;border:1px solid var(--c)}
 .warn{color:#ff3344}
 .hl{background:#ffb000;color:#000;font-weight:bold;padding:2px 6px;box-shadow:0 0 12px #ffb00099}
@@ -295,74 +299,53 @@ L'accès au sous-sol enfin déverrouillé, l'escouade plonge dans l'abîme. Ils 
 // MESSAGERIE SÉCURISÉE — TERMINAL DU POINT DE TRANSFERT
 // FIL : 3 MESSAGES — CHIFFREMENT LEVÉ
 ================================================================
-DE    : papa.kord@[relais-anonyme].nc
-À     : mr.h@[relais-anonyme].nc
-DATE  : 21/10/2045 — 23:48
+DE : papa.kord@[relais-anonyme].nc
+À : mr.h@[relais-anonyme].nc
+DATE : 21/10/2045 — 23:48
 OBJET : Contrôles sur les docks
 
 H.,
-Deux patrouilles du Precinct #1 ont tourné autour du hangar hier soir.
-Ça n'était pas prévu dans notre arrangement. Le chargement de jeudi
-ne peut PAS être retardé, le client ne tolère aucun écart.
-Je paie pour ne plus voir de gyrophares dans le secteur.
+Deux patrouilles du Precinct #1 ont tourné autour du hangar hier soir. Ça n'était pas prévu dans notre arrangement. Le chargement de jeudi ne peut PAS être retardé, le client ne tolère aucun écart. Je paie pour ne plus voir de gyrophares dans le secteur.
 — K.
-
 ----------------------------------------------------------------
-DE    : mr.h@[relais-anonyme].nc
-À     : papa.kord@[relais-anonyme].nc
-DATE  : 22/10/2045 — 07:12
+DE : mr.h@[relais-anonyme].nc
+À : papa.kord@[relais-anonyme].nc
+DATE : 22/10/2045 — 07:12
 OBJET : RE: Contrôles sur les docks
 
 Kord,
-Deux bleus qui n'étaient pas dans la boucle. C'est réglé : ils sont
-mutés à la circulation à partir de lundi. Les rapports de la nuit ont
-été « égarés » au service des archives.
-Rappel : la donation du mois passe par le compte habituel du Dpt. Vice.
-Et ne m'écris plus en direct pour ce genre de détail, mes collègues du
-Precinct #2 et de la brigade des docks ont aussi leur part du gâteau,
-je ne suis pas le seul à devoir rester discret.
+Deux bleus qui n'étaient pas dans la boucle. C'est réglé : ils sont mutés à la circulation à partir de lundi. Les rapports de la nuit ont été « égarés » au service des archives.
+Rappel : la donation du mois passe par le compte habituel du Dpt. Vice. Et ne m'écris plus en direct pour ce genre de détail : mes collègues du Precinct #2 et de la brigade des docks ont aussi leur part du gâteau, je ne suis pas le seul à devoir rester discret.
 — H.
-
 ----------------------------------------------------------------
-DE    : papa.kord@[relais-anonyme].nc
-À     : mr.h@[relais-anonyme].nc
-DATE  : 22/10/2045 — 07:30
+DE : papa.kord@[relais-anonyme].nc
+À : mr.h@[relais-anonyme].nc
+DATE : 22/10/2045 — 07:30
 OBJET : RE: RE: Contrôles sur les docks
 
-Compris. 5 000 eb versés ce matin. Dis à tes « collègues » que le
-prochain qui fouine sans prévenir finira dans une cuve avec le reste
-de la marchandise.
+Compris. 5 000 eb versés ce matin. Dis à tes « collègues » que le prochain qui fouine sans prévenir finira dans une cuve avec le reste de la marchandise.
 ================================================================`},
    {titre:"Mail — Relocalisation vers Bridgetown",texte:`================================================================
 // MESSAGERIE SÉCURISÉE — TERMINAL DU POINT DE TRANSFERT
 ================================================================
-DE    : logistique@by-corp-holding.nc
-À     : papa.kord@[relais-anonyme].nc
-CC    : transferts@by-corp-logistics.nc
-DATE  : 24/10/2045 — 14:05
+DE : logistique@by-corp-holding.nc
+À : papa.kord@[relais-anonyme].nc
+CC : transferts@by-corp-logistics.nc
+DATE : 24/10/2045 — 14:05
 OBJET : Nouvelle chaîne d'approvisionnement — Lot A3 et suivants
 
 Monsieur Kord,
 
-Suite aux « incidents » récents sur votre site, la holding BY Corp
-a validé le transfert des opérations vers un nouveau point d'échange
-au nord-est de Little China, dans l'ancienne zone des conteneurs de
-Bridgetown (entrepôt B-17, accès par le quai de service).
+Suite aux « incidents » récents sur votre site, la holding BY Corp a validé le transfert des opérations vers un nouveau point d'échange au nord-est de Little China, dans l'ancienne zone des conteneurs de Bridgetown (entrepôt B-17, accès par le quai de service).
 
 Calendrier :
-> Les sujets en attente d'expédition seront déplacés par convois
-  de nuit à partir du 28/10.
+> Les sujets en attente d'expédition seront déplacés par convois de nuit à partir du 28/10.
 > Le site actuel ne sert plus que de centre de tri temporaire.
 > Effacement complet des données locales sous 72 h.
 
-Rappel de nos exigences : la « matière première » doit rester
-vivante, intacte et non chromée. Les sujets sont destinés au
-programme d'expérimentation transhumaine du client final
-(protocoles d'augmentation cybernétique de nouvelle génération).
-Tout sujet présentant un rejet cybernétique sera refusé et non payé.
+Rappel de nos exigences : la « matière première » doit rester vivante, intacte et non chromée. Les sujets sont destinés au programme d'expérimentation transhumaine du client final (protocoles d'augmentation cybernétique de nouvelle génération). Tout sujet présentant un rejet cybernétique sera refusé et non payé.
 
-Les règlements continueront de transiter par BY Corp Holding.
-Aucune autre entité ne doit apparaître sur vos documents.
+Les règlements continueront de transiter par BY Corp Holding. Aucune autre entité ne doit apparaître sur vos documents.
 
 Cordialement,
 Service Logistique — BY Corp Holding
@@ -371,44 +354,30 @@ Service Logistique — BY Corp Holding
    {titre:"Mail — « Re: t'as vu le dernier virement ? »",texte:`================================================================
 // MESSAGERIE INTERNE — CANAL ÉQUIPE DE NUIT
 ================================================================
-DE    : rook@pt-transfert.local
-À     : sand@pt-transfert.local
-DATE  : 25/10/2045 — 03:17
+DE : rook@pt-transfert.local
+À : sand@pt-transfert.local
+DATE : 25/10/2045 — 03:17
 OBJET : Re: t'as vu le dernier virement ?
 
-80 000 eb pour UNE fille. Commande spéciale, priorité absolue,
-« Sujet L.F.O. ». J'ai jamais vu un chiffre pareil.
-
+80 000 eb pour UNE fille. Commande spéciale, priorité absolue, « Sujet L.F.O. ». J'ai jamais vu un chiffre pareil.
 ----------------------------------------------------------------
-DE    : sand@pt-transfert.local
-À     : rook@pt-transfert.local
-DATE  : 25/10/2045 — 03:22
+DE : sand@pt-transfert.local
+À : rook@pt-transfert.local
+DATE : 25/10/2045 — 03:22
 
-Ils peuvent se le permettre. Tu crois vraiment que « BY Corp »
-existe ? Holding par-ci, logistique par-là, trois boîtes aux lettres
-à Pacifica et une adresse à Night City Est qui mène à un parking.
-Ils se donnent un mal de chien pour se cacher derrière leurs
-sociétés écrans, alors que tout le monde ici sait que c'est RA qui
-tire les ficelles. Les camions repartent toujours vers leur campus.
-
+Ils peuvent se le permettre. Tu crois vraiment que « BY Corp » existe ? Holding par-ci, logistique par-là, trois boîtes aux lettres à Pacifica et une adresse à Night City Est qui mène à un parking. Ils se donnent un mal de chien pour se cacher derrière leurs sociétés écrans, alors que tout le monde ici sait que c'est RA qui tire les ficelles. Les camions repartent toujours vers leur campus.
 ----------------------------------------------------------------
-DE    : rook@pt-transfert.local
-À     : sand@pt-transfert.local
-DATE  : 25/10/2045 — 03:25
+DE : rook@pt-transfert.local
+À : sand@pt-transfert.local
+DATE : 25/10/2045 — 03:25
 
-Chut, efface ça. Et puis franchement, une boîte qui vend du chrome
-« pour l'humain de demain » et qui choisit de s'appeler comme un
-caillou… ROCK-ling Augmentics. Un rocher, c'est la seule chose au
-monde qui n'a jamais eu besoin d'une mise à jour.
-Tu veux le futur ? Achète pas un rocher. :)
-
+Chut, efface ça. Et puis franchement, une boîte qui vend du chrome « pour l'humain de demain » et qui met un ROCK au début de son nom… Un rocher, c'est la seule chose au monde qui n'a jamais eu besoin d'une augmentation. Tu veux le futur ? Achète pas un caillou. :)
 ----------------------------------------------------------------
-DE    : sand@pt-transfert.local
-À     : rook@pt-transfert.local
-DATE  : 25/10/2045 — 03:26
+DE : sand@pt-transfert.local
+À : rook@pt-transfert.local
+DATE : 25/10/2045 — 03:26
 
-Ha. Garde tes blagues pour le jour où ils te feront « augmenter »
-toi aussi. Je supprime le fil.
+Ha. Garde tes blagues pour le jour où ils te feront « augmenter » toi aussi. Je supprime le fil.
 [SUPPRESSION ÉCHOUÉE — CACHE LOCAL CONSERVÉ]
 ================================================================`}],
   strates:[
@@ -460,7 +429,9 @@ ov.onclick=e=>{if(e.target===ov&&!ovLock)ov.classList.remove("show")};
 addEventListener("keydown",e=>{if(e.key==="Escape"&&!ovLock)ov.classList.remove("show")});
 
 /* ---------- Fichiers ---------- */
-const fileBody=f=>`<pre>${f.html?f.texte:esc(f.texte)}</pre>`
+/* séparateurs ==== / ---- rendus en traits (ils ne se replient plus sur plusieurs lignes à l'écran) */
+const fmtTxt=t=>t.split("\n").map(l=>/^\s*[=\-]{8,}\s*$/.test(l)?"\u0000":l).join("\n").replace(/\n?\u0000\n?/g,'<hr class="sep">');
+const fileBody=f=>`<pre>${fmtTxt(f.html?f.texte:esc(f.texte))}</pre>`
   +(f.table?`<div class="tw"><table><thead><tr>${f.table.cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${f.table.rows.map(r=>`<tr class="${r[1]==="IN"?"in":"out"}">${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:"")
   +(f.pied?`<pre>${esc(f.pied)}</pre>`:"");
 function openFiles(app,idxs,fresh){
@@ -537,7 +508,7 @@ function route(keep){const y=scrollY;
   if(mm&&!mjOk){location.hash="#mj";return}
   if(mm||cm){if(keep&&$(".nc-box"))return;window.NC_CARTE?NC_CARTE.render(view,mm?mm[1]:null,{mj:!!mm}):view.innerHTML="<p>CARTE INDISPONIBLE (cartes.js absent).</p>";if(!keep)window.scrollTo(0,0);return}
   if(location.hash==="#mj")mj();else{const m=location.hash.match(/^#session-(\d+)$/),s=m&&SESSIONS.find(x=>x.id===+m[1]);s?session(s):home()}window.scrollTo(0,keep?y:0)}
-addEventListener("hashchange",()=>route());
+addEventListener("hashchange",()=>{ovLock=false;ov.classList.remove("show");route()});
 
 function home(){
   document.body.classList.remove("wide");
@@ -971,8 +942,11 @@ RUN.track=(root,app)=>{
 RUN.net=(root,app,ctx)=>{
   const K="net:"+app.id,
   LB={password:"MOT DE PASSE",cameras:"NŒUD DE CONTRÔLE",tourelles:"NŒUD DE CONTRÔLE",blackice:"PROGRAMME BLACK ICE",fichier:"FICHIER",paydata:"FICHIER PAYDATA",mail:"MAIL"},
-  fresh=()=>({max:1,cracked:{},revealed:{},won:{},tourelles:true});
-  let st=Object.assign(fresh(),ST.get(K));
+  fresh=()=>({max:1,cracked:{},revealed:{},won:{},tourelles:true,iface:st&&st.iface});
+  let st=null;st=Object.assign(fresh(),ST.get(K));
+  /* SD d'un nœud : « SD 10 » → 10 ; difficultés nommées → table ci-dessous */
+  const DIFF={facile:4,moyen:8,difficile:12},
+  sdOf=nd=>{const d=String(nd.diff||""),m=d.match(/SD\s*(\d+)/i);return m?+m[1]:DIFF[d.trim().toLowerCase()]||null};
   const keep=()=>ST.set(K,st),
   opened=nd=>!!ST.get("files")[fid(app,nd.f)],
   camApp=nd=>ctx.s.apps.find(a=>a.id===nd.cams),
@@ -991,7 +965,19 @@ RUN.net=(root,app,ctx)=>{
     if(nd.type==="blackice")return st.won[nd.id]?T(1,"NEUTRALISÉE"):T(0,"HOSTILE");
     if(nd.type==="tourelles")return !st.cracked[nd.id]?T(0,"VERROUILLÉ"):st.tourelles?T(0,"ACTIVÉ"):T(1,"DÉSACTIVÉ");
     return ""}
-  root.innerHTML=`<div class="nt-head"><h2>${esc(app.nom)}</h2><button class="nt-rs">↻ RÉINITIALISER</button></div><div class="nt-body"></div>`;
+  root.innerHTML=`<div class="nt-head"><h2>${esc(app.nom)}</h2><label class="nt-if">INTERFACE <input type="number" min="0" max="20" class="nt-ifv" value="${st.iface??""}" placeholder="?"></label><button class="nt-rs">↻ RÉINITIALISER</button></div><div class="nt-body"></div>`;
+  const ifIn=$(".nt-ifv",root);ifIn.onchange=()=>{const v=parseInt(ifIn.value,10);st.iface=isNaN(v)?null:Math.max(0,Math.min(20,v));ifIn.value=st.iface??"";keep()};
+  /* épreuve de netrunning : 1D10 + INTERFACE ≥ SD → succès (ok) ; sinon « Résultat trop bas, hacking échoué » */
+  function epreuve(nd,head,txt,ok){const sd=sdOf(nd);if(!sd)return modal(head+txt,[["JET RÉUSSI (1 ACTION)",ok],FERMER]);
+    const ask=()=>modal(head+txt+`<p>Épreuve : <b>1D10 + INTERFACE ≥ SD ${sd}</b></p>
+      <div class="row"><label class="nt-if">INTERFACE <input type="number" min="0" max="20" id="nt-ifm" value="${st.iface??""}" placeholder="?"></label></div>`,
+      [["🎲 LANCER 1D10 (1 ACTION)",()=>{const v=parseInt($("#nt-ifm").value,10);if(isNaN(v)){$("#nt-ifm").focus();$("#nt-ifm").placeholder="REQUIS";return}
+        st.iface=Math.max(0,Math.min(20,v));ifIn.value=st.iface;keep();
+        const d=1+Math.floor(Math.random()*10),tot=d+st.iface,win=tot>=sd;
+        const res=`<div class="nt-roll ${win?"ok":"ko"}"><span class="nt-die">${d}</span> + INTERFACE ${st.iface} = <b>${tot}</b> ${win?"≥":"<"} SD ${sd}</div>`;
+        if(win)modal(head+res+`<p>▓ HACKING RÉUSSI</p>`,[["CONTINUER",ok]]);
+        else modal(head+res+`<p class="warn">░ Résultat trop bas, hacking échoué</p>`,[["🎲 RELANCER (1 ACTION)",ask],FERMER])}],FERMER]);
+    ask()}
   const B=$(".nt-body",root);
   function render(){
     B.innerHTML=app.strates.map((s,i)=>i+1>st.max?"":`<section class="nt-strate"><h3>&gt; ${esc(s.nom)}</h3><div class="nt-nodes">${s.nodes.map(nd=>{
@@ -1005,11 +991,11 @@ RUN.net=(root,app,ctx)=>{
     switch(nd.type){
     case "password":
       if(ok)return modal(head+"<p>Accès déjà obtenu.</p>",[FERMER]);
-      return modal(head+`<p>Le mot de passe protège l’accès à la strate ${nd.ouvre}.</p>`,[["JET RÉUSSI (1 ACTION)",()=>{
+      return epreuve(nd,head,`<p>Le mot de passe protège l’accès à la strate ${nd.ouvre}.</p>`,()=>{
         st.cracked[nd.id]=true;st.max=Math.max(st.max,nd.ouvre);keep();render();
-        modal(`<h3>&gt; ACCÈS OBTENU</h3><p>La strate ${nd.ouvre} est maintenant accessible.</p>`,[FERMER])}],FERMER]);
+        modal(`<h3>&gt; ACCÈS OBTENU</h3><p>La strate ${nd.ouvre} est maintenant accessible.</p>`,[FERMER])});
     case "cameras":case "tourelles":
-      if(!ok)return modal(head+"<p>Le nœud de contrôle est verrouillé.</p>",[["JET RÉUSSI (1 ACTION)",()=>{st.cracked[nd.id]=true;keep();render();openNode(nd)}],FERMER]);
+      if(!ok)return epreuve(nd,head,"<p>Le nœud de contrôle est verrouillé.</p>",()=>{st.cracked[nd.id]=true;keep();render();openNode(nd)});
       if(nd.type==="cameras"){
         const c=camApp(nd);unlockCam(c);
         if(!c)return modal(head+"<p>Accès au nœud obtenu.</p>",[FERMER]);
