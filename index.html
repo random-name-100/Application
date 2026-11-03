@@ -450,7 +450,7 @@ Dernier badge autorisé avant l'incident : RA-SEC-0042 (badge externe, prestatai
 ================================================================`}]},
  {id:"s3track",type:"track",nom:"TRACK // Poursuite urbaine",code:"TRACK-03",desc:"Traque en voiture sur le plan de Night City : deux véhicules de traque contre une voiture de police, au tour par tour.",files:[],
   /* départs : coordonnées de la carte officielle (2000 × 1332) ; vmax = carrefours franchissables par tour */
-  voitures:{t1:{nom:"TRAQUEUR 1",col:"#00ff9c",dep:[960,470],vmax:4},t2:{nom:"TRAQUEUR 2",col:"#ffd400",dep:[1010,525],vmax:4},police:{nom:"POLICE",col:"#3d8bff",dep:[1035,772],vmax:4}},
+  voitures:{t1:{nom:"TRAQUEUR 1",col:"#d27bff",dep:[960,470],vmax:4},t2:{nom:"TRAQUEUR 2",col:"#ffd400",dep:[1010,525],vmax:4},police:{nom:"POLICE",col:"#3d8bff",dep:[1035,772],vmax:4}},
   /* destination secrète de la police (visible du MJ seulement) : si elle l'atteint avant le 3e repérage, la traque est réussie */
   objectif:{rues:["Blackout St","S 4th St"],nom:"Bâtiment gris",
     txt:"🎯 Traque réussie : la voiture de police s'arrête devant un bâtiment gris, au coin de Blackout St et de S 4th St. Vous observez la scène à distance, sans avoir été repérés."}}]}
@@ -1219,7 +1219,9 @@ RUN.track=(root,app)=>{
     if(!map.layer.isConnected)return;const k=map.z.px?map.z.px():0.3,u=1/Math.max(k,0.05),L=[];
     const show=c=>c!=="police"||isMJ()||(pub&&!pub.cacher&&pub.cars.police);
     if(pub&&pub.last&&pub.last.paths&&!anim)CARS.forEach(c=>{const pts=show(c)&&pub.last.paths[c]?poly(pub.last.paths[c]):[];
-      if(pts.length>1)L.push(`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="${V[c].col}" stroke-opacity=".45" stroke-width="${7*u}" stroke-linejoin="round" stroke-linecap="round"/>`)});
+      if(pts.length>1){const pl=pts.map(p=>p.join(",")).join(" ");
+        L.push(`<polyline points="${pl}" fill="none" stroke="#000" stroke-opacity=".7" stroke-width="${10*u}" stroke-linejoin="round" stroke-linecap="round"/>`,
+          `<polyline points="${pl}" fill="none" stroke="${V[c].col}" stroke-opacity=".9" stroke-width="${6*u}" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="${14*u} ${6*u}"/>`)}});
     const mc=myCar(),me=mc&&carOf(mc);
     if(me&&draft.length){const r=M.course(me.n,me.f,draft),pts=poly(r.path);
       if(pts.length>1)L.push(`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="#fff" stroke-width="${4*u}" stroke-dasharray="${10*u} ${7*u}" stroke-linejoin="round"/>`);
@@ -1340,7 +1342,7 @@ RUN.track=(root,app)=>{
       <div>${tok(V.police.col,"P")}<span>${esc(V.police.nom)} (MJ) — la pointe indique le sens de marche</span></div>
       <div>${sw('<path d="M13 9L24 4A12 12 0 0 1 24 14Z M13 9L2 14A12 12 0 0 1 2 4Z" fill="#ff2a3d" fill-opacity=".2" stroke="#ff2a3d" stroke-width="1.2" stroke-dasharray="2 1.5"/>')}<span><b style="color:#ff2a3d">Cônes de vision (${R.r1} m, ±${R.ang}°)</b> : à l'avant et à l'arrière de la police ; un traqueur qui y entre est repéré (compteur 0/3)</span></div>
       <div>${sw('<circle cx="13" cy="9" r="8" fill="none" stroke="#ffb000" stroke-width="1.5" stroke-dasharray="4 2"/>')}<span><b style="color:#ffb000">Distance de traque (${R.r2} m)</b> : rester à l'intérieur pour ne pas perdre la police</span></div>
-      <div>${sw('<line x1="2" y1="9" x2="24" y2="9" stroke="#00ff9c" stroke-opacity=".5" stroke-width="4"/>')}<span>Trajet du dernier tour</span></div>
+      <div>${sw(`<line x1="2" y1="9" x2="24" y2="9" stroke="#000" stroke-width="6"/><line x1="2" y1="9" x2="24" y2="9" stroke="${V.t1.col}" stroke-width="3.5" stroke-dasharray="7 3"/>`)}<span>Trajet du dernier tour (couleur du véhicule)</span></div>
       <div>${sw('<line x1="2" y1="9" x2="24" y2="9" stroke="#fff" stroke-width="2" stroke-dasharray="4 3"/><circle cx="20" cy="9" r="4" fill="#000" stroke="#fff"/>')}<span>Trajet prévu par vos ordres (étapes numérotées)</span></div>
       <div>${sw('<circle cx="13" cy="9" r="7" fill="#ff00c8" stroke="#000"/><text x="13" y="12" font-size="9" text-anchor="middle" fill="#fff">★</text>')}<span>Repère de la campagne (${(M.PERSO||[]).map(r=>esc(r.nom)).join(", ")})</span></div>`:""}</div>`;
     const byT={};(pub.log||[]).forEach(l=>(byT[l.t]||(byT[l.t]=[])).push(l));
