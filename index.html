@@ -86,6 +86,7 @@ body.wide main{max-width:1500px}
 .nt-if{display:flex;gap:6px;align-items:center;font-size:12px;letter-spacing:.1em}.nt-if input{width:64px;min-width:0;flex:none;text-align:center}
 .nt-roll{font-size:18px;margin:10px 0;letter-spacing:.06em}.nt-roll.ok{color:var(--c)}.nt-roll.ko{color:#ff3344}
 .nt-die{display:inline-block;min-width:38px;text-align:center;border:2px solid currentColor;padding:2px 6px;font-weight:bold;animation:ntin .3s}
+.nt-bk{max-width:640px}.nt-bkh{display:flex;justify-content:space-between;margin:6px 0;font-size:13px;letter-spacing:.08em}
 .nt-img{max-width:100%;display:block;margin:10px 0;border:1px solid var(--c)}
 .warn{color:#ff3344}
 .hl{background:#ffb000;color:#000;font-weight:bold;padding:2px 6px;box-shadow:0 0 12px #ffb00099}
@@ -110,6 +111,7 @@ tr.out td:nth-child(4){color:#ff3344}
 .stamp{position:absolute;top:18px;right:-4px;transform:rotate(12deg);border:3px double #b3131b;color:#b3131b;font-weight:bold;font-size:15px;letter-spacing:.2em;padding:2px 10px;opacity:.85;pointer-events:none;mix-blend-mode:multiply}
 .classified .stamp{top:58px;right:8px;font-size:13px}
 h2 .redact{background:var(--c);color:var(--c)}
+.sess-rz{margin-top:18px;opacity:.8}.sess-rz button{font-size:12px}
 .mj-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--dim)}
 .card .fin{opacity:1;text-shadow:0 0 8px var(--c)}
 .tk-wrap{position:relative}
@@ -416,10 +418,14 @@ Ha. Garde tes blagues pour le jour où ils te feront « augmenter » toi aussi. 
   strates:[
    {nom:"STRATE 1 - Pare-feu du terminal",nodes:[
     {id:"pc",type:"password",nom:"Point de contrôle",diff:"SD 10",ouvre:2}]},
-   {nom:"STRATE 2 - Messagerie du terminal",nodes:[
-    {id:"m1",type:"mail",nom:"De : papa.kord — À : mr.h — « Contrôles sur les docks »",f:0},
-    {id:"m2",type:"mail",nom:"De : logistique@by-corp-holding — « Nouvelle chaîne d'approvisionnement »",f:1},
-    {id:"m3",type:"mail",nom:"De : rook — À : sand — « Re: t'as vu le dernier virement ? »",f:2}]}]},
+   {nom:"STRATE 2 - Serveur chiffré",nodes:[
+    {id:"bk",type:"breach",nom:"Décryptage du serveur",ouvre:3,time:40}]},
+   {nom:"STRATE 3 - Messagerie du terminal",nodes:[
+    {id:"m1",type:"mail",inst:0,nom:"De : papa.kord — À : mr.h — « Contrôles sur les docks »",f:0},
+    {id:"m2",type:"mail",inst:1,nom:"De : logistique@by-corp-holding — « Nouvelle chaîne d'approvisionnement »",f:1},
+    {id:"m3",type:"mail",inst:2,nom:"De : rook — À : sand — « Re: t'as vu le dernier virement ? »",f:2}]}],
+  /* GLACE déclenchée après 3 erreurs de décryptage — type à préciser (nom, stats, image) */
+  glace:{nom:"GLACE — TYPE À DÉFINIR",stats:"statistiques à définir par le MJ",image:""}},
  {id:"s3medic",type:"medic",nom:"MEDIC // Bloc opératoire de fortune",code:"MEDIC-03",desc:"Un enfant blessé à l'abdomen : stopper l'hémorragie, retirer les éclats, réparer le foie, refermer.",
   files:[{titre:"Compte rendu opératoire",texte:`================================================================
 // COMPTE RENDU OPÉRATOIRE — BLOC DE FORTUNE
@@ -572,8 +578,14 @@ function home(){
     const nf=nfound(s,f),tf=s.apps.reduce((n,a)=>n+a.files.length,0);
     if(s.cache)return `<a class="card classified" href="#session-${s.id}"><span class="stamp">CLASSIFIÉ</span><small class="doc-head">DOSSIER NC-2045-${String(s.id).padStart(2,"0")} // DIFFUSION RESTREINTE</small><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${bars(14,6,9)}</span><small>${bars(4,11,7)}</small><small>ACCÈS : HABILITATION NIVEAU 5 REQUISE</small></a>`;
     return `<a class="card" href="#session-${s.id}"><b>SESSION ${String(s.id).padStart(2,"0")}</b><span>${esc(s.titre)}</span><small>${esc(s.resume)}</small><small>APPS ${s.apps.filter(a=>done(s)||u[a.id]).length}/${s.apps.length} · FICHIERS ${nf}/${tf}</small>${done(s)?'<small class="fin">▓ SESSION TERMINÉE</small>':""}</a>`}).join("")}</div>
-  <div class="row"><button id="rz">EFFACER LA PROGRESSION</button><a href="#carte"><button>🗺 CARTE</button></a><a href="#mj"><button>⚿ ACCÈS MJ</button></a></div>`;
-  let armed=false;$("#rz").onclick=e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER L’EFFACEMENT ?";return}ST.set("unl",{});ST.set("files",{});home()}}
+  <div class="row"><button id="rz">EFFACER LA PROGRESSION GÉNÉRALE</button><a href="#carte"><button>🗺 CARTE</button></a><a href="#mj"><button>⚿ ACCÈS MJ</button></a></div>`;
+  let armed=false;$("#rz").onclick=e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER L’EFFACEMENT DE TOUTE LA PROGRESSION ?";return}clearProgress(null);home()}}
+/* efface la progression de cet appareil : une session (s) ou toutes (null) — codes, fichiers, état des applications, véhicule choisi */
+function clearProgress(s){
+  const ss=s?[s]:SESSIONS,apps=ss.flatMap(x=>x.apps).concat(s?[]:RESERVE),u=ST.get("unl"),f=ST.get("files");
+  apps.forEach(a=>{delete u[a.id];a.files.forEach((_,i)=>delete f[fid(a,i)]);
+    ["net:"+a.id,"track-role:"+a.id].forEach(k=>{delete mem[k];try{localStorage.removeItem("nr:"+k)}catch(e){}})});
+  ST.set("unl",s?u:{});ST.set("files",s?f:{})}
 
 /* ---------- Onglet MJ (code "MJ", non mémorisé : redemandé à chaque chargement) ---------- */
 const MJ_CODE="MJ";let mjOk=false;
@@ -623,7 +635,10 @@ function mj(){
 
 const TAB={};
 function session(s){
-  view.innerHTML=`<a href="#">← INDEX</a><h2>SESSION ${String(s.id).padStart(2,"0")} // ${s.cache?bars(10,4,12):esc(s.titre.toUpperCase())}</h2>${s.cache?"":`<p><small>${esc(s.resume)}</small></p>`}<div class="tabs"><button data-t="acces">ACCÈS APPLICATIONS</button><button data-t="save">SAUVEGARDE DES INFOS</button>${done(s)?'<button data-t="resume">RÉSUMÉ</button>':""}</div><div id="tab"></div>`;
+  view.innerHTML=`<a href="#">← INDEX</a><h2>SESSION ${String(s.id).padStart(2,"0")} // ${s.cache?bars(10,4,12):esc(s.titre.toUpperCase())}</h2>${s.cache?"":`<p><small>${esc(s.resume)}</small></p>`}<div class="tabs"><button data-t="acces">ACCÈS APPLICATIONS</button><button data-t="save">SAUVEGARDE DES INFOS</button>${done(s)?'<button data-t="resume">RÉSUMÉ</button>':""}</div><div id="tab"></div>
+    <div class="row sess-rz"><button id="rzs">EFFACER LA PROGRESSION DE LA SESSION</button></div>`;
+  {let armed=false;$("#rzs").onclick=e=>{if(!armed){armed=true;e.target.textContent=`CONFIRMER : EFFACER LA SESSION ${String(s.id).padStart(2,"0")} ?`;return}
+    clearProgress(s);session(s);$("#rzs").textContent="▓ PROGRESSION DE LA SESSION EFFACÉE"}}
   const tab=$("#tab");
   const nbf=()=>nfound(s,ST.get("files"));
   const setTab=n=>{if(n==="resume"&&!done(s))n="acces"; /* onglet RÉSUMÉ visible seulement une fois la session terminée */
@@ -1366,8 +1381,8 @@ RUN.track=(root,app)=>{
 /* ============ APP : ARCHITECTURE NET (strates + nœuds) ============ */
 RUN.net=(root,app,ctx)=>{
   const K="net:"+app.id,
-  LB={password:"MOT DE PASSE",cameras:"NŒUD DE CONTRÔLE",tourelles:"NŒUD DE CONTRÔLE",blackice:"PROGRAMME BLACK ICE",fichier:"FICHIER",paydata:"FICHIER PAYDATA",mail:"MAIL"},
-  fresh=()=>({max:1,cracked:{},revealed:{},won:{},tourelles:true,iface:st&&st.iface});
+  LB={password:"MOT DE PASSE",cameras:"NŒUD DE CONTRÔLE",tourelles:"NŒUD DE CONTRÔLE",blackice:"PROGRAMME BLACK ICE",fichier:"FICHIER",paydata:"FICHIER PAYDATA",mail:"MAIL",breach:"DÉCRYPTAGE"},
+  fresh=()=>({max:1,cracked:{},revealed:{},won:{},tourelles:true,iface:st&&st.iface,dec:app.strates.flatMap(s=>s.nodes).filter(n=>n.inst!==undefined).map(()=>0),err:0,ice:false});
   let st=null;st=Object.assign(fresh(),ST.get(K));
   /* SD d'un nœud : « SD 10 » → 10 ; difficultés nommées → table ci-dessous */
   const DIFF={facile:4,moyen:8,difficile:12},
@@ -1388,8 +1403,48 @@ RUN.net=(root,app,ctx)=>{
   function tag(nd){
     if(nd.type==="password"||nd.type==="cameras")return st.cracked[nd.id]?T(1,"ACCÈS OBTENU"):T(0,"VERROUILLÉ");
     if(nd.type==="blackice")return st.won[nd.id]?T(1,"NEUTRALISÉE"):T(0,"HOSTILE");
+    if(nd.type==="breach"){const n=st.dec.filter(Boolean).length;return n>=st.dec.length?T(1,"DÉCRYPTÉ"):T(0,`${n}/${st.dec.length} · ERREURS ${st.err}/3`)}
+    if(nd.type==="mail"&&nd.inst!==undefined&&!st.dec[nd.inst])return T(0,"CHIFFRÉ");
     if(nd.type==="tourelles")return !st.cracked[nd.id]?T(0,"VERROUILLÉ"):st.tourelles?T(0,"ACTIVÉ"):T(1,"DÉSACTIVÉ");
     return ""}
+  /* ---- décryptage (breach) : une instance par mail, 2 séquences par instance ; 3 erreurs = combat contre une GLACE ---- */
+  const MAILS=app.strates.flatMap(s=>s.nodes).filter(n=>n.inst!==undefined).sort((a,b)=>a.inst-b.inst);
+  function iceFight(nd){const g=app.glace||{};st.ice=true;keep();
+    modal(`<h3 class="warn">⚠ 3 ERREURS — UNE GLACE S'ACTIVE</h3>${g.image?`<img class="nt-img" src="${esc(g.image)}" alt="" onerror="this.remove()">`:""}
+      <p>Programme : <b>${esc(g.nom||"GLACE")}</b>${g.stats?` — ${esc(g.stats)}`:""}</p><p class="warn">Combat en cours : impossible de quitter sans choisir.</p>`,
+      [["FUIR (DÉCONNEXION)",()=>{st.ice=false;st.err=0;app.strates[0].nodes.forEach(n=>{delete st.cracked[n.id]});st.max=1;keep();render();
+          modal(`<h3>⏏ DÉCONNEXION</h3><p>Vous êtes éjecté du terminal. Les mails déjà décryptés restent lisibles ; il faut refranchir le point de contrôle pour continuer.</p>`,[FERMER])}],
+       ["VICTOIRE",()=>{st.ice=false;st.err=0;keep();render();modal(`<h3>▓ GLACE NEUTRALISÉE</h3><p>Le compteur d'erreurs est remis à zéro. Le décryptage peut reprendre.</p>`,[["CONTINUER LE DÉCRYPTAGE",()=>breach(nd)],FERMER])}]],true)}
+  function breach(nd){
+    if(st.ice)return iceFight(nd);
+    const i=st.dec.findIndex(x=>!x);if(i<0)return modal(`<h3>▓ ${esc(nd.nom)}</h3><p>Les ${st.dec.length} instances sont décryptées.</p>`,[FERMER]);
+    const N=5,H=["1C","55","BD","E9","7A","FF"],R=n=>Math.floor(Math.random()*n),TIME=nd.time||40;
+    ovLock=true;ov.innerHTML=`<div class="panel nt-bk"><h3>▓ ${esc(nd.nom)} — INSTANCE ${i+1}/${st.dec.length}</h3><small>Fichier chiffré : ${esc(MAILS[i]?MAILS[i].nom:"mail "+(i+1))}</small>
+      <div class="nt-bkh"><span>ERREURS <b>${st.err}/3</b></span><span class="bk-t"></span></div>
+      <div class="hh"><div class="grid"></div><div><div>TAMPON</div><div class="slots"></div><div>SÉQUENCES DE DÉCRYPTAGE</div><div class="seqs"></div></div></div>
+      <div class="msg bk-m"></div><div class="row"><button class="bk-q">⏏ QUITTER</button></div></div>`;ov.classList.add("show");
+    const G=$(".grid",ov);let g,seqs,buf=[],step=0,last=[0,0],used=new Set(),t=TIME,over=false,iv;
+    g=Array.from({length:N},()=>Array.from({length:N},()=>H[R(6)]));
+    let r=0,c=R(N);const p=[[r,c]];
+    for(let k=1;k<5;k++){let n;if(k%2){do n=R(N);while(p.some(q=>q[0]===n&&q[1]===c));r=n}else{do n=R(N);while(p.some(q=>q[0]===r&&q[1]===n));c=n}p.push([r,c])}
+    const cd=p.map(q=>g[q[0]][q[1]]);seqs=[{s:cd.slice(0,3),ok:false},{s:cd.slice(1,5),ok:false}];
+    const has=s=>buf.some((_,k)=>s.every((h,j)=>buf[k+j]===h)),can=(r,c)=>!over&&!used.has(r+","+c)&&(step%2?c===last[1]:r===last[0]);
+    const draw=()=>{if(!G.isConnected)return;G.innerHTML=g.map((row,r)=>row.map((h,c)=>`<button data-r="${r}" data-c="${c}" class="${used.has(r+","+c)?"used":can(r,c)?"ok":""}">${h}</button>`).join("")).join("");
+      $(".slots",ov).innerHTML=Array.from({length:6},(_,k)=>`<span>${buf[k]||"··"}</span>`).join("");
+      $(".seqs",ov).innerHTML=seqs.map((q,k)=>`<div class="seq ${q.ok?"done":""}">${q.s.join(" ")}<br><small>${q.ok?"✔ CLÉ "+(k+1)+" ACQUISE":"CLÉ "+(k+1)}</small></div>`).join("");
+      $(".bk-t",ov).textContent=over?"":`⏱ ${t}s`};
+    const end=()=>{over=true;clearInterval(iv);ovLock=false;draw();
+      if(seqs.every(q=>q.ok)){st.dec[i]=1;st.max=Math.max(st.max,nd.ouvre||st.max);keep();render();GX.ok();
+        const m=MAILS[i],more=st.dec.some(x=>!x);
+        modal(`<h3>▓ INSTANCE ${i+1} DÉCRYPTÉE</h3><p>Fichier déchiffré : <b>${esc(m?m.nom:"mail")}</b></p>`,[...(m?[["LIRE LE MAIL",()=>reveal(app,[m.f])]]:[]),...(more?[["INSTANCE SUIVANTE",()=>breach(nd)]]:[]),FERMER])}
+      else{st.err++;keep();render();GX.buzz();
+        if(st.err>=3)return iceFight(nd);
+        modal(`<h3 class="warn">░ DÉCRYPTAGE ÉCHOUÉ</h3><p>${seqs.some(q=>q.ok)?"Une seule clé acquise : il faut les deux.":"Aucune clé acquise."} Erreur ${st.err}/3.</p>`,[["RÉESSAYER",()=>breach(nd)],FERMER])}};
+    G.onclick=e=>{const b=e.target.closest("button");if(!b)return;const r=+b.dataset.r,c=+b.dataset.c;if(!can(r,c))return;
+      buf.push(g[r][c]);used.add(r+","+c);last=[r,c];step++;seqs.forEach(q=>{if(!q.ok&&has(q.s))q.ok=true});
+      if(buf.length>=6||seqs.every(q=>q.ok))return end();draw()};
+    $(".bk-q",ov).onclick=()=>{over=true;clearInterval(iv);ovLock=false;close()};
+    iv=setInterval(()=>{if(!G.isConnected||over){clearInterval(iv);return}if(--t<=0)return end();draw()},1000);draw()}
   root.innerHTML=`<div class="nt-head"><h2>${esc(app.nom)}</h2><label class="nt-if">INTERFACE <input type="number" min="0" max="20" class="nt-ifv" value="${st.iface??""}" placeholder="?"></label><button class="nt-rs">↻ RÉINITIALISER</button></div><div class="nt-body"></div>`;
   const ifIn=$(".nt-ifv",root);ifIn.onchange=()=>{const v=parseInt(ifIn.value,10);st.iface=isNaN(v)?null:Math.max(0,Math.min(20,v));ifIn.value=st.iface??"";keep()};
   /* épreuve de netrunning : 1D10 + INTERFACE ≥ SD → succès (ok) ; sinon « Résultat trop bas, hacking échoué » */
@@ -1407,7 +1462,7 @@ RUN.net=(root,app,ctx)=>{
   function render(){
     B.innerHTML=app.strates.map((s,i)=>i+1>st.max?"":`<section class="nt-strate"><h3>&gt; ${esc(s.nom)}</h3><div class="nt-nodes">${s.nodes.map(nd=>{
       if(!st.revealed[nd.id]&&nd.type!=="mail")return `<button class="nt-node" data-n="${nd.id}"><span>[ ??? ] Donnée non identifiée<small>Cliquer pour analyser</small></span></button>`;
-      const done=st.cracked[nd.id]||st.won[nd.id]||(nd.f!==undefined&&opened(nd));
+      const done=st.cracked[nd.id]||st.won[nd.id]||(nd.f!==undefined&&opened(nd))||(nd.type==="breach"&&st.dec.every(Boolean));
       return `<button class="nt-node${done?" done":""}" data-n="${nd.id}"><span>[${LB[nd.type]}] ${esc(nd.nom)}${nd.diff?`<small>Difficulté : ${esc(nd.diff)}</small>`:""}</span>${tag(nd)}</button>`}).join("")}</div></section>`).join("")
       +(st.max<app.strates.length?`<div class="nt-locked">&gt; STRATE ${st.max+1} : ACCÈS VERROUILLÉ</div>`:"")}
   function openNode(nd){
@@ -1432,7 +1487,8 @@ RUN.net=(root,app,ctx)=>{
       if(st.won[nd.id])return modal(head+`<p>Glace <b>${esc(nd.nomIA)}</b> neutralisée.</p>`,[FERMER]);
       return modal(head+`<img class="nt-img" src="${esc(nd.image)}" alt="${esc(nd.nomIA)}" onerror="this.remove()"><p>Nom de Glace : <b>${esc(nd.nomIA)}</b> - ${esc(nd.stats)}</p><p class="warn">Combat en cours : impossible de quitter sans choisir.</p>`,
         [["FUIR (1 ACTION)",close],["VICTOIRE",()=>{st.won[nd.id]=true;keep();render();close()}]],true);
-    case "mail":return reveal(app,[nd.f]);
+    case "breach":return breach(nd);
+    case "mail":if(nd.inst!==undefined&&!st.dec[nd.inst])return modal(head+`<p>Fichier chiffré : terminez l'instance ${nd.inst+1} du décryptage du serveur.</p>`,[FERMER]);return reveal(app,[nd.f]);
     default:
       if(opened(nd))return openFiles(app,[nd.f],[]);
       return modal(head+"<p>Fichier verrouillé : il faut l’analyser pour le lire.</p>",[["ANALYSER (1 ACTION)",()=>{reveal(app,[nd.f]);render()}],FERMER])}}
