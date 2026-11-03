@@ -937,7 +937,8 @@ RUN.medic=(root,app)=>{
    4 tâches : câblage · calibrage des relais · alignement de phase · séquence d'accès */
 RUN.tech=(root,app)=>{
   document.body.classList.remove("wide");
-  const TASKS=[["CÂBLAGE","Reliez chaque fil à la borne de même couleur (glisser d'une borne à l'autre)."],
+  const TASKS=[["PANNEAU D'ACCÈS","Dévissez les 4 vis : maintenez le doigt sur une vis et tournez autour dans le sens inverse des aiguilles d'une montre. Puis faites glisser la plaque pour la retirer."],
+    ["CÂBLAGE","Reliez chaque fil à la borne de même couleur (glisser d'une borne à l'autre)."],
     ["CALIBRAGE DES RELAIS","Appuyez sur VERROUILLER quand l'aiguille passe dans la zone verte. 3 relais."],
     ["ALIGNEMENT DE PHASE","Réglez chaque curseur sur son repère jaune. Les 4 doivent être alignés en même temps."],
     ["SÉQUENCE D'ACCÈS","Mémorisez l'ordre dans lequel les cubes s'allument puis reproduisez-le. 4 séquences : 3, 6, 9 puis 12 couleurs."]];
@@ -951,8 +952,41 @@ RUN.tech=(root,app)=>{
   function head(){$(".tx-steps",root).innerHTML=TASKS.map((t,i)=>`<span class="${i<step?"ok":i===step?"on":""}">${i+1}. ${t[0]}</span>`).join("");$(".tx-help",root).textContent=step<TASKS.length?TASKS[step][1]:""}
   let busy=false;
   function done(){if(busy)return;busy=true;setTimeout(()=>busy=false,200);GX.ok();step++;if(step>=TASKS.length)return finish();flash("▓ TÂCHE TERMINÉE");run()}
-  function run(){head();[wiring,calib,phase,simon][step]()}
+  function run(){head();[plate,wiring,calib,phase,simon][step]()}
   function finish(){head();area.innerHTML=`<div class="tx-win">▓ BYPASS RÉUSSI<br><small>SYSTÈME DE SÉCURITÉ HORS LIGNE</small></div>`;msg.textContent="";if(app.files.length)reveal(app,app.files.map((_,i)=>i))}
+  /* --- 0. panneau d'accès : 4 vis à dévisser (rotation anti-horaire autour de la vis), puis plaque à retirer --- */
+  function plate(){const SC=[[58,46],[302,46],[58,184],[302,184]],TURNS=2,need=TURNS*360,rot=[0,0,0,0],gone=[0,0,0,0];let cur=null,dragP=null,off=[0,0],warned=0;
+    area.innerHTML=`<svg class="tx-svg" viewBox="0 0 360 230">
+      <defs><linearGradient id="txm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a959c"/><stop offset=".45" stop-color="#c4ccd1"/><stop offset=".55" stop-color="#9aa4aa"/><stop offset="1" stop-color="#6c767c"/></linearGradient>
+        <pattern id="txb" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6L6 0" stroke="#fff" stroke-opacity=".07"/></pattern></defs>
+      <rect width="360" height="230" fill="#071210"/>
+      <g opacity=".85"><rect x="40" y="30" width="280" height="170" fill="#0b2a1e" stroke="#1d5a40"/>
+        ${[0,1,2,3].map(i=>`<path d="M60 ${60+i*35} C150 ${60+i*35} 200 ${80+i*28} 300 ${70+i*35}" stroke="${["#ff3344","#ffd400","#3d8bff","#ff00c8"][i]}" stroke-width="6" fill="none" stroke-dasharray="14 6" opacity=".7"/>`).join("")}
+        <text x="180" y="190" text-anchor="middle" font-size="10" fill="#5fa" font-family="monospace">BUS DE SÉCURITÉ — MODULE 7</text></g>
+      <g class="pl"><rect x="22" y="18" width="316" height="194" rx="8" fill="url(#txm)" stroke="#3c4448" stroke-width="3"/><rect x="22" y="18" width="316" height="194" rx="8" fill="url(#txb)"/>
+        <rect x="120" y="96" width="120" height="38" rx="3" fill="#2a3034" stroke="#555"/><text x="180" y="112" text-anchor="middle" font-size="10" fill="#ffd400" font-family="monospace" font-weight="bold">⚠ ACCÈS RESTREINT</text>
+        <text x="180" y="126" text-anchor="middle" font-size="8" fill="#bbb" font-family="monospace">SECURITECH MK.IV</text><g class="pl-scr"></g></g>
+    </svg><div class="tx-meter"><i></i></div>`;
+    const svg=$("svg",area),pl=$(".pl",area),scr=$(".pl-scr",area),meter=$(".tx-meter i",area),ang=(p,c)=>Math.atan2(p[1]-c[1],p[0]-c[0])*180/Math.PI;
+    const draw=()=>{scr.innerHTML=SC.map((c,i)=>{if(gone[i])return `<circle cx="${c[0]}" cy="${c[1]}" r="7" fill="#1b1f22" stroke="#555"/>`;const k=rot[i]/need,r=11+k*3;
+      return `<g transform="translate(${c[0]} ${c[1]})"><circle r="${r+3}" fill="#000" opacity="${.25+k*.35}" transform="translate(${k*4} ${k*4})"/><circle r="${r}" fill="#b9c2c8" stroke="#555" stroke-width="2"/>
+        <g transform="rotate(${-rot[i]})"><path d="M${-r*.7} 0H${r*.7}M0 ${-r*.7}V${r*.7}" stroke="#333" stroke-width="3" stroke-linecap="round"/></g>
+        ${cur&&cur.i===i?`<circle r="${r+8}" fill="none" stroke="#00ff9c" stroke-width="2" stroke-dasharray="${(k*2*Math.PI*(r+8)).toFixed(1)} 400" transform="rotate(-90)"/>`:""}</g>`}).join("");
+      meter.style.width=(gone.reduce((a,b)=>a+b,0)/4*100)+"%"};
+    draw();
+    svg.onpointerdown=e=>{const p=GX.pt(svg,e);svg.setPointerCapture(e.pointerId);
+      if(gone.every(Boolean)){dragP=p;return}
+      const i=SC.findIndex((c,i)=>!gone[i]&&GX.d(p,c)<20);if(i>=0){cur={i,a:ang(p,SC[i])};draw()}
+      else if(GX.d(p,[180,115])<150){GX.buzz(120,.12);flash("La plaque est encore vissée",true)}};
+    svg.onpointermove=e=>{const p=GX.pt(svg,e);
+      if(dragP){off=[p[0]-dragP[0],p[1]-dragP[1]];pl.style.transform=`translate(${off[0]}px,${off[1]}px)`;return}
+      if(!cur)return;const c=SC[cur.i];if(GX.d(p,c)<4)return;const a=ang(p,c);let d=a-cur.a;if(d>180)d-=360;if(d<-180)d+=360;cur.a=a;
+      if(d<0){rot[cur.i]=Math.min(need,rot[cur.i]-d);if(rot[cur.i]>=need){gone[cur.i]=1;cur=null;GX.ok();if(gone.every(Boolean))flash("▓ Vis retirées : faites glisser la plaque")}}
+      else if(d>3&&Date.now()-warned>1200){warned=Date.now();GX.buzz(140,.1);flash("Mauvais sens : vous resserrez la vis",true)}
+      draw()};
+    svg.onpointerup=svg.onpointercancel=()=>{cur=null;if(dragP){dragP=null;
+      if(Math.hypot(...off)>110){pl.style.transition="transform .6s ease-in,opacity .6s";pl.style.transform=`translate(${off[0]*4}px,${off[1]*4+300}px) rotate(${off[0]>0?14:-14}deg)`;pl.style.opacity="0";GX.buzz(220,.3,"triangle");setTimeout(done,700)}
+      else{off=[0,0];pl.style.transform=""}}draw()}}
   /* --- 1. câblage --- */
   function wiring(){const C=["#ff3344","#ffd400","#3d8bff","#ff00c8"],R=C.map((c,i)=>i).sort(()=>Math.random()-.5),Y=i=>40+i*50,done_=[0,0,0,0];
     area.innerHTML=`<svg class="tx-svg" viewBox="0 0 360 230"><rect width="360" height="230" fill="#0a1412"/><g class="w-lines"></g>
@@ -971,7 +1005,7 @@ RUN.tech=(root,app)=>{
       <div class="row" style="justify-content:center"><button class="tx-lock">⏻ VERROUILLER</button></div>`;
     const arc=(c,w)=>{const r=46,p=t=>[r*Math.sin(t*Math.PI/180),-r*Math.cos(t*Math.PI/180)],s=p(c-w/2),e=p(c+w/2);return `M${s[0]} ${s[1]}A${r} ${r} 0 0 1 ${e[0]} ${e[1]}`};
     const setZ=()=>{for(let i=0;i<3;i++){const z=$(".z"+i,area);if(i===k)z.setAttribute("d",arc(Z.c,Z.w));$(".t"+i,area).textContent=i<k?"OK":i===k?"…":""}};setZ();
-    let last=performance.now();const loop=now=>{if(!alive||!area.isConnected||step!==1)return;a=(a+sp*(now-last)/8)%360;last=now;$(".n"+k,area)?.setAttribute("transform",`rotate(${a})`);requestAnimationFrame(loop)};requestAnimationFrame(loop);
+    let last=performance.now();const loop=now=>{if(!alive||!area.isConnected||step!==2)return;a=(a+sp*(now-last)/8)%360;last=now;$(".n"+k,area)?.setAttribute("transform",`rotate(${a})`);requestAnimationFrame(loop)};requestAnimationFrame(loop);
     $(".tx-lock",area).onclick=()=>{if(k>=3)return;const d=Math.abs(((a-Z.c)%360+540)%360-180);if(d<=Z.w/2){GX.ok();k++;sp+=.9;if(k>=3)return setTimeout(done,300);Z=zone();setZ()}else{fail("Relais désynchronisé");a=0}}}
   /* --- 3. alignement de phase --- */
   function phase(){const T=[0,1,2,3].map(()=>10+Math.floor(Math.random()*80));let held=0;
@@ -979,7 +1013,7 @@ RUN.tech=(root,app)=>{
     const ins=[...area.querySelectorAll("input")];
     const chk=()=>ins.map((x,i)=>Math.abs(+x.value-T[i])<=3);
     const show=()=>ins.forEach((x,i)=>{$(".v"+i,area).textContent=Math.abs(+x.value-T[i])<=3?"✔":"·"});ins.forEach(x=>x.oninput=show);show();
-    const loop=()=>{if(!alive||!area.isConnected||step!==2)return;const ok=chk().every(Boolean);held=ok?held+1:0;$(".tx-meter i",area).style.width=Math.min(100,held/60*100)+"%";
+    const loop=()=>{if(!alive||!area.isConnected||step!==3)return;const ok=chk().every(Boolean);held=ok?held+1:0;$(".tx-meter i",area).style.width=Math.min(100,held/60*100)+"%";
       if(held>=60)return done();requestAnimationFrame(loop)};requestAnimationFrame(loop)}
   /* --- 4. séquence : 9 cubes de couleur, 4 séquences de 3, 6, 9 et 12 couleurs --- */
   function simon(){const L=[3,6,9,12],COL=["#ff3344","#ff8a00","#ffd400","#39ff6a","#00e5ff","#3d6bff","#a24dff","#ff4dd2","#ffffff"],
@@ -987,7 +1021,7 @@ RUN.tech=(root,app)=>{
     let lvl=0,seq=[],inp=0,lock=true,timers=[];
     area.innerHTML=`<div class="tx-lvl"></div><div class="tx-pad">${COL.map((c,i)=>`<button class="tx-cube" data-p="${i}" style="--k:${c}" title="${NOM[i]}"></button>`).join("")}</div><div class="tx-prog"></div>`;
     const btn=i=>area.querySelector(`[data-p="${i}"]`),lab=$(".tx-lvl",area),prog=$(".tx-prog",area);
-    const clear=()=>{timers.forEach(clearTimeout);timers=[]},later=(f,ms)=>timers.push(setTimeout(()=>{if(area.isConnected&&step===3)f()},ms));
+    const clear=()=>{timers.forEach(clearTimeout);timers=[]},later=(f,ms)=>timers.push(setTimeout(()=>{if(area.isConnected&&step===4)f()},ms));
     const light=(i,ms)=>{const b=btn(i);b.classList.add("lit");GX.buzz(260+i*55,.14,"triangle");later(()=>b.classList.remove("lit"),ms)};
     const dots=()=>{prog.innerHTML=seq.map((_,k)=>`<i class="${k<inp?"ok":""}"></i>`).join("")};
     const play=()=>{clear();lock=true;inp=0;dots();lab.textContent=`SÉQUENCE ${lvl+1}/4 — ${L[lvl]} COULEURS — OBSERVEZ`;
