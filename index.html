@@ -205,7 +205,7 @@ Ciblant le point de transfert, l'équipe débarque devant un complexe délabré,
 
 L'accès au sous-sol enfin déverrouillé, l'escouade plonge dans l'abîme. Ils libèrent Juan en interrompant sa séance de torture et survivent par miracle à l'embuscade toxique d'un chimiste du gang grâce à des réflexes surhumains. L'horreur les attend plus loin : une immense cage remplie de cobayes humains malingres. La découverte glaçante du cadavre d'un enfant ébranle profondément l'humanité de deux membres du groupe. En fouillant les données numériques du repaire, l'ampleur de l'opération se dévoile : un trafic d'êtres humains massivement financé par l'obscure _BY Corp_. Le choc devient intime lorsque Choura découvre que sa propre sœur, Lisa Fiodorovitch Ouvarov, a été expédiée via ce réseau sur commande spéciale. L'intervention s'achève dans le vacarme des gyrophares lorsque le sauvetage d'un corpo captif déclenche sa puce d'alerte, attirant instantanément la Trauma Team et le NCPD qui sécurisent le périmètre et démantèlent ce qu'il reste des Metal Heads.`,
  apps:[
- {id:"s2net",type:"net",nom:"NET // Architecture NET du repaire",code:"NET-02",desc:"Simulation d’architecture NET : strates, mots de passe, glace et paydata.",
+ {id:"s2net",type:"net",nom:"NET // Architecture NET du repaire",code:"NET-02",desc:"Architecture NET du repaire : strates, mots de passe, glace et paydata.",
   /* Fichiers récupérables (référencés par f:N dans les nœuds). html:true = texte non échappé (permet <mark class="hl">) */
   files:[
    {titre:"Organisation et activités",texte:`================================================================
@@ -805,7 +805,7 @@ const GX={
 /* ============ APP : MEDIC (opération chirurgicale) ============
    4 étapes : 1. hémostase (maintenir la pince sur chaque vaisseau malgré les tremblements)
               2. extraction des éclats (les sortir sans toucher les bords du passage)
-              3. suture du foie (suivre la déchirure)  4. fermeture (points de suture dans l'ordre)
+              3. suture de l'organe (suivre la déchirure)  4. fermeture (points de suture dans l'ordre)
    Les constantes baissent tant que des vaisseaux saignent et à chaque contact (« bzzz »). À 0 : patient perdu. */
 function medicOp(root,app){
   document.body.classList.remove("wide");
@@ -815,15 +815,15 @@ function medicOp(root,app){
             {p:[197,373],path:[[197,373],[180,384],[148,398],[110,428],[78,466],[58,494]]}];
   const TEAR=[[187,350],[197,358],[206,347],[216,359],[226,348],[237,357]];
   const ST=[[150,292],[250,292],[144,321],[256,321],[152,350],[248,350]];
-  /* balle logée dans le foie : visible et extractible seulement en vue LOUPE ; passage étroit pour la sortir */
+  /* balle logée dans l'organe : visible et extractible seulement en vue LOUPE ; passage étroit pour la sortir */
   const BUL=[223,366],BPATH=[[223,366],[227,359],[234,352],[243,345],[250,340]],LIVER=p=>((p[0]-213)/42)**2+((p[1]-352)/28)**2<=1,
     VB0=[0,0,400,560],VB1=[166,308,90,126];
-  const STEPS=["HÉMOSTASE","EXTRACTION DES ÉCLATS","BALLE + SUTURE DU FOIE","FERMETURE"],
+  const STEPS=["HÉMOSTASE","EXTRACTION DES ÉCLATS","BALLE + SUTURE DE L'ORGANE","FERMETURE"],
     TOOL=["clamp","pince","fil","fil"],
     TOOLS={aspi:["🩸","ASPIRER"],loupe:["🔍","LOUPE"],clamp:["🗜","CLAMP"],pince:["✂","PINCE"],fil:["🧵","FIL"]},
     HELP=["Outil CLAMP : maintenez le pointeur dans l'anneau qui tremble sur chaque vaisseau jusqu'à ce que le clamp se ferme.",
       "Outil PINCE : faites glisser chaque éclat de chrome jusqu'au bac en restant dans le passage, sans toucher les bords.",
-      "Outil LOUPE sur le foie : un projectile y est logé. Retirez la balle avec la PINCE par le passage étroit, puis outil FIL : suivez la déchirure du point vert jusqu'au bout.",
+      "Outil LOUPE sur l'organe : un projectile y est logé. Retirez la balle avec la PINCE par le passage étroit, puis outil FIL : suivez la déchirure du point vert jusqu'au bout.",
       "Outil FIL : refermez la plaie en touchant les points de suture dans l'ordre (1 → 6)."];
   /* fuites de sang : apparaissent au hasard dans la plaie, masquent la zone et se retirent avec l'outil ASPIRER */
   const WC=[200,330],inWound=p=>((p[0]-WC[0])/54)**2+((p[1]-WC[1])/44)**2<=1;
@@ -846,10 +846,10 @@ function medicOp(root,app){
     </svg><div class="md-tools">${Object.entries(TOOLS).map(([k,[i,t]])=>`<button data-tool="${k}">${i}<br><small>${t}</small></button>`).join("")}</div></div>
     <div class="md-msg"></div><div class="row"><button class="md-rs">↻ RECOMMENCER L'OPÉRATION</button><button class="md-tr">🎓 ENTRAÎNEMENT</button></div></div>`;
   root.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{if(b.dataset.tool==="loupe"&&S.zoom){zoom(false);return}S.tool=b.dataset.tool;upd()});
-  /* vue LOUPE : agrandissement animé sur le foie */
+  /* vue LOUPE : agrandissement animé sur l'organe */
   function zoom(on){if(S.zoom===on)return;S.zoom=on;const from=svg.getAttribute("viewBox").split(" ").map(Number),to=on?VB1:VB0,t0=performance.now();
     const st=now=>{const k=Math.min(1,(now-t0)/350),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;svg.setAttribute("viewBox",from.map((v,i)=>(v+(to[i]-v)*e).toFixed(2)).join(" "));if(k<1)requestAnimationFrame(st)};
-    requestAnimationFrame(st);if(on)flash("🔍 Vue agrandie du foie — reLOUPE pour revenir");upd()}
+    requestAnimationFrame(st);if(on)flash("🔍 Vue agrandie de l'organe — reLOUPE pour revenir");upd()}
   const svg=$(".md-svg",root),dyn=$(".md-dyn",root),stl=$(".md-stains",root),bar=$(".md-bar i",root),bpm=$(".md-bpm",root),msgEl=$(".md-msg",root);
   $(".md-tr",root).onclick=()=>RUN.medic(root,app,{train:true});
   $(".md-rs",root).onclick=()=>{reset();svg.setAttribute("viewBox",VB0.join(" "));msgEl.textContent="";upd()};
@@ -890,9 +890,9 @@ function medicOp(root,app){
   const onTarget=p=>S.phase===0?VES.some((v,k)=>!S.clamp[k]&&GX.d(p,v.tip)<20):S.phase===1?SH.some((s,k)=>!S.out[k]&&GX.d(p,s.p)<14):S.phase===2?GX.d(p,TEAR[0])<12:S.phase===3?GX.d(p,ST[S.stitch])<13:false;
   svg.addEventListener("pointerdown",e=>{if(S.over)return;const p=GX.pt(svg,e);svg.setPointerCapture(e.pointerId);S.p=p;
     if(S.tool==="aspi"){S.aspi=true;upd();return}
-    if(S.tool==="loupe"){if(S.zoom)zoom(false);else if(LIVER(p))zoom(true);else flash("Touchez l'organe (le foie) avec la LOUPE");return}
+    if(S.tool==="loupe"){if(S.zoom)zoom(false);else if(LIVER(p))zoom(true);else flash("Touchez l'organe avec la LOUPE");return}
     /* balle : uniquement en vue LOUPE, avec la PINCE */
-    if(!S.bulOut&&GX.d(p,BUL)<(S.zoom?5:7)){if(!S.zoom){flash("Quelque chose brille dans le foie… utilisez la LOUPE");return}
+    if(!S.bulOut&&GX.d(p,BUL)<(S.zoom?5:7)){if(!S.zoom){flash("Quelque chose brille dans l'organe… utilisez la LOUPE");return}
       if(S.tool!=="pince"){GX.buzz(140,.15);flash("Outil inadapté : utilisez PINCE");return}
       if(masked(p)){maskMsg();return}S.bdrag={p};upd();return}
     if(S.phase===2&&!S.bulOut&&S.tool==="fil"&&GX.d(p,TEAR[0])<12){GX.buzz(140,.2);flash("⚠ Un corps étranger empêche la suture");return}
@@ -905,8 +905,8 @@ function medicOp(root,app){
     upd()});
   svg.addEventListener("pointermove",e=>{if(S.over)return;const p=GX.pt(svg,e);S.p=p;
     if((S.drag||S.trace||S.bdrag)&&masked(p)){S.drag=null;S.bdrag=null;if(S.trace){S.trace=null;S.traced=0}maskMsg();upd();return}
-    if(S.bdrag){const r=GX.proj(p,BPATH);if(r.d>2.4){S.bdrag=null;fault(5,"La balle accroche la paroi du foie")}
-      else{S.bdrag.p=p;if(GX.d(p,BPATH[BPATH.length-1])<3){S.bdrag=null;S.bulOut=true;GX.ok();flash("▓ Balle extraite — la suture du foie est possible")}}upd();return}
+    if(S.bdrag){const r=GX.proj(p,BPATH);if(r.d>2.4){S.bdrag=null;fault(5,"La balle accroche la paroi de l'organe")}
+      else{S.bdrag.p=p;if(GX.d(p,BPATH[BPATH.length-1])<3){S.bdrag=null;S.bulOut=true;GX.ok();flash("▓ Balle extraite — la suture de l'organe est possible")}}upd();return}
     if(S.drag){const s=SH[S.drag.i],r=GX.proj(p,s.path);
       if(r.d>9){S.drag=null;fault(6,"Contact avec les tissus !")}
       else{S.drag.p=p;if(GX.d(p,s.path[s.path.length-1])<14){S.out[S.drag.i]=1;S.drag=null;GX.ok();if(S.out.every(Boolean))next()}}}
@@ -999,7 +999,7 @@ RUN.medic=(root,app,opt={})=>{
   const pad=`<rect width="400" height="300" fill="#0b1a1a"/><rect x="20" y="20" width="360" height="260" rx="14" fill="#e9e2d6"/><path d="M20 60H380M20 100H380M20 140H380M20 180H380M20 220H380M20 260H380M60 20V280M100 20V280M140 20V280M180 20V280M220 20V280M260 20V280M300 20V280M340 20V280" stroke="#cfc6b7" stroke-width="1"/>
     <ellipse cx="200" cy="150" rx="150" ry="100" fill="#c9566a" opacity=".55"/><ellipse cx="200" cy="150" rx="120" ry="78" fill="#a8323f" opacity=".5"/>`;
   function win(){GX.ok();flash("✔ Bien joué !");T=null;k++;setTimeout(()=>{if(!alive)return;if(k<EX.length)ex();else end()},900)}
-  function end(){head();$(".md-tr-txt",root).textContent="Entraînement terminé : vous connaissez les 5 outils. Rappel : surveillez la barre de vie, aspirez le sang dès qu'il gêne, et utilisez la LOUPE sur le foie.";
+  function end(){head();$(".md-tr-txt",root).textContent="Entraînement terminé : vous connaissez les 5 outils. Rappel : surveillez la barre de vie, aspirez le sang dès qu'il gêne, et utilisez la LOUPE sur l'organe.";
     svg.innerHTML=pad+`<text x="200" y="158" font-size="22" text-anchor="middle" fill="#0b3" font-family="monospace" font-weight="bold">PRÊT ✔</text>`;
     const b=$(".md-skip",root);b.textContent="▶ COMMENCER L'OPÉRATION"}
   function ex(){head();$(".md-tr-txt",root).textContent=`${k+1}/5 — ${TOOLS[EX[k].t][0]} ${TOOLS[EX[k].t][1]} : ${EX[k].txt}`;svg.setAttribute("viewBox","0 0 400 300");
