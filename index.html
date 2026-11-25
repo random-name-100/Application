@@ -168,6 +168,41 @@ h2 .redact{background:var(--c);color:var(--c)}
 .bm-pre{display:flex;flex-direction:column;gap:3px}.bm-pre button{font-size:11px;padding:3px 6px;text-align:left;opacity:.8}
 .bm-list{max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:4px}.bm-msg{border-left:3px solid var(--c);padding:3px 8px;font-size:13px}
 .bm-msg.alerte{border-color:#ff3344;color:#ff6a78}.bm-msg.aide{border-color:#39ff6a;color:#9fffb8}
+/* boîtier 3D */
+.bx-wrap{position:relative}.bx-views{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:6px}.bx-views button{padding:4px 8px;font-size:11px}
+.bx-stage{position:relative;height:min(62vh,560px);min-height:380px;perspective:1600px;overflow:hidden;border:1px solid var(--dim);background:radial-gradient(ellipse at 50% 40%,#22302c,#050807 70%);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.bx-stage.drag{cursor:grabbing}.bx-hint{display:block;margin-top:4px;opacity:.6}
+.bx-cube{position:absolute;left:50%;top:50%;transform-style:preserve-3d}
+.bx-face{position:absolute;box-sizing:border-box;backface-visibility:hidden;-webkit-backface-visibility:hidden;padding:14px;background:linear-gradient(145deg,#3a4146,#22282c);border:3px solid #111;box-shadow:inset 0 0 30px #0009;overflow:hidden}
+.f-av,.f-ar{width:520px;height:340px;left:0;top:0}.f-av{transform:translateZ(85px)}.f-ar{transform:rotateY(180deg) translateZ(85px)}
+.f-ga,.f-dr{width:170px;height:340px;left:175px;top:0}.f-dr{transform:rotateY(90deg) translateZ(260px)}.f-ga{transform:rotateY(-90deg) translateZ(260px)}
+.f-de,.f-ds{width:520px;height:170px;left:0;top:85px}.f-de{transform:rotateX(90deg) translateZ(170px)}.f-ds{transform:rotateX(-90deg) translateZ(170px)}
+.bx-screw{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(#999,#444);box-shadow:0 0 0 1px #000}.bx-screw.s1{top:5px;left:5px}.bx-screw.s2{top:5px;right:5px}.bx-screw.s3{bottom:5px;left:5px}.bx-screw.s4{bottom:5px;right:5px}
+.bx-lab{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:.25em;opacity:.35}
+.bx-row{display:flex;gap:10px;height:100%}.bx-row>*{flex:1;min-width:0}
+.bx-m{min-height:0;padding:8px;gap:5px}.bx-m .bm-scr{font-size:20px;padding:3px}.bx-m .bm-kp button{padding:3px 0;font-size:12px}.bx-m .bm-fqb button{padding:4px 0;font-size:12px}.bx-m .bm-fq{font-size:18px}.bx-m .bm-pin{font-size:18px}
+.bx-tmod{flex:0 0 140px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#0b0f10;border:2px solid #2c3438;border-radius:6px}
+.bx-tmod small{font-size:9px;letter-spacing:.12em;opacity:.7}.bx-timer{font-size:30px;font-weight:bold;color:#ff3344;text-shadow:0 0 10px #ff3344;background:#100;border:2px solid #400;padding:4px 8px;font-variant-numeric:tabular-nums}.bx-timer.urg{animation:fdb .5s infinite}
+.bx-strk{display:flex;gap:8px}.bx-strk i{width:14px;height:14px;border-radius:50%;background:#300;border:2px solid #000}.bx-strk i.on{background:#ff3344;box-shadow:0 0 10px #ff3344}
+.bx-warn{color:#ffd400!important;opacity:.8!important}
+.bx-sw{height:100%}.bx-swrow{display:flex;gap:10px;align-items:center}.bx-swrow .bm-frame{flex:1;padding:4px 8px}.bx-sw .bm-sws button{height:52px}.bx-sw .bm-sws button.up span{bottom:24px}.bx-sw .bm-sws button span{height:20px}
+.bx-plate{display:flex;gap:12px;align-items:center;height:100%}.bx-plate>*{flex:1}.bx-plate small{display:block;font-size:9px;opacity:.7;letter-spacing:.08em}
+.bx-maker{font-size:11px;border:1px dashed #666;padding:6px;opacity:.75}
+.bx-cells{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:100%;text-align:center}.bx-cells small{font-size:9px;letter-spacing:.1em;opacity:.7}
+.bx-cells div{display:flex;flex-direction:column;gap:8px}.bx-cells i{display:block;width:70px;height:34px;border:2px solid #ccc;border-radius:4px;background:linear-gradient(90deg,#39ff6a 0 70%,#1a3 70%)}.bx-cells em{font-size:12px;opacity:.6}
+.bx-dial{height:100%;align-items:center}.bx-dled{width:18px;height:18px;border-radius:50%;background:var(--k);box-shadow:0 0 12px var(--k);border:2px solid #000}
+.bx-knob{width:120px}.bx-dbtn{display:flex;gap:6px}.bx-dbtn button{padding:4px 12px;font-size:16px}
+.bx-wrap.off .bx-face{filter:grayscale(.5)}.bx-wrap .bm-wait{border-radius:0}
+/* manuel en pages */
+.bk{max-width:760px;margin:0 auto}.bk-page{background:#efe8d6;color:#1b1b1b;padding:22px 26px;min-height:520px;box-shadow:0 0 0 1px #000,6px 6px 0 #0006,0 0 20px var(--dim);font-family:Georgia,"Times New Roman",serif;line-height:1.55;animation:ntin .25s}
+.bk-hd{display:flex;justify-content:space-between;font-family:"Courier New",monospace;font-size:11px;letter-spacing:.1em;border-bottom:2px solid #1b1b1b;padding-bottom:4px;margin-bottom:12px}
+.bk-page h3{font-family:"Courier New",monospace;letter-spacing:.12em;margin:4px 0 10px}.bk-page h4{margin:12px 0 4px}.bk-page li{margin:3px 0}.bk-page a{color:#7a1020}
+.bk-t{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}.bk-t th,.bk-t td{border:1px solid #6b6558;padding:4px 6px;text-align:center}.bk-t th{background:#d9d0b8}.bk-t .bm-ico{font-size:22px}
+.bk-ft{text-align:center;margin-top:16px;font-size:12px;opacity:.6}
+.bk-cover{text-align:center;border:3px double #1b1b1b;padding:20px;margin-bottom:12px}.bk-cover div{font-size:48px}.bk-cover h2{font-family:"Courier New",monospace;letter-spacing:.15em;margin:6px 0}.bk-conf{color:#b3131b;font-weight:bold;letter-spacing:.2em;font-family:"Courier New",monospace}
+.bk-toc li{display:flex;justify-content:space-between;border-bottom:1px dotted #888}
+.bk-nav{display:flex;gap:6px;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap}.bk-nav select{font:inherit;background:#000;color:var(--c);border:1px solid var(--c);padding:6px;flex:1;min-width:160px}
+.bm-rz button{border-color:#ffb000;color:#ffb000}
 /* --- App : TRACK --- */
 .tk{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start}
 @media(max-width:900px){.tk{grid-template-columns:1fr}}
@@ -522,7 +557,7 @@ Dernier badge autorisé avant l'incident : RA-SEC-0042 (badge externe, prestatai
   objectif:{rues:["Blackout St","S 4th St"],nom:"Bâtiment gris",
     txt:"🎯 Traque réussie : la voiture de police s'arrête devant un bâtiment gris, au coin de Blackout St et de S 4th St. Vous observez la scène à distance, sans avoir été repérés."}}]},
 {id:4,titre:"Compte à rebours",resume:"La bombe, le manuel et les nerfs",histoire:"",apps:[
- {id:"s4bomb",type:"bomb",nom:"TECH // Désamorçage",code:"TECH-04",desc:"Une bombe, deux joueurs : l'opérateur la voit, l'expert lit le manuel. Le MJ surveille et communique.",files:[],
+ {id:"s4bomb",type:"bomb",nom:"TECH // Désamorçage",code:"TECH-04",desc:"Une bombe, deux joueurs : le désarmeur manipule le boîtier en 3D, le connaisseur lit le manuel. Le MJ surveille et communique.",files:[],
   duree:300 /* compte à rebours par défaut, en secondes (modifiable par le MJ) */}]}
 ];
 /* ============ APPLICATIONS EN RÉSERVE (onglet MJ) ============
@@ -1444,29 +1479,31 @@ RUN.battle=(root,app)=>{
     const chg=side.querySelector('[data-a="chg"]');if(chg){let armed=false;chg.onclick=e=>{e.preventDefault();if(!armed){armed=true;chg.textContent="CONFIRMER LE CHANGEMENT DE PERSONNAGE ?";return}role="";try{localStorage.removeItem(RK)}catch(er){}render();draw()}}}
   draw();render()};
 
-/* ============ APP : BOMB (désamorçage à deux : opérateur + expert, messages du MJ) ============
-   Documents partagés (collection « traque ») : <id>-main (graine de la bombe, minuteur, avertissements, modules résolus)
-   et <id>-msg (messages du MJ). La bombe est générée à partir de la graine : identique sur tous les appareils.
-   Modules : câbles, code d'accès, interrupteurs, fréquence. 3 avertissements ou fin du temps = explosion. */
+/* ============ APP : BOMB (désamorçage à deux : désarmeur + connaisseur, messages du MJ) ============
+   Le désarmeur voit un boîtier en 3D (parallélépipède) qu'il fait pivoter : modules sur les 6 faces.
+   Le connaisseur lit un manuel en pages. Documents partagés (collection « traque ») : <id>-main et <id>-msg.
+   Modules : câbles, code d'accès, interrupteurs, fréquence, molette. 3 avertissements ou fin du temps = explosion. */
 RUN.bomb=(root,app)=>{
   document.body.classList.add("wide");
   const ID=app.id,RK="nr:bomb-role:"+ID;
   let role=(()=>{try{return localStorage.getItem(RK)||""}catch(e){return""}})();if(role==="mj"&&!mjOk)role="";
   const isMJ=()=>!!mjOk&&(SYNC.kind==="firebase"?!!SYNC.user:SYNC.kind==="claude"?!!SYNC.canWrite:true);
-  let st=null,msgs=[],unsubs=[],seenMsg=null,tk=null,ending=false,local={seed:null,pin:"",sw:null,fq:150,tab:"gen"},B=null,mjTo="tous";
+  let st=null,msgs=[],unsubs=[],seenMsg=null,tk=null,ending=false,B=null,mjTo="tous",
+    local={seed:null,rv:null,pin:"",sw:null,fq:150,dial:1,page:0},view={ax:-18,ay:-28,z:1};
   const alive=()=>{if(root.isConnected)return true;unsubs.forEach(f=>{try{f()}catch(e){}});unsubs=[];clearInterval(tk);return false};
   /* ---------- génération de la bombe ---------- */
   const rngOf=seed=>{let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}};
   const COLS=[["rouge","#ff3344"],["bleu","#3d6bff"],["jaune","#ffd400"],["blanc","#f2f2f2"],["noir","#1a1a1a"],["vert","#39ff6a"]];
   const LET="ABCDEFGHJKLMNPRSTVXZ",ROW_A=[7,2,9,4,0,6,1,8,3,5,2,7,4,9,0,6,8,1,5,3],ROW_B=[4,8,1,6,3,9,5,0,7,2,6,1,8,3,9,4,2,7,0,5];
-  const ICONS=[["☢\uFE0E","Radiation",7],["⚡\uFE0E","Éclair",12],["☠\uFE0E","Crâne",3],["◆\uFE0E","Diamant",9],["✚\uFE0E","Croix",15],["⬤\uFE0E","Cercle",5]]; /* \uFE0E : symbole texte, pas emoji */
+  const ICONS=[["☢︎","Radiation",7],["⚡︎","Éclair",12],["☠︎","Crâne",3],["◆︎","Diamant",9],["✚︎","Croix",15],["⬤︎","Cercle",5]]; /* ︎ : symbole texte, pas emoji */
   const FRAMES={cyan:"#00e5ff",magenta:"#ff4dd2",orange:"#ff8a00"};
+  const DLED=[["rouge","#ff3344"],["vert","#39ff6a"],["bleu","#3d6bff"],["blanc","#f2f2f2"]],MOL=[[3,6,1,8],[5,2,7,4],[8,4,2,6],[1,7,5,3]];
   function gen(seed){const R=rngOf(seed),n=(a,b)=>a+Math.floor(R()*(b-a+1)),pick=a=>a[n(0,a.length-1)],SL="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let serial="";for(let i=0;i<5;i++)serial+=R()<.5?SL[n(0,25)]:String(n(0,9));serial+=String(n(0,9));
     const b={serial,bat:n(0,3),ports:["NET","OPT","AUX"].filter(()=>R()<.45),cables:[...Array(n(3,6))].map(()=>n(0,5)),
       code:[...Array(4)].map(()=>pick(LET)).join(""),leds:[...Array(5)].map(()=>R()<.5),sw0:[...Array(5)].map(()=>R()<.5),
-      frame:pick(Object.keys(FRAMES)),icons:[...Array(3)].map(()=>n(0,5))};
-    b.sol={cab:cutIdx(b),pin:pinOf(b),sw:swOf(b),fq:fqOf(b)};return b}
+      frame:pick(Object.keys(FRAMES)),icons:[...Array(3)].map(()=>n(0,5)),dled:n(0,3),dial0:n(1,8)};
+    b.sol={cab:cutIdx(b),pin:pinOf(b),sw:swOf(b),fq:fqOf(b),dial:dialOf(b)};return b}
   const cname=k=>COLS[k][0];
   function cutIdx(b){const c=b.cables.map(cname),N=c.length,cnt=x=>c.filter(k=>k===x).length,last=+b.serial.slice(-1);
     if(N===3){if(c[0]===c[2])return 1;const g=c.indexOf("vert");return g>=0?g:0}
@@ -1477,8 +1514,10 @@ RUN.bomb=(root,app)=>{
   const pinOf=b=>{const row=/[AEIOUY]/.test(b.serial)?ROW_B:ROW_A;return b.code.split("").map(l=>row[LET.indexOf(l)]).join("")};
   const swOf=b=>b.leds.map((l,i)=>b.frame==="cyan"?l:b.frame==="magenta"?!l:(b.bat>0&&i===b.bat-1?!l:l));
   const fqOf=b=>100+b.icons.reduce((a,i)=>a+ICONS[i][2],0)+(b.ports.includes("AUX")?5:0);
+  const dialOf=b=>{let p=MOL[b.dled][b.ports.length];if(b.bat===0)p=p%8+1;return p};
+  const MODS=["cab","pin","sw","fq","dial"];
   /* ---------- état partagé ---------- */
-  const DEF=()=>({v:1,seed:Math.floor(Math.random()*1e9),dur:app.duree||300,t0:0,left:null,status:"attente",strikes:0,solved:{},cut:[]});
+  const DEF=()=>({v:1,seed:Math.floor(Math.random()*1e9),rv:Date.now(),dur:app.duree||300,t0:0,left:null,status:"attente",strikes:0,solved:{},cut:[]});
   const left=()=>!st?0:st.status==="armée"?Math.max(0,st.dur-(Date.now()-st.t0)/1000):(st.left??st.dur);
   const fmt=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
   const put=p=>{st={...st,...p};render();return SYNC.put("traque",ID+"-main",{...st,maj:Date.now()}).catch(e=>toast("░ ÉCHEC D'ENREGISTREMENT : "+(e&&e.code||e),"alerte"))};
@@ -1486,7 +1525,7 @@ RUN.bomb=(root,app)=>{
   const arm=()=>put({status:"armée",t0:Date.now()-(st.dur-left())*1000,left:null});
   function strike(why){GX.buzz();const s=st.strikes+1;
     if(s>=3)put({strikes:s,status:"explosée",left:left()});else{put({strikes:s});toast(`✕ AVERTISSEMENT ${s}/3 — ${why}`,"alerte")}}
-  function solve(k){GX.ok();const sv={...st.solved,[k]:true};if(["cab","pin","sw","fq"].every(x=>sv[x]))put({solved:sv,status:"désamorcée",left:left()});else put({solved:sv})}
+  function solve(k){GX.ok();const sv={...st.solved,[k]:true};if(MODS.every(x=>sv[x]))put({solved:sv,status:"désamorcée",left:left()});else put({solved:sv})}
   /* ---------- squelette ---------- */
   root.innerHTML=`<div class="bm"><div class="bm-head"><h2>${esc(app.nom)}</h2><div class="bm-roles"></div></div>
     <div class="bm-top"><div class="bm-timer">--:--</div><div class="bm-x"></div><div class="bm-st"></div></div>
@@ -1500,7 +1539,8 @@ RUN.bomb=(root,app)=>{
       const mine=msgs.filter(m=>m.to==="tous"||m.to===role),last=mine[mine.length-1];
       if(last&&seenMsg!==null&&last.id!==seenMsg&&role!=="mj"){toast(`📡 MJ : ${last.txt}`,last.niv);GX.buzz(last.niv==="alerte"?220:660,.15,"square")}
       seenMsg=last?last.id:0;renderComms()}));render()});
-  tk=setInterval(()=>{if(!alive()||!st)return;const L=left();$t.textContent=fmt(L);$t.classList.toggle("urg",st.status==="armée"&&L<=30);
+  tk=setInterval(()=>{if(!alive()||!st)return;const L=left(),txt=fmt(L);$t.textContent=txt;$t.classList.toggle("urg",st.status==="armée"&&L<=30);
+    const ft=$(".bx-timer",root);if(ft){ft.textContent=txt;ft.classList.toggle("urg",st.status==="armée"&&L<=30)}
     if(st.status==="armée"&&L<=10&&role==="op"&&Math.ceil(L)!==tk.last){tk.last=Math.ceil(L);GX.buzz(1200,.04,"square")}
     if(st.status==="armée"&&L<=0&&canAct()&&!ending){ending=true;put({status:"explosée",left:0}).finally(()=>ending=false)}},250);
   /* ---------- rendu ---------- */
@@ -1508,83 +1548,115 @@ RUN.bomb=(root,app)=>{
     const R=$(".bm-roles",root);
     if(!role){R.innerHTML="";$(".bm-top",root).style.display="none";$c.style.display="none";
       $m.innerHTML=`<div class="tk-intro bm-intro"><b>▓ DISPOSITIF EXPLOSIF DÉTECTÉ</b><p>Une bombe artisanale a été découverte. Un seul d'entre vous la voit ; l'autre détient le manuel de désamorçage. <b>Parlez-vous.</b></p>
-        <p><small>Ne montrez pas votre écran à votre coéquipier : l'opérateur décrit, l'expert guide.</small></p></div>
-        <div class="tk-pick"><button data-role="op" style="--k:#ff3344">💣 JOUEUR 1 — OPÉRATEUR <small>(voit la bombe)</small></button>
-        <button data-role="exp" style="--k:#00e5ff">📖 JOUEUR 2 — EXPERT <small>(lit le manuel)</small></button>${mjOk?`<button data-role="mj" style="--k:#ffb000">⚿ MJ (CONTRÔLE ET MESSAGES)</button>`:""}</div>`;bind();return}
+        <p><small>Ne montrez pas votre écran à votre coéquipier : le désarmeur décrit, le connaisseur guide.</small></p></div>
+        <div class="tk-pick"><button data-role="op" style="--k:#ff3344">💣 JOUEUR 1 — DÉSARMEUR <small>(voit et manipule la bombe)</small></button>
+        <button data-role="exp" style="--k:#00e5ff">📖 JOUEUR 2 — CONNAISSEUR <small>(lit le manuel)</small></button>${mjOk?`<button data-role="mj" style="--k:#ffb000">⚿ MJ (CONTRÔLE ET MESSAGES)</button>`:""}</div>`;bind();return}
     $(".bm-top",root).style.display="";$c.style.display="";
-    R.innerHTML=mjOk?`VUE : ${[["op","OPÉRATEUR"],["exp","EXPERT"],["mj","MJ"]].map(([k,t])=>`<button data-role="${k}" class="${role===k?"on":""}">${t}</button>`).join("")}`
-      :`<small>${role==="op"?"💣 OPÉRATEUR":"📖 EXPERT"}</small> <a href="#" data-a="chg"><small>↺ changer de rôle</small></a>`;
-    if(!st){$m.innerHTML=`<p>${role==="exp"?"EN ATTENTE DE L'OPÉRATEUR OU DU MJ…":"CHARGEMENT…"}</p>`;renderComms();bind();return}
-    if(st.seed!==local.seed){B=gen(st.seed);local={...local,seed:st.seed,pin:"",sw:B.sw0.slice(),fq:150}}
+    R.innerHTML=mjOk?`VUE : ${[["op","DÉSARMEUR"],["exp","CONNAISSEUR"],["mj","MJ"]].map(([k,t])=>`<button data-role="${k}" class="${role===k?"on":""}">${t}</button>`).join("")}`
+      :`<small>${role==="op"?"💣 DÉSARMEUR":"📖 CONNAISSEUR"}</small> <a href="#" data-a="chg"><small>↺ changer de rôle</small></a>`;
+    if(!st){$m.innerHTML=`<p>${role==="exp"?"EN ATTENTE DU DÉSARMEUR OU DU MJ…":"CHARGEMENT…"}</p>`;renderComms();bind();return}
+    if(st.seed!==local.seed||st.rv!==local.rv){B=gen(st.seed);local={...local,seed:st.seed,rv:st.rv,pin:"",sw:B.sw0.slice(),fq:150,dial:B.dial0}}
     $(".bm-x",root).innerHTML=`AVERTISSEMENTS ${[0,1,2].map(i=>`<span class="${i<st.strikes?"on":""}">✕</span>`).join("")}`;
     $(".bm-st",root).innerHTML={attente:"⏳ EN ATTENTE",armée:"● ARMÉE",pause:"⏸ EN PAUSE",explosée:"💥 EXPLOSÉE",désamorcée:"✔ DÉSAMORCÉE"}[st.status];
     $(".bm-st",root).className="bm-st "+st.status;$t.textContent=fmt(left());
-    $m.innerHTML=(role==="op"?bombHTML():role==="exp"?manualHTML():mjHTML())+endHTML();
-    renderComms();bind()}
+    $m.innerHTML=(role==="op"?boxHTML():role==="exp"?bookHTML():mjHTML())+endHTML();
+    if(role==="op")fitBox();renderComms();bind()}
   const endHTML=()=>st.status==="explosée"?`<div class="bm-end boom">💥 LA BOMBE A EXPLOSÉ</div>`:st.status==="désamorcée"?`<div class="bm-end ok">✔ BOMBE DÉSAMORCÉE — ${fmt(st.left)} RESTANTES</div>`:"";
   const led=k=>`<i class="bm-led ${st.solved[k]?"ok":""}"></i>`;
-  function bombHTML(){const b=B,on=st.status==="armée";
-    const cab=b.cables,N=cab.length,gap=200/(N+1);
-    let w="";cab.forEach((k,i)=>{const y=gap*(i+1),c=COLS[k][1],cut=st.cut.includes(i);
+  /* ---------- boîtier 3D : 520 × 340 × 170 ---------- */
+  const BW=520,BH=340,BD=170;
+  function boxHTML(){const b=B,on=st.status==="armée";
+    const N=b.cables.length,gap=200/(N+1);let w="";
+    b.cables.forEach((k,i)=>{const y=gap*(i+1),c=COLS[k][1],cut=st.cut.includes(i);
       w+=cut?`<path d="M30 ${y} C60 ${y-6} 90 ${y-4} 116 ${y-1}M144 ${y+1} C170 ${y+4} 200 ${y+6} 230 ${y}" stroke="#000" stroke-width="11" fill="none"/><path d="M30 ${y} C60 ${y-6} 90 ${y-4} 116 ${y-1}M144 ${y+1} C170 ${y+4} 200 ${y+6} 230 ${y}" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round"/>`
         :`<path d="M30 ${y} C100 ${y-12} 160 ${y+12} 230 ${y}" stroke="#000" stroke-width="11" fill="none"/><path d="M30 ${y} C100 ${y-12} 160 ${y+12} 230 ${y}" stroke="${c}" stroke-width="7" fill="none"/><path data-cut="${i}" d="M30 ${y} C100 ${y-12} 160 ${y+12} 230 ${y}" stroke="transparent" stroke-width="20" fill="none" style="cursor:pointer"/>`;
       w+=`<rect x="14" y="${y-7}" width="18" height="14" fill="#555"/><rect x="228" y="${y-7}" width="18" height="14" fill="#555"/>`});
-    return `<div class="bm-case${on?"":" off"}">
-      <div class="bm-side"><div class="bm-serial"><small>N° DE SÉRIE</small><b>${esc(b.serial)}</b></div>
-        <div class="bm-bat"><small>CELLULES D'ÉNERGIE</small><div>${[...Array(b.bat)].map(()=>`<i></i>`).join("")||"<em>aucune</em>"}</div></div>
-        <div class="bm-ports"><small>PORTS</small><div>${b.ports.map(p=>`<span>${p}</span>`).join("")||"<em>aucun</em>"}</div></div></div>
-      <div class="bm-mods">
-        <div class="bm-mod">${led("cab")}<h4>CÂBLES</h4><svg viewBox="0 0 260 200" class="bm-cab">${w}</svg></div>
-        <div class="bm-mod">${led("pin")}<h4>CODE D'ACCÈS</h4><div class="bm-scr">${esc(b.code)}</div>
-          <div class="bm-pin">${[0,1,2,3].map(i=>`<span>${local.pin[i]||"_"}</span>`).join("")}</div>
-          <div class="bm-kp">${[1,2,3,4,5,6,7,8,9,"⌫",0,"OK"].map(k=>`<button data-k="${k}">${k}</button>`).join("")}</div></div>
-        <div class="bm-mod" style="--f:${FRAMES[b.frame]}">${led("sw")}<h4>INTERRUPTEURS</h4><div class="bm-frame">
-          <div class="bm-leds">${b.leds.map(l=>`<i class="${l?"on":""}"></i>`).join("")}</div>
-          <div class="bm-sws">${local.sw.map((u,i)=>`<button data-sw="${i}" class="${u?"up":""}"><span></span><small>${i+1}</small></button>`).join("")}</div></div>
-          <div class="row"><button data-a="swok">⏻ VERROUILLER</button></div></div>
-        <div class="bm-mod">${led("fq")}<h4>FRÉQUENCE</h4><div class="bm-scr bm-ico">${b.icons.map(i=>ICONS[i][0]).join(" ")}</div>
-          <div class="bm-fq">${local.fq} MHz</div><div class="bm-fqb">${[-10,-1,1,10].map(d=>`<button data-fq="${d}">${d>0?"+":""}${d}</button>`).join("")}</div>
-          <div class="row"><button data-a="fqok">📡 ÉMETTRE</button></div></div>
-      </div>
+    const dial=local.dial,da=(dial-1)*45;
+    const face=(cls,lab,html)=>`<div class="bx-face ${cls}"><i class="bx-screw s1"></i><i class="bx-screw s2"></i><i class="bx-screw s3"></i><i class="bx-screw s4"></i><span class="bx-lab">${lab}</span>${html}</div>`;
+    return `<div class="bx-wrap${on?"":" off"}">
+      <div class="bx-views"><small>VUE :</small>${[["av","AVANT"],["ar","ARRIÈRE"],["ga","GAUCHE"],["dr","DROITE"],["de","DESSUS"],["ds","DESSOUS"]].map(([k,t])=>`<button data-v="${k}">${t}</button>`).join("")}
+        <button data-zm="-1">−</button><button data-zm="1">+</button></div>
+      <div class="bx-stage"><div class="bx-cube" style="width:${BW}px;height:${BH}px">
+        ${face("f-av","AVANT",`<div class="bx-row"><div class="bx-tmod"><small>COMPTE À REBOURS</small><div class="bx-timer">${fmt(left())}</div>
+            <div class="bx-strk">${[0,1,2].map(i=>`<i class="${i<st.strikes?"on":""}"></i>`).join("")}</div><small class="bx-warn">⚠ NE PAS SECOUER</small></div>
+          <div class="bm-mod bx-m">${led("cab")}<h4>CÂBLES</h4><svg viewBox="0 0 260 200" class="bm-cab">${w}</svg></div></div>`)}
+        ${face("f-ar","ARRIÈRE",`<div class="bx-row"><div class="bm-mod bx-m">${led("pin")}<h4>CODE D'ACCÈS</h4><div class="bm-scr">${esc(b.code)}</div>
+            <div class="bm-pin">${[0,1,2,3].map(i=>`<span>${local.pin[i]||"_"}</span>`).join("")}</div>
+            <div class="bm-kp">${[1,2,3,4,5,6,7,8,9,"⌫",0,"OK"].map(k=>`<button data-k="${k}">${k}</button>`).join("")}</div></div>
+          <div class="bm-mod bx-m">${led("fq")}<h4>FRÉQUENCE</h4><div class="bm-scr bm-ico">${b.icons.map(i=>ICONS[i][0]).join(" ")}</div>
+            <div class="bm-fq">${local.fq} MHz</div><div class="bm-fqb">${[-10,-1,1,10].map(d=>`<button data-fq="${d}">${d>0?"+":""}${d}</button>`).join("")}</div>
+            <button data-a="fqok">📡 ÉMETTRE</button></div></div>`)}
+        ${face("f-de","DESSUS",`<div class="bm-mod bx-m bx-sw" style="--f:${FRAMES[b.frame]}">${led("sw")}<h4>INTERRUPTEURS</h4><div class="bx-swrow"><div class="bm-frame">
+            <div class="bm-leds">${b.leds.map(l=>`<i class="${l?"on":""}"></i>`).join("")}</div>
+            <div class="bm-sws">${local.sw.map((u,i)=>`<button data-sw="${i}" class="${u?"up":""}"><span></span><small>${i+1}</small></button>`).join("")}</div></div>
+            <button data-a="swok">⏻ VERROUILLER</button></div></div>`)}
+        ${face("f-ds","DESSOUS",`<div class="bx-plate"><div class="bm-serial"><small>N° DE SÉRIE</small><b>${esc(b.serial)}</b></div>
+            <div class="bm-ports"><small>PORTS</small><div>${b.ports.map(p=>`<span>${p}</span>`).join("")||"<em>aucun</em>"}</div></div>
+            <div class="bx-maker"><small>FABRICANT</small>SECURITECH MK.VII<br><small>LOT 2045-NC</small></div></div>`)}
+        ${face("f-ga","GAUCHE",`<div class="bx-cells"><small>CELLULES D'ÉNERGIE</small><div>${[...Array(b.bat)].map(()=>`<i></i>`).join("")||"<em>aucune</em>"}</div><small class="bx-warn">⚡ HAUTE TENSION</small></div>`)}
+        ${face("f-dr","DROITE",`<div class="bm-mod bx-m bx-dial">${led("dial")}<h4>MOLETTE</h4><i class="bx-dled" style="--k:${DLED[b.dled][1]}"></i>
+            <div class="bx-knob"><svg viewBox="-60 -60 120 120">${[...Array(8)].map((_,i)=>{const a=(i*45-90)*Math.PI/180;return `<text x="${(48*Math.cos(a)).toFixed(1)}" y="${(48*Math.sin(a)+4).toFixed(1)}" font-size="12" text-anchor="middle" fill="${i+1===dial?"#fff":"#7a8"}" font-weight="bold">${i+1}</text>`}).join("")}
+              <circle r="30" fill="#2a3034" stroke="#000" stroke-width="3"/><line x1="0" y1="0" x2="0" y2="-26" stroke="#ffd400" stroke-width="5" stroke-linecap="round" transform="rotate(${da})"/><circle r="5" fill="#ffd400"/></svg></div>
+            <div class="bx-dbtn"><button data-dial="-1">⟲</button><button data-dial="1">⟳</button></div><button data-a="dialok">⚙ ENGAGER</button></div>`)}
+      </div></div>
+      <small class="bx-hint">Faites glisser le fond pour faire pivoter le boîtier, ou choisissez une vue.</small>
       ${st.status==="attente"||st.status==="pause"?`<div class="bm-wait"><b>${st.status==="pause"?"⏸ COMPTE À REBOURS EN PAUSE":"⏳ BOMBE EN ATTENTE"}</b>${st.status==="attente"?`<button data-a="arm">▶ DÉMARRER LE COMPTE À REBOURS</button>`:""}</div>`:""}</div>`}
-  function manualHTML(){const T=local.tab,tab=(k,t)=>`<button data-tab="${k}" class="${T===k?"on":""}">${t}</button>`;
-    const body={
-      gen:`<h3>MANUEL DE DÉSAMORÇAGE — DISPOSITIF NC/7</h3><p>Le dispositif comporte <b>4 modules</b> : CÂBLES, CODE D'ACCÈS, INTERRUPTEURS et FRÉQUENCE. Chaque module désamorcé allume son voyant vert.</p>
-        <p>Toute mauvaise manipulation déclenche un <b>avertissement ✕</b>. Au <b>3ᵉ avertissement</b>, ou quand le compte à rebours atteint zéro, la bombe explose.</p>
-        <p>Certaines règles dépendent du boîtier. Demandez à l'opérateur :</p><ul><li>le <b>numéro de série</b> (étiquette, 6 caractères, finit toujours par un chiffre) ;</li><li>le nombre de <b>cellules d'énergie</b> (0 à 3) ;</li><li>les <b>ports</b> présents : NET, OPT, AUX.</li></ul>`,
-      cab:`<h3>MODULE : CÂBLES</h3><p>Le module compte 3 à 6 câbles, numérotés <b>de haut en bas</b>. Il faut couper <b>un seul</b> câble. Appliquez la première règle vraie.</p>
-        <h4>3 câbles</h4><ol><li>Si le premier et le dernier câble sont de la même couleur → couper le <b>câble du milieu</b>.</li><li>Sinon, s'il y a un câble vert → couper le <b>premier câble vert</b>.</li><li>Sinon → couper le <b>premier câble</b>.</li></ol>
-        <h4>4 câbles</h4><ol><li>Si la bombe a 2 cellules d'énergie ou plus → couper le <b>dernier câble</b>.</li><li>Sinon, s'il y a exactement un câble jaune → couper le <b>câble juste en dessous du jaune</b> (si le jaune est le dernier, couper le premier).</li><li>Sinon → couper le <b>troisième câble</b>.</li></ol>
-        <h4>5 câbles</h4><ol><li>Si le dernier chiffre du numéro de série est pair → couper le <b>deuxième câble</b>.</li><li>Sinon, s'il n'y a aucun câble noir → couper le <b>quatrième câble</b>.</li><li>Sinon → couper le <b>dernier câble noir</b>.</li></ol>
-        <h4>6 câbles</h4><ol><li>Si la bombe a un port NET → couper le <b>premier câble blanc</b> (s'il n'y en a pas, couper le cinquième).</li><li>Sinon, s'il y a plus de câbles rouges que de câbles bleus → couper le <b>dernier câble rouge</b>.</li><li>Sinon → couper le <b>premier câble</b>.</li></ol>`,
-      pin:`<h3>MODULE : CODE D'ACCÈS</h3><p>L'écran affiche un code de 4 lettres. Si le <b>numéro de série contient une voyelle</b> (A, E, I, O, U, Y), utilisez la <b>ligne B</b> ; sinon la <b>ligne A</b>. Remplacez chaque lettre par son chiffre, dans l'ordre, puis l'opérateur saisit les 4 chiffres et appuie sur OK.</p>
-        <div class="tw"><table><tr><th>LETTRE</th>${LET.split("").map(l=>`<th>${l}</th>`).join("")}</tr><tr><td>LIGNE A</td>${ROW_A.map(d=>`<td>${d}</td>`).join("")}</tr><tr><td>LIGNE B</td>${ROW_B.map(d=>`<td>${d}</td>`).join("")}</tr></table></div>`,
-      sw:`<h3>MODULE : INTERRUPTEURS</h3><p>Cinq voyants surmontent cinq interrupteurs, numérotés <b>de 1 à 5 de gauche à droite</b>. Le module est entouré d'un <b>cadre de couleur</b>.</p>
-        <ul><li><b>Cadre CYAN</b> : chaque interrupteur doit être en position <b>HAUTE</b> si son voyant est <b>allumé</b>, BASSE sinon.</li>
-        <li><b>Cadre MAGENTA</b> : l'inverse — HAUTE si le voyant est <b>éteint</b>, BASSE s'il est allumé.</li>
-        <li><b>Cadre ORANGE</b> : comme le cadre cyan, <b>sauf</b> l'interrupteur dont le numéro est égal au <b>nombre de cellules d'énergie</b>, qu'il faut placer à l'inverse (aucune exception s'il n'y a pas de cellule).</li></ul>
-        <p>Une fois les 5 interrupteurs placés, l'opérateur appuie sur <b>VERROUILLER</b>.</p>`,
-      fq:`<h3>MODULE : FRÉQUENCE</h3><p>L'écran affiche 3 symboles. Additionnez leurs valeurs, ajoutez <b>100</b>. Si la bombe possède un <b>port AUX</b>, ajoutez encore <b>5</b>. Le résultat est la fréquence à régler (en MHz), puis l'opérateur appuie sur <b>ÉMETTRE</b>.</p>
-        <div class="tw"><table><tr><th>SYMBOLE</th><th>NOM</th><th>VALEUR</th></tr>${ICONS.map(([s,n,v])=>`<tr><td class="bm-ico">${s}</td><td>${n}</td><td>${v}</td></tr>`).join("")}</table></div>`}[T];
-    return `<div class="bm-man"><div class="bm-tabs">${tab("gen","GÉNÉRALITÉS")}${tab("cab","CÂBLES")}${tab("pin","CODE")}${tab("sw","INTERRUPTEURS")}${tab("fq","FRÉQUENCE")}</div><div class="bm-page">${body}</div></div>`}
+  const VIEWS={av:[-12,-18],ar:[-12,162],ga:[-12,72],dr:[-12,-108],de:[-78,-10],ds:[78,-10]};
+  function applyView(anim){const c=$(".bx-cube",root);if(!c)return;c.style.transition=anim?"transform .6s ease":"none";
+    c.style.transform=`translate(-50%,-50%) scale(${view.z*view.fit}) rotateX(${view.ax}deg) rotateY(${view.ay}deg)`}
+  function fitBox(){const s=$(".bx-stage",root);if(!s)return;view.fit=Math.min(1,s.clientWidth/(BW*1.3));applyView(false)}
+  /* ---------- manuel en pages ---------- */
+  function pages(){const T=(t,b)=>({t,b});return[
+    T("COUVERTURE",`<div class="bk-cover"><div>☢︎</div><h2>MANUEL DE DÉSAMORÇAGE</h2><p>DISPOSITIF NC/7 — SECURITECH MK.VII</p><p class="bk-conf">DIFFUSION RESTREINTE</p></div>
+      <h4>SOMMAIRE</h4><ol class="bk-toc">${["Le dispositif","Module : câbles","Module : code d'accès","Module : interrupteurs","Module : fréquence","Module : molette","Annexe : bien communiquer"].map((x,i)=>`<li><a href="#" data-pg="${i+1}">${x}</a> <span>p. ${i+2}</span></li>`).join("")}</ol>`),
+    T("LE DISPOSITIF",`<p>Le dispositif est un <b>boîtier rectangulaire</b> à 6 faces. Le désarmeur peut le faire pivoter dans toutes les directions.</p>
+      <table class="bk-t"><tr><th>FACE</th><th>CONTENU</th></tr><tr><td>Avant</td><td>Compte à rebours, voyants d'avertissement, module CÂBLES</td></tr>
+      <tr><td>Arrière</td><td>Modules CODE D'ACCÈS et FRÉQUENCE</td></tr><tr><td>Dessus</td><td>Module INTERRUPTEURS</td></tr>
+      <tr><td>Dessous</td><td>Plaque d'identification : <b>numéro de série</b> et <b>ports</b></td></tr><tr><td>Gauche</td><td><b>Cellules d'énergie</b> (0 à 3)</td></tr><tr><td>Droite</td><td>Module MOLETTE</td></tr></table>
+      <p>Il faut désamorcer les <b>5 modules</b>. Chaque module désamorcé allume son voyant vert. Toute erreur provoque un <b>avertissement ✕</b> ; au <b>3ᵉ</b>, ou à la fin du compte à rebours, le dispositif explose.</p>
+      <p>Le numéro de série compte 6 caractères et finit toujours par un chiffre. Les ports possibles sont NET, OPT et AUX.</p>`),
+    T("MODULE : CÂBLES",`<p>Face avant. 3 à 6 câbles, numérotés <b>de haut en bas</b>. Il faut couper <b>un seul</b> câble : appliquez la première règle vraie.</p>
+      <h4>3 câbles</h4><ol><li>Premier et dernier câble de même couleur → couper le <b>câble du milieu</b>.</li><li>Sinon, s'il y a un câble vert → couper le <b>premier câble vert</b>.</li><li>Sinon → couper le <b>premier câble</b>.</li></ol>
+      <h4>4 câbles</h4><ol><li>2 cellules d'énergie ou plus → couper le <b>dernier câble</b>.</li><li>Sinon, exactement un câble jaune → couper le câble <b>juste en dessous du jaune</b> (si le jaune est le dernier, couper le premier).</li><li>Sinon → couper le <b>troisième câble</b>.</li></ol>
+      <h4>5 câbles</h4><ol><li>Dernier chiffre du numéro de série pair → couper le <b>deuxième câble</b>.</li><li>Sinon, aucun câble noir → couper le <b>quatrième câble</b>.</li><li>Sinon → couper le <b>dernier câble noir</b>.</li></ol>
+      <h4>6 câbles</h4><ol><li>Port NET présent → couper le <b>premier câble blanc</b> (s'il n'y en a pas, le cinquième).</li><li>Sinon, plus de câbles rouges que de bleus → couper le <b>dernier câble rouge</b>.</li><li>Sinon → couper le <b>premier câble</b>.</li></ol>`),
+    T("MODULE : CODE D'ACCÈS",`<p>Face arrière. L'écran affiche un code de 4 lettres. Si le <b>numéro de série contient une voyelle</b> (A, E, I, O, U, Y), utilisez la <b>ligne B</b> ; sinon la <b>ligne A</b>. Remplacez chaque lettre par son chiffre, dans l'ordre. Le désarmeur saisit les 4 chiffres puis appuie sur OK.</p>
+      <div class="tw"><table class="bk-t"><tr><th>LETTRE</th>${LET.split("").map(l=>`<th>${l}</th>`).join("")}</tr><tr><td>LIGNE A</td>${ROW_A.map(d=>`<td>${d}</td>`).join("")}</tr><tr><td>LIGNE B</td>${ROW_B.map(d=>`<td>${d}</td>`).join("")}</tr></table></div>`),
+    T("MODULE : INTERRUPTEURS",`<p>Face du dessus. Cinq voyants surmontent cinq interrupteurs numérotés <b>de 1 à 5 de gauche à droite</b>, dans un <b>cadre de couleur</b>.</p>
+      <ul><li><b>Cadre CYAN</b> : interrupteur en position <b>HAUTE</b> si son voyant est <b>allumé</b>, BASSE sinon.</li><li><b>Cadre MAGENTA</b> : l'inverse — HAUTE si le voyant est <b>éteint</b>.</li>
+      <li><b>Cadre ORANGE</b> : comme le cyan, <b>sauf</b> l'interrupteur dont le numéro est égal au <b>nombre de cellules d'énergie</b>, à placer à l'inverse (aucune exception sans cellule).</li></ul>
+      <p>Une fois les 5 interrupteurs placés, appuyer sur <b>VERROUILLER</b>.</p>`),
+    T("MODULE : FRÉQUENCE",`<p>Face arrière. L'écran affiche 3 symboles. Additionnez leurs valeurs et ajoutez <b>100</b>. Si le boîtier possède un <b>port AUX</b>, ajoutez encore <b>5</b>. Réglez cette fréquence (MHz) puis appuyez sur <b>ÉMETTRE</b>.</p>
+      <table class="bk-t"><tr><th>SYMBOLE</th><th>NOM</th><th>VALEUR</th></tr>${ICONS.map(([s,n,v])=>`<tr><td class="bm-ico">${s}</td><td>${n}</td><td>${v}</td></tr>`).join("")}</table>`),
+    T("MODULE : MOLETTE",`<p>Face droite. Une molette à 8 positions (1 à 8) et un voyant de couleur. Lisez la position dans le tableau selon la <b>couleur du voyant</b> et le <b>nombre de ports</b>. Si le boîtier n'a <b>aucune cellule d'énergie</b>, prenez la position suivante (8 → 1). Tournez la molette puis appuyez sur <b>ENGAGER</b>.</p>
+      <table class="bk-t"><tr><th>VOYANT</th><th>0 PORT</th><th>1 PORT</th><th>2 PORTS</th><th>3 PORTS</th></tr>${DLED.map(([n],i)=>`<tr><td>${n.toUpperCase()}</td>${MOL[i].map(p=>`<td>${p}</td>`).join("")}</tr>`).join("")}</table>`),
+    T("ANNEXE : BIEN COMMUNIQUER",`<ul><li>Faites d'abord <b>lire la plaque du dessous</b> (numéro de série, ports) et <b>compter les cellules</b> sur la face gauche : beaucoup de règles en dépendent.</li>
+      <li>Faites <b>épeler</b> le numéro de série caractère par caractère (« lettre B, chiffre 8 »).</li><li>Les câbles se comptent <b>de haut en bas</b>, les interrupteurs <b>de gauche à droite</b>.</li>
+      <li>En cas de doute, <b>ne touchez à rien</b> : une erreur coûte un avertissement, une hésitation ne coûte que du temps.</li></ul>`)]}
+  function bookHTML(){const P=pages(),i=Math.max(0,Math.min(P.length-1,local.page)),p=P[i];
+    return `<div class="bk"><div class="bk-page"><div class="bk-hd"><span>MANUEL — DISPOSITIF NC/7</span><span>p. ${i+1} / ${P.length}</span></div>
+      <h3>${p.t}</h3><div class="bk-body">${p.b}</div><div class="bk-ft">— ${i+1} —</div></div>
+      <div class="bk-nav"><button data-pg="${i-1}" ${i?"":"disabled"}>◀ PAGE PRÉCÉDENTE</button><select class="bk-sel">${P.map((q,k)=>`<option value="${k}" ${k===i?"selected":""}>${k+1}. ${q.t}</option>`).join("")}</select><button data-pg="${i+1}" ${i<P.length-1?"":"disabled"}>PAGE SUIVANTE ▶</button></div></div>`}
+  /* ---------- MJ ---------- */
   function mjHTML(){if(!isMJ())return `<p class="warn"><small>${SYNC.kind==="firebase"?"CONNECTEZ-VOUS AVEC LE COMPTE MJ DANS ⚿ ACCÈS MJ.":"SEUL LE PROPRIÉTAIRE DE LA PAGE PEUT ÊTRE MJ."}</small></p>`;
     const b=B,s=st.status,mod=(k,t,sol)=>`<div class="tk-car"><span>${st.solved[k]?"✔":"·"} ${t}</span><small>SOLUTION : ${sol}</small></div>`;
     return `<div class="tk-box"><b>▓ CONTRÔLE MJ</b>
-      <small>Bombe : série ${esc(b.serial)} · ${b.bat} cellule(s) · ports ${b.ports.join(", ")||"aucun"} · cadre ${b.frame}</small>
-      ${mod("cab","Câbles",`couper le n° ${b.sol.cab+1} (${cname(b.cables[b.sol.cab])}) sur ${b.cables.length}`)}${mod("pin","Code d'accès",`${b.code} → ${b.sol.pin}`)}
-      ${mod("sw","Interrupteurs",b.sol.sw.map((u,i)=>`${i+1}:${u?"H":"B"}`).join(" "))}${mod("fq","Fréquence",b.sol.fq+" MHz")}
+      <small>Bombe : série ${esc(b.serial)} · ${b.bat} cellule(s) · ports ${b.ports.join(", ")||"aucun"} · cadre ${b.frame} · voyant molette ${DLED[b.dled][0]}</small>
+      ${mod("cab","Câbles (avant)",`couper le n° ${b.sol.cab+1} (${cname(b.cables[b.sol.cab])}) sur ${b.cables.length}`)}${mod("pin","Code d'accès (arrière)",`${b.code} → ${b.sol.pin}`)}
+      ${mod("sw","Interrupteurs (dessus)",b.sol.sw.map((u,i)=>`${i+1}:${u?"H":"B"}`).join(" "))}${mod("fq","Fréquence (arrière)",b.sol.fq+" MHz")}${mod("dial","Molette (droite)","position "+b.sol.dial)}
       <div class="row">${s==="attente"?`<button data-a="arm">▶ DÉMARRER</button>`:""}${s==="armée"?`<button data-a="pause">⏸ PAUSE</button>`:""}${s==="pause"?`<button data-a="arm">▶ REPRENDRE</button>`:""}
         <button data-t="-30">−30 s</button><button data-t="30">+30 s</button></div>
       <div class="row"><span class="tk-ctl"><small>AVERTISSEMENTS</small><button data-x="-1">−</button><b>${st.strikes}/3</b><button data-x="1">+</button></span>
         ${s==="attente"?`<span class="tk-ctl"><small>DURÉE</small><button data-d="-60">−1 min</button><b>${fmt(st.dur)}</b><button data-d="60">+1 min</button></span>`:""}</div>
-      <div class="row"><button data-a="new">↺ NOUVELLE BOMBE</button></div></div>`}
+      <div class="row bm-rz"><button data-a="reset">↺ RÉINITIALISER (MÊME BOMBE)</button><button data-a="new">🎲 RÉINITIALISER (NOUVELLE BOMBE)</button></div>
+      <small>Réinitialiser : compte à rebours remis à zéro (en attente), avertissements et modules effacés, sur tous les écrans.</small></div>`}
   function renderComms(){if(!$c.isConnected)return;const vis=msgs.filter(m=>role==="mj"||m.to==="tous"||m.to===role).slice().reverse();
-    const dest={tous:"TOUS",op:"OPÉRATEUR",exp:"EXPERT"};
+    const dest={tous:"TOUS",op:"DÉSARMEUR",exp:"CONNAISSEUR"};
     $c.innerHTML=`<div class="tk-box bm-com"><b>📡 COMMUNICATIONS</b>
       ${role==="mj"&&isMJ()?`<div class="bm-to">À : ${Object.entries(dest).map(([k,t])=>`<button data-to="${k}" class="${mjTo===k?"on":""}">${t}</button>`).join("")}</div>
         <textarea class="bm-in" rows="2" placeholder="Message pour les joueurs…"></textarea>
         <div class="row"><button data-send="alerte" class="bm-al">⚠ ALERTE</button><button data-send="aide" class="bm-ai">💡 AIDE</button><button data-send="info">ℹ INFO</button></div>
-        <div class="bm-pre">${["Le temps presse !","Relisez la règle du module en entier.","Vérifiez le numéro de série.","Comptez les câbles de haut en bas.","Attention : une erreur de plus et c'est fini."].map(p=>`<button data-pre="${esc(p)}">${esc(p)}</button>`).join("")}</div>
+        <div class="bm-pre">${["Le temps presse !","Retournez le boîtier : regardez le dessous.","Vérifiez le numéro de série.","Comptez les câbles de haut en bas.","Attention : une erreur de plus et c'est fini."].map(p=>`<button data-pre="${esc(p)}">${esc(p)}</button>`).join("")}</div>
         <div class="row"><button data-a="clr"><small>EFFACER LES MESSAGES</small></button></div>`:""}
       <div class="bm-list">${vis.map(m=>`<div class="bm-msg ${m.niv}"><small>${new Date(m.id).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}${role==="mj"?" → "+dest[m.to]:""}</small> ${esc(m.txt)}</div>`).join("")||"<small>Aucun message.</small>"}</div></div>`;bindComms()}
   /* ---------- interactions ---------- */
@@ -1593,8 +1665,15 @@ RUN.bomb=(root,app)=>{
     const chg=root.querySelector('[data-a="chg"]');if(chg){let armed=false;chg.onclick=e=>{e.preventDefault();if(!armed){armed=true;chg.innerHTML="<small>CONFIRMER ?</small>";return}role="";try{localStorage.removeItem(RK)}catch(er){}render()}}
     const A=a=>$m.querySelector(`[data-a="${a}"]`),on=()=>st&&st.status==="armée";
     A("arm")&&(A("arm").onclick=()=>{if(canAct())arm()});
-    $m.querySelectorAll("[data-cut]").forEach(p=>p.onclick=()=>{if(!on()||st.solved.cab)return;const i=+p.dataset.cut;const cut=[...st.cut,i];
-      if(i===B.sol.cab){st.cut=cut;solve("cab")}else{st.cut=cut;strike("mauvais câble coupé")}});
+    /* rotation du boîtier */
+    const stage=$(".bx-stage",$m);if(stage){let drag=null;
+      stage.onpointerdown=e=>{if(e.target.closest("button,[data-cut]"))return;drag=[e.clientX,e.clientY,view.ax,view.ay];stage.setPointerCapture(e.pointerId);stage.classList.add("drag")};
+      stage.onpointermove=e=>{if(!drag)return;view.ay=drag[3]+(e.clientX-drag[0])*.5;view.ax=Math.max(-89,Math.min(89,drag[2]-(e.clientY-drag[1])*.5));applyView(false)};
+      stage.onpointerup=stage.onpointercancel=()=>{drag=null;stage.classList.remove("drag")};
+      $m.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{const [x,y]=VIEWS[b.dataset.v];view.ax=x;view.ay=y;applyView(true)});
+      $m.querySelectorAll("[data-zm]").forEach(b=>b.onclick=()=>{view.z=Math.max(.6,Math.min(1.8,view.z+ +b.dataset.zm*.15));applyView(true)})}
+    $m.querySelectorAll("[data-cut]").forEach(p=>p.onclick=()=>{if(!on()||st.solved.cab)return;const i=+p.dataset.cut;st.cut=[...st.cut,i];
+      if(i===B.sol.cab)solve("cab");else strike("mauvais câble coupé")});
     $m.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{if(!on()||st.solved.pin)return;const k=b.dataset.k;
       if(k==="⌫")local.pin=local.pin.slice(0,-1);else if(k==="OK"){if(local.pin.length<4)return;if(local.pin===B.sol.pin)solve("pin");else{local.pin="";strike("code d'accès refusé")}return}
       else if(local.pin.length<4)local.pin+=k;render()});
@@ -1602,13 +1681,18 @@ RUN.bomb=(root,app)=>{
     A("swok")&&(A("swok").onclick=()=>{if(!on()||st.solved.sw)return;if(local.sw.every((u,i)=>u===B.sol.sw[i]))solve("sw");else strike("interrupteurs mal positionnés")});
     $m.querySelectorAll("[data-fq]").forEach(b=>b.onclick=()=>{if(!on()||st.solved.fq)return;local.fq=Math.max(100,Math.min(199,local.fq+ +b.dataset.fq));render()});
     A("fqok")&&(A("fqok").onclick=()=>{if(!on()||st.solved.fq)return;if(local.fq===B.sol.fq)solve("fq");else strike("mauvaise fréquence")});
-    $m.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{local.tab=b.dataset.tab;render()});
+    $m.querySelectorAll("[data-dial]").forEach(b=>b.onclick=()=>{if(!on()||st.solved.dial)return;local.dial=(local.dial-1+ +b.dataset.dial+8)%8+1;GX.buzz(300,.03,"square");render()});
+    A("dialok")&&(A("dialok").onclick=()=>{if(!on()||st.solved.dial)return;if(local.dial===B.sol.dial)solve("dial");else strike("molette mal positionnée")});
+    /* manuel */
+    $m.querySelectorAll("[data-pg]").forEach(b=>b.onclick=e=>{e.preventDefault();local.page=+b.dataset.pg;render()});
+    const sel=$(".bk-sel",$m);sel&&(sel.onchange=()=>{local.page=+sel.value;render()});
     if(role==="mj"&&isMJ()&&st){
       A("pause")&&(A("pause").onclick=()=>put({status:"pause",left:left()}));
       $m.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{const d=+b.dataset.t;if(st.status==="armée")put({t0:st.t0+d*1000});else put({left:Math.max(0,left()+d)})});
       $m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const s=Math.max(0,Math.min(3,st.strikes+ +b.dataset.x));put(s>=3?{strikes:s,status:"explosée",left:left()}:{strikes:s})});
       $m.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const d=Math.max(60,Math.min(1800,st.dur+ +b.dataset.d));put({dur:d,left:d})});
-      let armed=false;A("new")&&(A("new").onclick=e=>{if(!armed){armed=true;e.target.textContent="CONFIRMER : NOUVELLE BOMBE ?";return}put({...DEF(),dur:st.dur})})}}
+      const conf=(a,f)=>{const el=A(a);if(!el)return;let armed=false;el.onclick=()=>{if(!armed){armed=true;el.textContent="CONFIRMER ?";return}f()}};
+      conf("reset",()=>put({...DEF(),seed:st.seed,dur:st.dur}));conf("new",()=>put({...DEF(),dur:st.dur}))}}
   function bindComms(){if(!(role==="mj"&&isMJ()))return;
     $c.querySelectorAll("[data-to]").forEach(b=>b.onclick=()=>{mjTo=b.dataset.to;renderComms()});
     const inp=$(".bm-in",$c),send=(txt,niv)=>{txt=String(txt||"").trim();if(!txt)return;const list=[...msgs,{id:Date.now(),to:mjTo,niv,txt}].slice(-40);msgs=list;renderComms();
@@ -1616,6 +1700,7 @@ RUN.bomb=(root,app)=>{
     $c.querySelectorAll("[data-send]").forEach(b=>b.onclick=()=>{send(inp.value,b.dataset.send);inp.value=""});
     $c.querySelectorAll("[data-pre]").forEach(b=>b.onclick=()=>{inp.value=b.dataset.pre;inp.focus()});
     let armed=false;const clr=$c.querySelector('[data-a="clr"]');clr&&(clr.onclick=()=>{if(!armed){armed=true;clr.innerHTML="<small>CONFIRMER ?</small>";return}msgs=[];renderComms();SYNC.put("traque",ID+"-msg",{list:[],maj:Date.now()})})}
+  addEventListener("resize",()=>{if(alive()&&role==="op")fitBox()});
   render()};
 
 /* ============ APP : TRACK (poursuite au tour par tour sur le plan complet) ============
